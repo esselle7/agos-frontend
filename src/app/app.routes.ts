@@ -1,3 +1,85 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { noAuthGuard } from './core/auth/no-auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { AuthCallbackComponent } from './core/auth/auth-callback.component';
+import { AppShellComponent } from './layout/shell/app-shell.component';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login.component').then(m => m.LoginComponent),
+    canActivate: [noAuthGuard],
+  },
+  {
+    path: 'auth/callback',
+    component: AuthCallbackComponent,
+  },
+  {
+    path: '',
+    component: AppShellComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(
+            m => m.DashboardComponent
+          ),
+      },
+      {
+        path: 'movimenti',
+        loadChildren: () =>
+          import('./features/movimenti/movimenti.routes').then(
+            m => m.movimentiRoutes
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'cassa',
+        loadComponent: () =>
+          import('./features/cassa/cassa.component').then(
+            m => m.CassaComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'eventi',
+        loadChildren: () =>
+          import('./features/eventi/eventi.routes').then(
+            m => m.eventiRoutes
+          ),
+      },
+      {
+        path: 'bu/:buId',
+        loadComponent: () =>
+          import('./features/bu/bu.component').then(m => m.BuComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'reporting',
+        loadComponent: () =>
+          import('./features/reporting/reporting.component').then(
+            m => m.ReportingComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'anagrafica',
+        loadChildren: () =>
+          import('./features/anagrafica/anagrafica.routes').then(
+            m => m.anagraficaRoutes
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      { path: '**', redirectTo: 'dashboard' },
+    ],
+  },
+];

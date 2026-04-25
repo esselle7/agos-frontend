@@ -1,0 +1,176 @@
+<mat-sidenav-container class="shell-container">
+
+  <!-- ── Sidenav ─────────────────────────────────────────────────── -->
+  <mat-sidenav
+    #sidenav
+    mode="side"
+    [opened]="sidenavOpen()"
+    class="sidenav"
+    [class.sidenav--collapsed]="!sidenavOpen()"
+  >
+    <!-- Brand -->
+    <div class="sidenav-brand">
+      <span class="brand-leaf">🌿</span>
+      @if (sidenavOpen()) {
+        <span class="brand-text">Agostinelli</span>
+      }
+    </div>
+
+    <mat-divider />
+
+    <!-- Top nav items -->
+    <mat-nav-list class="nav-list">
+      @for (item of visibleNavItems(); track item.route) {
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="nav-active"
+          [matTooltip]="!sidenavOpen() ? item.label : ''"
+          matTooltipPosition="right"
+          class="nav-item"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          @if (sidenavOpen()) {
+            <span matListItemTitle>{{ item.label }}</span>
+          }
+        </a>
+      }
+    </mat-nav-list>
+
+    @if (isAdmin() && businessUnits().length > 0) {
+      <mat-divider />
+
+      <!-- Business Unit sub-menu -->
+      @if (sidenavOpen()) {
+        <p class="nav-section-label">Business Unit</p>
+      }
+      <mat-nav-list class="nav-list">
+        @for (bu of businessUnits(); track bu.id) {
+          <a
+            mat-list-item
+            [routerLink]="['/bu', bu.id]"
+            routerLinkActive="nav-active"
+            [matTooltip]="!sidenavOpen() ? bu.nome : ''"
+            matTooltipPosition="right"
+            class="nav-item bu-item"
+          >
+            <span
+              class="bu-dot"
+              [style.background]="bu.colore"
+              matListItemIcon
+            ></span>
+            @if (sidenavOpen()) {
+              <span matListItemTitle>{{ bu.nome }}</span>
+            }
+          </a>
+        }
+      </mat-nav-list>
+    }
+
+    <mat-divider />
+
+    <!-- Bottom nav items -->
+    <mat-nav-list class="nav-list">
+      @for (item of visibleNavItemsBottom(); track item.route) {
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="nav-active"
+          [matTooltip]="!sidenavOpen() ? item.label : ''"
+          matTooltipPosition="right"
+          class="nav-item"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          @if (sidenavOpen()) {
+            <span matListItemTitle>{{ item.label }}</span>
+          }
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- ── Main content ───────────────────────────────────────────── -->
+  <mat-sidenav-content class="shell-content">
+
+    <!-- Topbar -->
+    <mat-toolbar class="topbar">
+
+      <!-- Left: hamburger -->
+      <button mat-icon-button (click)="toggleSidenav()" class="hamburger-btn">
+        <mat-icon>{{ sidenavOpen() ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
+
+      <!-- Spacer -->
+      <span class="topbar-spacer"></span>
+
+      <!-- Center: period placeholder (Step 04) -->
+      <div class="period-placeholder">
+        <mat-icon class="period-icon">date_range</mat-icon>
+        <span>MTD</span>
+      </div>
+
+      <span class="topbar-spacer"></span>
+
+      <!-- Right: badges + avatar -->
+      <div class="topbar-actions">
+
+        @if (isAdmin() && scadenzeCount() > 0) {
+          <button
+            mat-icon-button
+            class="badge-btn"
+            matTooltip="Scadenze imminenti ad alta urgenza"
+            [routerLink]="['/dashboard']"
+          >
+            <mat-icon
+              [matBadge]="scadenzeCount()"
+              matBadgeColor="warn"
+              matBadgeSize="small"
+            >alarm</mat-icon>
+          </button>
+        }
+
+        @if (isAdmin() && nonRiconciliatiCount() > 0) {
+          <button
+            mat-icon-button
+            class="badge-btn"
+            matTooltip="Movimenti da riconciliare"
+            [routerLink]="['/movimenti']"
+          >
+            <mat-icon
+              [matBadge]="nonRiconciliatiCount()"
+              matBadgeColor="accent"
+              matBadgeSize="small"
+            >sync_problem</mat-icon>
+          </button>
+        }
+
+        <!-- Avatar menu -->
+        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="avatar-btn">
+          <div class="avatar">
+            {{ user()?.nome?.charAt(0)?.toUpperCase() ?? '?' }}
+          </div>
+        </button>
+
+        <mat-menu #userMenu="matMenu" xPosition="before">
+          <div class="user-menu-header">
+            <strong>{{ user()?.nome }}</strong>
+            <span class="user-email">{{ user()?.email }}</span>
+          </div>
+          <mat-divider />
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Esci
+          </button>
+        </mat-menu>
+      </div>
+
+    </mat-toolbar>
+
+    <!-- Page content -->
+    <main class="page-content">
+      <router-outlet />
+    </main>
+
+  </mat-sidenav-content>
+
+</mat-sidenav-container>
