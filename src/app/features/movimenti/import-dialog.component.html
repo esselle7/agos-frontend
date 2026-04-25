@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>
+  <mat-icon>upload</mat-icon>
+  Import bulk movimenti
+</h2>
+
+<mat-dialog-content class="import-dialog">
+
+  @if (!importResult()) {
+    <p class="text-sub import-dialog__hint">
+      Incolla un array JSON di movimenti (max 500). Ogni elemento deve rispettare il formato
+      <code>MovimentoCreateRequest</code>.
+    </p>
+
+    <mat-form-field appearance="outline" class="import-dialog__textarea-field">
+      <mat-label>JSON movimenti</mat-label>
+      <textarea matInput [formControl]="jsonControl"
+                class="import-dialog__textarea"
+                placeholder='[{"tipo":"ENTRATA","importo":100,...},...]'
+                rows="12">
+      </textarea>
+      @if (jsonControl.hasError('required')) {
+        <mat-error>Inserire il JSON da importare</mat-error>
+      }
+    </mat-form-field>
+
+    @if (parseError()) {
+      <div class="import-dialog__parse-error">
+        <mat-icon>error</mat-icon>
+        {{ parseError() }}
+      </div>
+    }
+  } @else {
+    <!-- Risultato import -->
+    <div class="import-dialog__result">
+      <div class="import-dialog__result-row import-dialog__result-row--ok">
+        <mat-icon>check_circle</mat-icon>
+        <span>Importati: <strong>{{ importResult()!.importati }}</strong></span>
+      </div>
+      <div class="import-dialog__result-row import-dialog__result-row--warn">
+        <mat-icon>info</mat-icon>
+        <span>Duplicati ignorati: <strong>{{ importResult()!.duplicati }}</strong></span>
+      </div>
+      <div class="import-dialog__result-row import-dialog__result-row--err">
+        <mat-icon>warning</mat-icon>
+        <span>Errori: <strong>{{ importResult()!.errori }}</strong></span>
+      </div>
+
+      @if (importResult()!.dettaglioErrori?.length) {
+        <mat-divider></mat-divider>
+        <div class="import-dialog__errors">
+          <h4>Dettaglio errori</h4>
+          @for (e of importResult()!.dettaglioErrori; track e.riga) {
+            <div class="import-dialog__error-item">
+              <span class="import-dialog__error-riga">Riga {{ e.riga }}</span>
+              <span class="import-dialog__error-campo">{{ e.campo }}</span>
+              <span class="import-dialog__error-msg">{{ e.motivo }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (!importResult()) {
+    <button mat-stroked-button (click)="close()">Annulla</button>
+    <button mat-flat-button color="primary"
+            (click)="onImport()"
+            [disabled]="importing() || jsonControl.invalid">
+      @if (importing()) {
+        <mat-spinner diameter="18"></mat-spinner>
+      }
+      @if (!importing()) {
+        <mat-icon>upload</mat-icon>
+      }
+      {{ importing() ? '' : 'Importa' }}
+    </button>
+  } @else {
+    <button mat-flat-button color="primary" (click)="close()">
+      <mat-icon>done</mat-icon>
+      Chiudi
+    </button>
+  }
+</mat-dialog-actions>

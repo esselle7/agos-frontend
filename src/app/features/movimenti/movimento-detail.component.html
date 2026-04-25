@@ -1,0 +1,183 @@
+<div class="mov-detail">
+
+  <div class="mov-detail__nav">
+    <button mat-icon-button (click)="goBack()" matTooltip="Indietro">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="card mov-detail__skeleton">
+      <agos-skeleton-loader type="card" [rows]="12"></agos-skeleton-loader>
+    </div>
+  } @else if (movimento(); as mov) {
+
+    <!-- ═══════ [1] HEADER ════════════════════════════════════════════════ -->
+    <div class="card mov-detail__card">
+      <div class="mov-detail__header">
+        <div class="mov-detail__header-main">
+          <agos-badge [text]="mov.tipo" [color]="tipoColor(mov.tipo)"></agos-badge>
+          <span class="mov-detail__importo euro"
+                [class.mov-detail__importo--entrata]="mov.tipo === 'ENTRATA'"
+                [class.mov-detail__importo--uscita]="mov.tipo === 'USCITA'">
+            {{ mov.importo | euro }}
+          </span>
+          <agos-badge [text]="mov.stato" [color]="statoColor(mov.stato)"></agos-badge>
+        </div>
+        <div class="mov-detail__header-actions">
+          <a mat-stroked-button [routerLink]="['/movimenti', mov.id, 'modifica']">
+            <mat-icon>edit</mat-icon> Modifica
+          </a>
+          @if (authService.isAdmin()) {
+            <button mat-stroked-button color="warn" (click)="deleteMovimento()">
+              <mat-icon>delete</mat-icon> Elimina
+            </button>
+          }
+        </div>
+      </div>
+
+      <p class="mov-detail__descrizione">{{ mov.descrizione }}</p>
+    </div>
+
+    <!-- ═══════ [2] DATE ══════════════════════════════════════════════════ -->
+    <div class="card mov-detail__card">
+      <h4 class="mov-detail__section-title">Date</h4>
+      <div class="mov-detail__grid">
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Data movimento</span>
+          <span class="mov-detail__field-value">{{ formatDate(mov.dataMovimento) }}</span>
+        </div>
+        @if (mov.dataCompetenza && mov.dataCompetenza !== mov.dataMovimento) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Data competenza</span>
+            <span class="mov-detail__field-value">{{ formatDate(mov.dataCompetenza) }}</span>
+          </div>
+        }
+        @if (mov.dataLiquidita) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Data liquidità</span>
+            <span class="mov-detail__field-value">{{ formatDate(mov.dataLiquidita) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════ [3] CLASSIFICAZIONE ══════════════════════════════════════ -->
+    <div class="card mov-detail__card">
+      <h4 class="mov-detail__section-title">Classificazione</h4>
+      <div class="mov-detail__grid">
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Business Unit</span>
+          <agos-badge [text]="buNome(mov.businessUnitId)" [color]="buColore(mov.businessUnitId)"></agos-badge>
+        </div>
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Conto bancario</span>
+          <span class="mov-detail__field-value">{{ contoNome(mov.contoBancarioId) }}</span>
+        </div>
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Metodo di pagamento</span>
+          <span class="mov-detail__field-value">{{ metodoPagamentoNome(mov.metodoPagamentoId) }}</span>
+        </div>
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Conto CoGe</span>
+          <span class="mov-detail__field-value">{{ mov.contoCoge }}</span>
+        </div>
+        @if (mov.categoriaId) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Categoria ID</span>
+            <span class="mov-detail__field-value">{{ mov.categoriaId }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════ [4] EVENTO ════════════════════════════════════════════════ -->
+    @if (mov.eventoId) {
+      <div class="card mov-detail__card">
+        <h4 class="mov-detail__section-title">Evento collegato</h4>
+        <div class="mov-detail__grid">
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Evento</span>
+            <a class="mov-detail__link" [routerLink]="['/eventi', mov.eventoId]">
+              Vai all'evento <mat-icon class="mov-detail__link-icon">open_in_new</mat-icon>
+            </a>
+          </div>
+          @if (mov.tipoEventoMovimento) {
+            <div class="mov-detail__field">
+              <span class="mov-detail__field-label">Tipo pagamento</span>
+              <span class="mov-detail__field-value">{{ mov.tipoEventoMovimento }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ═══════ [5] FORNITORE ═════════════════════════════════════════════ -->
+    @if (mov.fornitoreId) {
+      <div class="card mov-detail__card">
+        <h4 class="mov-detail__section-title">Fornitore / Controparte</h4>
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Ragione sociale</span>
+          <span class="mov-detail__field-value">{{ fornitoreNome() ?? '…' }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- ═══════ [6] DETTAGLI FISCALI ══════════════════════════════════════ -->
+    @if (mov.importoImponibile || mov.importoIva || mov.importoCommissione) {
+      <div class="card mov-detail__card">
+        <h4 class="mov-detail__section-title">Dettagli fiscali</h4>
+        <div class="mov-detail__grid">
+          @if (mov.importoImponibile != null) {
+            <div class="mov-detail__field">
+              <span class="mov-detail__field-label">Imponibile</span>
+              <span class="mov-detail__field-value euro">{{ mov.importoImponibile | euro }}</span>
+            </div>
+          }
+          @if (mov.importoIva != null) {
+            <div class="mov-detail__field">
+              <span class="mov-detail__field-label">IVA</span>
+              <span class="mov-detail__field-value euro">{{ mov.importoIva | euro }}</span>
+            </div>
+          }
+          @if (mov.importoCommissione != null) {
+            <div class="mov-detail__field">
+              <span class="mov-detail__field-label">Commissioni</span>
+              <span class="mov-detail__field-value euro">{{ mov.importoCommissione | euro }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ═══════ [7] METADATI ══════════════════════════════════════════════ -->
+    <div class="card mov-detail__card">
+      <h4 class="mov-detail__section-title">Metadati</h4>
+      <div class="mov-detail__grid">
+        @if (mov.fonte) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Fonte</span>
+            <agos-badge [text]="mov.fonte" [color]="fonteColor(mov.fonte)" size="sm"></agos-badge>
+          </div>
+        }
+        @if (mov.riferimentoEsterno) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Riferimento esterno</span>
+            <span class="mov-detail__field-value">{{ mov.riferimentoEsterno }}</span>
+          </div>
+        }
+        @if (mov.note) {
+          <div class="mov-detail__field mov-detail__field--full">
+            <span class="mov-detail__field-label">Note</span>
+            <span class="mov-detail__field-value">{{ mov.note }}</span>
+          </div>
+        }
+        <div class="mov-detail__field">
+          <span class="mov-detail__field-label">Creato il</span>
+          <span class="mov-detail__field-value text-sub">{{ formatDateTime(mov.createdAt) }}</span>
+        </div>
+      </div>
+    </div>
+
+  }
+</div>

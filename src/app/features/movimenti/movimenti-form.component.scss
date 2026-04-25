@@ -1,0 +1,132 @@
+.mov-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    h2 { font-size: 1.5rem; }
+  }
+
+  &__skeleton {
+    padding: 24px;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__section {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  &__row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  &__field {
+    &--full { flex: 1 1 100%; }
+    &--lg   { flex: 1 1 240px; max-width: 320px; }
+    &--md   { flex: 1 1 200px; }
+    &--sm   { flex: 0 0 160px; }
+  }
+
+  &__tipo-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    background: #f5f5f5;
+    transition: background 0.2s;
+
+    &--entrata { background: rgba(46, 125, 50, 0.08); }
+    &--uscita  { background: rgba(198, 40, 40, 0.08); }
+  }
+
+  &__tipo-label {
+    font-size: 0.875rem;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+
+  &__tipo-toggle {
+    .mat-button-toggle-checked { font-weight: 600; }
+  }
+
+  &__toggle-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  &__toggle-desc {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__info-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    cursor: help;
+  }
+
+  &__divider {
+    margin: 0 0 8px;
+  }
+
+  &__iva-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(45, 106, 79, 0.06);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+  }
+
+  &__expansion {
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 8px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+}

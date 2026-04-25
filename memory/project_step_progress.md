@@ -56,3 +56,18 @@ File creati in `src/app/features/dashboard/` e `src/app/core/services/`:
 
 **Why:** Step 5 implementa la dashboard principale con visualizzazione KPI, grafici, transazioni recenti e routing per ruolo.
 **How to apply:** ng2-charts richiede `provideCharts()` in app.config; i grafici usano `BaseChartDirective` come standalone directive.
+
+### Step 06 — Modulo Movimenti (completato 2026-04-25)
+
+File creati in `src/app/features/movimenti/` e `src/app/core/constants/`:
+
+- **metodi-pagamento.ts** — costanti hardcodate (1=POS BPM … 8=Alveare)
+- **movimenti.routes.ts** aggiornato — route: `''` lista, `nuovo` form, `:id` dettaglio, `:id/modifica` form edit
+- **MovimentiListComponent** — mat-table diretta (non DataTableComponent), filtri: search/tipo/stato/from/to; segnali; paginazione server-side; bottoni header: Nuovo, Esporta CSV, Riconciliazione, Import bulk; eliminazione con ConfirmDialog; badge colorati per tipo/stato/fonte/BU
+- **MovimentiFormComponent** — ReactiveForm tipizzato; 5 sezioni (dati base, classificazione, evento toggle, date avanzate toggle, dettagli espandibile); BuSelectorComponent + CurrencyInputComponent con formControlName; cascade categorie padre→figlio; autocomplete fornitore/evento con debounce 300ms; calcolo IVA live; MatSlideToggle con `[checked]/(change)` (no ngModel); MatExpansionPanel per sezione 5; gestione errori 400 campo per campo
+- **MovimentoDetailComponent** — sola lettura con skeleton, 7 sezioni, lookup BU/conto/metodo da servizi, link all'evento collegato
+- **RiconciliazioneDialogComponent** — match automatico + lista non riconciliati con paginazione locale + riconciliazione manuale singola con note
+- **ImportDialogComponent** — textarea JSON, validazione, POST /api/movimenti/bulk, BulkImportResponse con dettaglio errori
+
+**Why:** Step 6 implementa il modulo core del gestionale — tutti i movimenti economico-finanziari.
+**How to apply:** `MatSlideToggle` richiede `MatSlideToggleModule` nell'imports; usare `[checked]/(change)` invece di `[(ngModel)]` per evitare dipendenza da FormsModule. Skeleton loader supporta solo `card|table|stat|text` (non `form`).

@@ -1,0 +1,335 @@
+<div class="mov-form">
+
+  <!-- Page header -->
+  <div class="mov-form__header">
+    <button mat-icon-button (click)="goBack()" matTooltip="Indietro">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2>{{ isEditMode ? 'Modifica Movimento' : 'Nuovo Movimento' }}</h2>
+  </div>
+
+  @if (loading()) {
+    <div class="card mov-form__skeleton">
+      <agos-skeleton-loader type="card" [rows]="10"></agos-skeleton-loader>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mov-form__body">
+
+      <!-- ═══════════════════════════════ SEZIONE 1 — DATI BASE ════════════ -->
+      <div class="card mov-form__section">
+        <h4 class="mov-form__section-title">Dati principali</h4>
+
+        <!-- Tipo toggle -->
+        <div class="mov-form__tipo-row" [class.mov-form__tipo-row--entrata]="tipoValue === 'ENTRATA'"
+                                        [class.mov-form__tipo-row--uscita]="tipoValue === 'USCITA'">
+          <label class="mov-form__tipo-label">Tipo operazione</label>
+          <mat-button-toggle-group formControlName="tipo" class="mov-form__tipo-toggle">
+            <mat-button-toggle value="ENTRATA">
+              <mat-icon>arrow_downward</mat-icon> Entrata
+            </mat-button-toggle>
+            <mat-button-toggle value="USCITA">
+              <mat-icon>arrow_upward</mat-icon> Uscita
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div class="mov-form__row">
+          <!-- Importo -->
+          <mat-form-field appearance="outline" class="mov-form__field--lg">
+            <mat-label>Importo *</mat-label>
+            <agos-currency-input formControlName="importo" label="Importo" [required]="true"></agos-currency-input>
+            @if (form.controls.importo.hasError('required')) {
+              <mat-error>Importo obbligatorio</mat-error>
+            }
+            @if (form.controls.importo.hasError('min')) {
+              <mat-error>Importo minimo 0,01 €</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Data movimento -->
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Data movimento *</mat-label>
+            <input matInput [matDatepicker]="pickerData" formControlName="dataMovimento">
+            <mat-datepicker-toggle matSuffix [for]="pickerData"></mat-datepicker-toggle>
+            <mat-datepicker #pickerData></mat-datepicker>
+            @if (form.controls.dataMovimento.hasError('required')) {
+              <mat-error>Data obbligatoria</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Descrizione -->
+        <mat-form-field appearance="outline" class="mov-form__field--full">
+          <mat-label>Descrizione *</mat-label>
+          <input matInput formControlName="descrizione" placeholder="es. Pranzo domenicale - coperto 45 persone">
+          @if (form.controls.descrizione.hasError('required')) {
+            <mat-error>Descrizione obbligatoria</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- BU -->
+        <mat-form-field appearance="outline" class="mov-form__field--full">
+          <mat-label>Business Unit *</mat-label>
+          <agos-bu-selector formControlName="businessUnitId" [required]="true"></agos-bu-selector>
+          @if (form.controls.businessUnitId.hasError('required')) {
+            <mat-error>Business unit obbligatoria</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- ═══════════════════════════════ SEZIONE 2 — CLASSIFICAZIONE ══════ -->
+      <div class="card mov-form__section">
+        <h4 class="mov-form__section-title">Classificazione contabile</h4>
+
+        <div class="mov-form__row">
+          <!-- Conto bancario -->
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Conto bancario *</mat-label>
+            <mat-select formControlName="contoBancarioId">
+              @for (c of conti(); track c.id) {
+                <mat-option [value]="c.id">
+                  {{ c.nome }} — {{ c.saldoCalcolato | euro }}
+                </mat-option>
+              }
+            </mat-select>
+            @if (form.controls.contoBancarioId.hasError('required')) {
+              <mat-error>Conto obbligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Metodo pagamento -->
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Metodo di pagamento *</mat-label>
+            <mat-select formControlName="metodoPagamentoId">
+              @for (m of metodiPagamento; track m.id) {
+                <mat-option [value]="m.id">{{ m.nome }}</mat-option>
+              }
+            </mat-select>
+            @if (form.controls.metodoPagamentoId.hasError('required')) {
+              <mat-error>Metodo obbligatorio</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Categoria (2 livelli) -->
+        <div class="mov-form__row">
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Categoria</mat-label>
+            <mat-select formControlName="categoriaPadreId">
+              <mat-option [value]="null">— Nessuna —</mat-option>
+              @for (cat of categoriePadre(); track cat.id) {
+                <mat-option [value]="cat.id">{{ cat.nome }}</mat-option>
+              }
+            </mat-select>
+            @if (categoriePadre().length === 0) {
+              <mat-hint>Seleziona prima BU e tipo</mat-hint>
+            }
+          </mat-form-field>
+
+          @if (categorieFiglio().length > 0) {
+            <mat-form-field appearance="outline" class="mov-form__field--md">
+              <mat-label>Sottocategoria</mat-label>
+              <mat-select formControlName="categoriaFiglioId">
+                <mat-option [value]="null">— Nessuna —</mat-option>
+                @for (sub of categorieFiglio(); track sub.id) {
+                  <mat-option [value]="sub.id">{{ sub.nome }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+
+        <div class="mov-form__row">
+          <!-- Conto CoGe -->
+          <mat-form-field appearance="outline" class="mov-form__field--sm">
+            <mat-label>Conto CoGe *</mat-label>
+            <input matInput type="number" formControlName="contoCoge" placeholder="es. 4000">
+            <mat-hint>Codice piano dei conti</mat-hint>
+            @if (form.controls.contoCoge.hasError('required')) {
+              <mat-error>Conto CoGe obbligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Fornitore autocomplete -->
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Fornitore / Controparte</mat-label>
+            <input matInput [formControl]="fornitoreSearch"
+                   [matAutocomplete]="autoFornitore"
+                   placeholder="Cerca per ragione sociale...">
+            <mat-autocomplete #autoFornitore (optionSelected)="onFornitoreSelected($event)">
+              @for (f of filteredFornitori(); track f.id) {
+                <mat-option [value]="f.ragioneSociale">{{ f.ragioneSociale }}</mat-option>
+              }
+            </mat-autocomplete>
+            @if (form.controls.fornitoreId.value) {
+              <button matSuffix mat-icon-button type="button" (click)="clearFornitore()">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════ SEZIONE 3 — EVENTO (toggle) ══════ -->
+      <div class="card mov-form__section">
+        <div class="mov-form__toggle-header">
+          <div>
+            <h4 class="mov-form__section-title">Evento collegato</h4>
+            <p class="text-sub mov-form__toggle-desc">Collega questo movimento a una cerimonia o evento</p>
+          </div>
+          <mat-slide-toggle [checked]="showEventoSection"
+                            (change)="showEventoSection = $event.checked; clearEvento()">
+          </mat-slide-toggle>
+        </div>
+
+        @if (showEventoSection) {
+          <mat-divider class="mov-form__divider"></mat-divider>
+          <div class="mov-form__row">
+            <mat-form-field appearance="outline" class="mov-form__field--md">
+              <mat-label>Cerca evento</mat-label>
+              <input matInput [formControl]="eventoSearch"
+                     [matAutocomplete]="autoEvento"
+                     placeholder="Nome evento o contatto...">
+              <mat-autocomplete #autoEvento (optionSelected)="onEventoSelected($event)">
+                @for (e of filteredEventi(); track e.id) {
+                  <mat-option [value]="e.nome">
+                    {{ e.nome }} — {{ e.dataEvento }}
+                  </mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="mov-form__field--sm">
+              <mat-label>Tipo pagamento evento</mat-label>
+              <mat-select formControlName="tipoEventoMovimento">
+                <mat-option value="CAPARRA">Caparra</mat-option>
+                <mat-option value="ACCONTO">Acconto</mat-option>
+                <mat-option value="SALDO">Saldo</mat-option>
+                <mat-option value="RIMBORSO">Rimborso</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        }
+      </div>
+
+      <!-- ═══════════════════════════════ SEZIONE 4 — DATE AVANZATE (toggle) -->
+      <div class="card mov-form__section">
+        <div class="mov-form__toggle-header">
+          <div>
+            <h4 class="mov-form__section-title">Gestione date competenza</h4>
+            <p class="text-sub mov-form__toggle-desc">
+              Utile quando data economica e data di cassa differiscono (P&amp;L vs Cash Flow)
+              <mat-icon class="mov-form__info-icon"
+                        matTooltip="La data competenza è usata per il calcolo del P&L economico. Lasciare vuota se coincide con la data del movimento.">
+                info_outline
+              </mat-icon>
+            </p>
+          </div>
+          <mat-slide-toggle [checked]="showDateAvanzate"
+                            (change)="showDateAvanzate = $event.checked">
+          </mat-slide-toggle>
+        </div>
+
+        @if (showDateAvanzate) {
+          <mat-divider class="mov-form__divider"></mat-divider>
+          <div class="mov-form__row">
+            <mat-form-field appearance="outline" class="mov-form__field--md">
+              <mat-label>Data competenza</mat-label>
+              <input matInput [matDatepicker]="pickerComp" formControlName="dataCompetenza">
+              <mat-datepicker-toggle matSuffix [for]="pickerComp"></mat-datepicker-toggle>
+              <mat-datepicker #pickerComp></mat-datepicker>
+              <mat-hint>Data economica per P&L</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="mov-form__field--md">
+              <mat-label>Data liquidità</mat-label>
+              <input matInput [matDatepicker]="pickerLiq" formControlName="dataLiquidita">
+              <mat-datepicker-toggle matSuffix [for]="pickerLiq"></mat-datepicker-toggle>
+              <mat-datepicker #pickerLiq></mat-datepicker>
+              <mat-hint>Data disponibilità effettiva fondi</mat-hint>
+            </mat-form-field>
+          </div>
+        }
+      </div>
+
+      <!-- ═══════════════════════════════ SEZIONE 5 — DETTAGLI AGGIUNTIVI ══ -->
+      <mat-expansion-panel class="mov-form__expansion">
+        <mat-expansion-panel-header>
+          <mat-panel-title>Dettagli aggiuntivi</mat-panel-title>
+          <mat-panel-description>IVA, note, riferimento esterno</mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="mov-form__row">
+          <!-- Importo lordo -->
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Importo lordo</mat-label>
+            <agos-currency-input formControlName="importoLordo" label="Importo lordo"></agos-currency-input>
+            <mat-hint>Prima delle commissioni</mat-hint>
+          </mat-form-field>
+
+          <!-- Aliquota IVA -->
+          <mat-form-field appearance="outline" class="mov-form__field--sm">
+            <mat-label>Aliquota IVA</mat-label>
+            <mat-select formControlName="aliquotaIva">
+              <mat-option [value]="null">— Nessuna —</mat-option>
+              @for (a of aliquoteIva; track a.valore) {
+                <mat-option [value]="a.valore">{{ a.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        @if (importoIvaCalcolato != null) {
+          <div class="mov-form__iva-preview">
+            <span class="text-sub">IVA calcolata:</span>
+            <strong>{{ importoIvaCalcolato | euro }}</strong>
+            <span class="text-sub">— Imponibile:</span>
+            <strong>{{ (form.controls.importo.value! - importoIvaCalcolato) | euro }}</strong>
+          </div>
+        }
+
+        <!-- Note -->
+        <mat-form-field appearance="outline" class="mov-form__field--full">
+          <mat-label>Note</mat-label>
+          <textarea matInput formControlName="note" rows="3" placeholder="Note aggiuntive..."></textarea>
+        </mat-form-field>
+
+        <div class="mov-form__row">
+          <!-- Riferimento esterno -->
+          <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-label>Riferimento esterno</mat-label>
+            <input matInput formControlName="riferimentoEsterno" placeholder="es. Fattura n° 2024/123">
+          </mat-form-field>
+
+          <!-- Fonte -->
+          <mat-form-field appearance="outline" class="mov-form__field--sm">
+            <mat-label>Fonte</mat-label>
+            <mat-select formControlName="fonte">
+              @for (f of fonti; track f) {
+                <mat-option [value]="f">{{ f }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- ═══════════════════════════════ AZIONI ═══════════════════════════ -->
+      <div class="mov-form__footer">
+        <button mat-stroked-button type="button" (click)="goBack()" [disabled]="submitting()">
+          Annulla
+        </button>
+        <button mat-flat-button color="primary" type="submit"
+                [disabled]="submitting()">
+          @if (submitting()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          }
+          @if (!submitting()) {
+            <mat-icon>save</mat-icon>
+          }
+          {{ submitting() ? '' : 'Salva' }}
+        </button>
+      </div>
+
+    </form>
+  }
+</div>

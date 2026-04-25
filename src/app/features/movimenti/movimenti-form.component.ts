@@ -1,0 +1,384 @@
+import {
+  Component,
+  Input,
+  OnInit,
+  OnDestroy,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import { Location } from '@angular/common';
+import {
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { Router } from '@angular/router';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
+import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
+
+import { MovimentiService } from '../../core/services/movimenti.service';
+import { ContiService } from '../../core/services/conti.service';
+import { CategorieService } from '../../core/services/categorie.service';
+import { FornitoriService } from '../../core/services/fornitori.service';
+import { EventiService } from '../../core/services/eventi.service';
+import { BuSelectorComponent } from '../../shared/components/bu-selector/bu-selector.component';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { EuroPipe } from '../../shared/pipes/euro.pipe';
+import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { MovimentoCreateRequest, MovimentoDTO, TipoMovimento } from '../../core/models/movimenti.models';
+import { ContoBancarioDTO, CategoriaNode, FornitoreSummaryDTO } from '../../core/models/anagrafica.models';
+import { EventoDTO } from '../../core/models/eventi.models';
+import { METODI_PAGAMENTO } from '../../core/constants/metodi-pagamento';
+
+const ALIQUOTE_IVA = [
+  { valore: 0,    label: '0% (esente)' },
+  { valore: 0.04, label: '4%' },
+  { valore: 0.05, label: '5%' },
+  { valore: 0.10, label: '10%' },
+  { valore: 0.22, label: '22%' },
+];
+
+const FONTI = ['MANUALE', 'IMPORT_CSV', 'STRIPE', 'SATISPAY', 'SHOPIFY', 'BILLY'];
+
+@Component({
+  selector: 'app-movimenti-form',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatButtonToggleModule,
+    MatIconModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatSlideToggleModule,
+    MatAutocompleteModule,
+    MatExpansionModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatDividerModule,
+    BuSelectorComponent,
+    CurrencyInputComponent,
+    EuroPipe,
+    SkeletonLoaderComponent,
+  ],
+  templateUrl: './movimenti-form.component.html',
+  styleUrls: ['./movimenti-form.component.scss'],
+})
+export class MovimentiFormComponent implements OnInit, OnDestroy {
+  @Input() id?: string;
+
+  private readonly movimentiService = inject(MovimentiService);
+  private readonly contiService = inject(ContiService);
+  private readonly categorieService = inject(CategorieService);
+  private readonly fornitoriService = inject(FornitoriService);
+  private readonly eventiService = inject(EventiService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroy$ = new Subject<void>();
+
+  readonly metodiPagamento = METODI_PAGAMENTO;
+  readonly aliquoteIva = ALIQUOTE_IVA;
+  readonly fonti = FONTI;
+
+  loading = signal(false);
+  submitting = signal(false);
+  conti = signal<ContoBancarioDTO[]>([]);
+  categoriePadre = signal<CategoriaNode[]>([]);
+  categorieFiglio = signal<CategoriaNode[]>([]);
+  filteredFornitori = signal<FornitoreSummaryDTO[]>([]);
+  filteredEventi = signal<EventoDTO[]>([]);
+
+  showEventoSection = false;
+  showDateAvanzate = false;
+
+  // Separate controls for autocompletes (display values)
+  readonly fornitoreSearch = new FormControl<string>('', { nonNullable: true });
+  readonly eventoSearch = new FormControl<string>('', { nonNullable: true });
+
+  form = new FormGroup({
+    tipo: new FormControl<TipoMovimento>('ENTRATA', { nonNullable: true }),
+    importo: new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    dataMovimento: new FormControl<Date | null>(null, Validators.required),
+    descrizione: new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
+    businessUnitId: new FormControl<number | null>(null, Validators.required),
+    contoBancarioId: new FormControl<number | null>(null, Validators.required),
+    metodoPagamentoId: new FormControl<number | null>(null, Validators.required),
+    categoriaPadreId: new FormControl<number | null>(null),
+    categoriaFiglioId: new FormControl<number | null>(null),
+    contoCoge: new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
+    fornitoreId: new FormControl<string | null>(null),
+    eventoId: new FormControl<string | null>(null),
+    tipoEventoMovimento: new FormControl<string | null>(null),
+    dataCompetenza: new FormControl<Date | null>(null),
+    dataLiquidita: new FormControl<Date | null>(null),
+    importoLordo: new FormControl<number | null>(null),
+    aliquotaIva: new FormControl<number | null>(null),
+    note: new FormControl<string | null>(null),
+    riferimentoEsterno: new FormControl<string | null>(null),
+    fonte: new FormControl<string>('MANUALE', { nonNullable: true }),
+  });
+
+  get isEditMode(): boolean {
+    return !!this.id;
+  }
+
+  get tipoValue(): TipoMovimento {
+    return this.form.controls.tipo.value;
+  }
+
+  get importoIvaCalcolato(): number | null {
+    const imp = this.form.controls.importo.value;
+    const aliq = this.form.controls.aliquotaIva.value;
+    if (imp != null && aliq != null) {
+      return Math.round(imp * aliq * 100) / 100;
+    }
+    return null;
+  }
+
+  ngOnInit(): void {
+    this.contiService.getAll().subscribe(data => {
+      this.conti.set(data);
+      this.cdr.markForCheck();
+    });
+
+    // Reload categories when BU or tipo changes
+    this.form.controls.businessUnitId.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.reloadCategorie());
+    this.form.controls.tipo.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.reloadCategorie());
+
+    // When parent category changes, load children
+    this.form.controls.categoriaPadreId.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(parentId => {
+        const parent = this.categoriePadre().find(c => c.id === parentId);
+        this.categorieFiglio.set(parent?.sottocategorie ?? []);
+        this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
+        this.cdr.markForCheck();
+      });
+
+    // Fornitore autocomplete
+    this.fornitoreSearch.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(search => {
+        if (!search || search.length < 2) return of({ content: [] as FornitoreSummaryDTO[], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+        return this.fornitoriService.getList({ search, size: 20 });
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe(res => {
+      this.filteredFornitori.set(res.content);
+      this.cdr.markForCheck();
+    });
+
+    // Evento autocomplete
+    this.eventoSearch.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(search => {
+        if (!search || search.length < 2) return of({ content: [] as EventoDTO[], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+        return this.eventiService.getList({ search, size: 20 });
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe(res => {
+      this.filteredEventi.set(res.content);
+      this.cdr.markForCheck();
+    });
+
+    if (this.isEditMode) {
+      this.loadMovimento();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadMovimento(): void {
+    this.loading.set(true);
+    this.movimentiService.getById(this.id!).subscribe({
+      next: mov => {
+        this.populateForm(mov);
+        this.loading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.loading.set(false);
+        this.snackBar.open('Errore nel caricamento del movimento', 'OK', { duration: 3000 });
+        this.router.navigate(['/movimenti']);
+      },
+    });
+  }
+
+  private populateForm(mov: MovimentoDTO): void {
+    this.form.patchValue({
+      tipo: mov.tipo,
+      importo: mov.importo,
+      dataMovimento: mov.dataMovimento ? this.parseDate(mov.dataMovimento) : null,
+      descrizione: mov.descrizione,
+      businessUnitId: mov.businessUnitId,
+      contoBancarioId: mov.contoBancarioId,
+      metodoPagamentoId: mov.metodoPagamentoId,
+      contoCoge: String(mov.contoCoge),
+      fornitoreId: mov.fornitoreId,
+      eventoId: mov.eventoId,
+      tipoEventoMovimento: mov.tipoEventoMovimento,
+      dataCompetenza: mov.dataCompetenza ? this.parseDate(mov.dataCompetenza) : null,
+      dataLiquidita: mov.dataLiquidita ? this.parseDate(mov.dataLiquidita) : null,
+      importoLordo: null,
+      aliquotaIva: mov.importoIva && mov.importo ? Math.round((mov.importoIva / mov.importo) * 100) / 100 : null,
+      note: mov.note,
+      riferimentoEsterno: mov.riferimentoEsterno,
+      fonte: mov.fonte ?? 'MANUALE',
+    });
+
+    if (mov.eventoId) this.showEventoSection = true;
+    if (mov.dataCompetenza || mov.dataLiquidita) this.showDateAvanzate = true;
+
+    if (mov.fornitoreId) {
+      this.fornitoriService.getById(mov.fornitoreId).subscribe(f => {
+        this.fornitoreSearch.setValue(f.ragioneSociale, { emitEvent: false });
+        this.cdr.markForCheck();
+      });
+    }
+  }
+
+  private reloadCategorie(): void {
+    const buId = this.form.controls.businessUnitId.value;
+    const tipo = this.form.controls.tipo.value;
+    if (!buId) {
+      this.categoriePadre.set([]);
+      this.categorieFiglio.set([]);
+      return;
+    }
+    this.categorieService.getAlbero(buId, tipo).subscribe(data => {
+      this.categoriePadre.set(data);
+      this.categorieFiglio.set([]);
+      this.form.controls.categoriaPadreId.setValue(null, { emitEvent: false });
+      this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
+      this.cdr.markForCheck();
+    });
+  }
+
+  onFornitoreSelected(event: MatAutocompleteSelectedEvent): void {
+    const nome = event.option.value as string;
+    const found = this.filteredFornitori().find(f => f.ragioneSociale === nome);
+    this.form.controls.fornitoreId.setValue(found?.id ?? null);
+  }
+
+  clearFornitore(): void {
+    this.fornitoreSearch.setValue('');
+    this.form.controls.fornitoreId.setValue(null);
+  }
+
+  onEventoSelected(event: MatAutocompleteSelectedEvent): void {
+    const nome = event.option.value as string;
+    const found = this.filteredEventi().find(e => e.nome === nome);
+    this.form.controls.eventoId.setValue(found?.id ?? null);
+  }
+
+  clearEvento(): void {
+    this.eventoSearch.setValue('');
+    this.form.controls.eventoId.setValue(null);
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.submitting.set(true);
+    const body = this.buildRequest();
+
+    const obs = this.isEditMode
+      ? this.movimentiService.update(this.id!, body)
+      : this.movimentiService.create(body);
+
+    obs.subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.snackBar.open('Movimento salvato', 'OK', { duration: 3000 });
+        this.router.navigate(['/movimenti']);
+      },
+      error: err => {
+        this.submitting.set(false);
+        if (err.status === 400 && err.error?.details) {
+          this.applyServerErrors(err.error.details);
+        } else {
+          this.snackBar.open('Errore durante il salvataggio', 'OK', { duration: 3000 });
+        }
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  goBack(): void {
+    this.location.back();
+  }
+
+  private buildRequest(): MovimentoCreateRequest {
+    const v = this.form.getRawValue();
+    const categoriaId = v.categoriaFiglioId ?? v.categoriaPadreId ?? null;
+    return {
+      tipo: v.tipo,
+      importo: v.importo!,
+      importoLordo: v.importoLordo,
+      aliquotaIva: v.aliquotaIva,
+      dataMovimento: this.formatDate(v.dataMovimento!),
+      dataCompetenza: v.dataCompetenza ? this.formatDate(v.dataCompetenza) : null,
+      dataLiquidita: v.dataLiquidita ? this.formatDate(v.dataLiquidita) : null,
+      contoBancarioId: v.contoBancarioId!,
+      metodoPagamentoId: v.metodoPagamentoId!,
+      businessUnitId: v.businessUnitId!,
+      contoCoge: parseInt(v.contoCoge, 10),
+      categoriaId,
+      fornitoreId: v.fornitoreId,
+      eventoId: v.eventoId,
+      tipoEventoMovimento: v.tipoEventoMovimento,
+      descrizione: v.descrizione,
+      note: v.note,
+      riferimentoEsterno: v.riferimentoEsterno,
+      fonte: v.fonte || 'MANUALE',
+      allegatoPath: null,
+    };
+  }
+
+  private applyServerErrors(details: Record<string, string>): void {
+    for (const [campo, msg] of Object.entries(details)) {
+      const ctrl = this.form.get(campo);
+      if (ctrl) ctrl.setErrors({ server: msg });
+    }
+  }
+
+  private parseDate(str: string): Date {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  private formatDate(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+}

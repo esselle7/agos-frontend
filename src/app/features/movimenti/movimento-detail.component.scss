@@ -1,0 +1,111 @@
+.mov-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  &__nav {
+    margin-bottom: 4px;
+  }
+
+  &__skeleton {
+    padding: 24px;
+  }
+
+  &__card {
+    padding: 24px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  &__header-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  &__importo {
+    font-size: 2rem;
+    font-weight: 700;
+
+    &--entrata { color: var(--success); }
+    &--uscita  { color: var(--danger); }
+  }
+
+  &__descrizione {
+    font-size: 1rem;
+    color: var(--text-main);
+    margin-top: 4px;
+  }
+
+  &__section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+    margin-bottom: 16px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    &--full {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__field-label {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__field-value {
+    font-size: 0.95rem;
+    color: var(--text-main);
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.95rem;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  &__link-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
