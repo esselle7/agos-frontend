@@ -1,0 +1,41 @@
+export const API_PATHS = {
+  AUTH: {
+    GOOGLE_LOGIN: '/auth/google/login',
+    CALLBACK:     '/auth/google/callback',
+    REFRESH:      '/auth/refresh',
+    LOGOUT:       '/auth/logout',
+    ME:           '/auth/me',
+  },
+  BU:         '/api/bu',
+  CONTI:      '/api/conti',
+  CATEGORIE:  '/api/categorie',
+  FORNITORI:  '/api/fornitori',
+  CASSA: {
+    SALDO:     '/api/cassa/saldo',
+    MOVIMENTI: '/api/cassa/movimenti',
+  },
+  EVENTI: '/api/eventi',
+  MOVIMENTI: {
+    BASE:             '/api/movimenti',
+    BULK:             '/api/movimenti/bulk',
+    NON_RICONCILIATI: '/api/movimenti/riconciliazione/non-riconciliati',
+    MATCH_AUTO:       '/api/movimenti/riconciliazione/match-automatico',
+  },
+  DASHBOARD: {
+    KPI:                '/api/dashboard/kpi',
+    ANDAMENTO_MENSILE:  '/api/dashboard/andamento-mensile',
+    FATTURATO_PER_BU:   '/api/dashboard/fatturato-per-bu',
+    ULTIME_TRANSAZIONI: '/api/dashboard/ultime-transazioni',
+    SCADENZE_IMMINENTI: '/api/dashboard/scadenze-imminenti',
+  },
+  REPORTING: {
+    PL:                    '/api/reporting/pl',
+    PL_STATUS:             '/api/reporting/pl/status',
+    PL_TUTTE_BU:           '/api/reporting/pl/tutte-bu',
+    CASHFLOW_STORICO:      '/api/reporting/cashflow/storico',
+    CASHFLOW_FORECAST:     '/api/reporting/cashflow/forecast',
+    EXPORT_MOVIMENTI:      '/api/reporting/export/movimenti',
+    EXPORT_COMMERCIALISTA: '/api/reporting/export/commercialista',
+    EXPORT_PL_BU:          '/api/reporting/export/pl-bu',
+  },
+} as const;
