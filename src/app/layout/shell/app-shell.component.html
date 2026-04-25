@@ -103,11 +103,12 @@
       <!-- Spacer -->
       <span class="topbar-spacer"></span>
 
-      <!-- Center: period placeholder (Step 04) -->
-      <div class="period-placeholder">
-        <mat-icon class="period-icon">date_range</mat-icon>
-        <span>MTD</span>
-      </div>
+      <!-- Center: period selector -->
+      @if (isAdmin()) {
+        <agos-date-range-picker
+          [period]="globalPeriod.period()"
+          (periodChange)="onPeriodChange($event)" />
+      }
 
       <span class="topbar-spacer"></span>
 

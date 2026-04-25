@@ -1,0 +1,33 @@
+<div class="drp">
+  <div class="drp__chips" role="group" aria-label="Seleziona periodo">
+    @for (p of periods; track p.value) {
+      <button class="drp__chip"
+              [class.drp__chip--active]="period === p.value"
+              [matTooltip]="p.tooltip"
+              (click)="onPeriodClick(p.value)"
+              type="button">
+        {{ p.label }}
+      </button>
+    }
+  </div>
+
+  @if (period === 'CUSTOM') {
+    <div class="drp__custom" [formGroup]="customForm">
+      <mat-form-field appearance="outline" class="drp__date-field">
+        <mat-label>Da</mat-label>
+        <input matInput [matDatepicker]="pickerFrom" formControlName="from"
+               (dateChange)="onCustomChange()" placeholder="GG/MM/AAAA">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+        <mat-datepicker #pickerFrom></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="drp__date-field">
+        <mat-label>A</mat-label>
+        <input matInput [matDatepicker]="pickerTo" formControlName="to"
+               (dateChange)="onCustomChange()" placeholder="GG/MM/AAAA">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+        <mat-datepicker #pickerTo></mat-datepicker>
+      </mat-form-field>
+    </div>
+  }
+</div>

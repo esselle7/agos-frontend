@@ -1,0 +1,33 @@
+<div class="stat-card card">
+  @if (icon) {
+    <div class="stat-card__icon" [style.background]="iconBg">
+      <mat-icon [style.color]="hexColor">{{ icon }}</mat-icon>
+    </div>
+  }
+
+  <p class="stat-card__label">{{ label }}</p>
+
+  @if (loading) {
+    <span class="skeleton-line stat-card__skeleton-value"></span>
+    <span class="skeleton-line stat-card__skeleton-delta"></span>
+  } @else {
+    <p class="stat-card__value euro">{{ formatValue(value) }}</p>
+
+    @if (delta !== null) {
+      <div class="stat-card__delta"
+           [class.good]="deltaIsGood"
+           [class.bad]="!deltaIsGood && !deltaIsNeutral"
+           [class.neutral]="deltaIsNeutral">
+        @if (!deltaIsNeutral) {
+          <mat-icon class="stat-card__delta-arrow">
+            {{ deltaIsPositive ? 'arrow_upward' : 'arrow_downward' }}
+          </mat-icon>
+        }
+        <span>{{ formatDelta(delta) }}</span>
+        @if (deltaLabel) {
+          <span class="stat-card__delta-label">{{ deltaLabel }}</span>
+        }
+      </div>
+    }
+  }
+</div>

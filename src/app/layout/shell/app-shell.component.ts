@@ -20,9 +20,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
+import { GlobalPeriodService } from '../../core/services/global-period.service';
 import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { MovimentoDTO } from '../../core/models/movimenti.models';
 import { ScadenzaDTO } from '../../core/models/dashboard.models';
+import { DateRangePickerComponent, PeriodChangeEvent } from '../../shared/components/date-range-picker/date-range-picker.component';
 import { API_PATHS } from '../../core/constants/api-paths';
 import { environment } from '../../../environments/environment';
 
@@ -62,6 +64,7 @@ const NAV_ITEMS_BOTTOM: NavItem[] = [
     MatBadgeModule,
     MatDividerModule,
     MatTooltipModule,
+    DateRangePickerComponent,
   ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
@@ -70,6 +73,7 @@ export class AppShellComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly buService = inject(BuService);
   private readonly http = inject(HttpClient);
+  readonly globalPeriod = inject(GlobalPeriodService);
 
   readonly user = this.authService.user;
   readonly isAdmin = this.authService.isAdmin;
@@ -110,6 +114,10 @@ export class AppShellComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  onPeriodChange(evt: PeriodChangeEvent): void {
+    this.globalPeriod.setPeriod(evt.period, evt.from, evt.to);
   }
 
   private loadNonRiconciliati(): void {

@@ -1,0 +1,14 @@
+<mat-form-field appearance="outline" class="currency-field">
+  <mat-label>{{ label }}</mat-label>
+  <span matTextPrefix>€&nbsp;</span>
+  <input matInput
+         inputmode="decimal"
+         [placeholder]="placeholder"
+         [disabled]="disabled"
+         [required]="required"
+         [value]="displayValue"
+         (input)="onInput($event)"
+         (blur)="onBlur($event)"
+         (paste)="onPaste($event)"
+         aria-label="{{ label }}">
+</mat-form-field>

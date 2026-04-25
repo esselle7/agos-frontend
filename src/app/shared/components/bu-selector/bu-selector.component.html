@@ -1,0 +1,18 @@
+<mat-form-field appearance="outline" class="bu-selector-field">
+  <mat-label>{{ label }}</mat-label>
+  <mat-select [formControl]="control"
+              [required]="required"
+              [placeholder]="placeholder"
+              (blur)="onBlur()">
+    @if (loading) {
+      <mat-option disabled>Caricamento…</mat-option>
+    } @else {
+      @for (bu of units; track bu.id) {
+        <mat-option [value]="bu.id">
+          <span class="bu-dot" [style.background]="bu.colore"></span>
+          {{ bu.nome }}
+        </mat-option>
+      }
+    }
+  </mat-select>
+</mat-form-field>

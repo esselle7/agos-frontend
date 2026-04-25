@@ -1,0 +1,187 @@
+.eventi-dashboard {
+  padding: 24px;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.eventi-dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.eventi-dashboard__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+
+  h2 {
+    font-size: 26px;
+    color: var(--primary-d);
+  }
+
+  .text-sub {
+    font-size: 14px;
+  }
+}
+
+// ── Date filter ────────────────────────────────────────────────────────────────
+
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  mat-form-field {
+    width: 160px;
+  }
+}
+
+// ── KPI grid ─────────────────────────────────────────────────────────────────
+
+.kpi-grid {
+  display: grid;
+  gap: 16px;
+
+  &--4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// ── Table card ────────────────────────────────────────────────────────────────
+
+.table-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h5 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+.btn-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.eventi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead tr {
+    border-bottom: 2px solid var(--border);
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .evento-row:last-child td {
+    border-bottom: none;
+  }
+
+  .evento-row {
+    cursor: pointer;
+
+    &:hover td {
+      background: rgba(45, 106, 79, 0.04);
+    }
+  }
+}
+
+.col-date {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.col-nome {
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-amount {
+  text-align: right !important;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+// ── Quick links ───────────────────────────────────────────────────────────────
+
+.quick-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 1024px) {
+  .kpi-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .eventi-dashboard__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .eventi-dashboard {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .kpi-grid--4 {
+    grid-template-columns: 1fr;
+  }
+
+  .date-filter {
+    flex-direction: column;
+    align-items: stretch;
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+}

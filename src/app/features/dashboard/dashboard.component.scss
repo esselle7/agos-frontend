@@ -1,0 +1,345 @@
+.dashboard {
+  padding: 24px;
+  max-width: 1600px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+
+.dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.dashboard__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+
+  h2 {
+    font-size: 26px;
+    color: var(--primary-d);
+  }
+}
+
+.update-label {
+  font-size: 12px;
+}
+
+// ── Section headers ─────────────────────────────────────────────────────────
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__skeleton {
+    width: 200px;
+  }
+
+  &--financial mat-icon,
+  &--financial h4 {
+    color: var(--primary);
+  }
+
+  &--economic mat-icon,
+  &--economic h4 {
+    color: #5C6BC0;
+  }
+}
+
+.section-note {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.section-divider {
+  margin: 8px 0;
+  opacity: 0.5;
+}
+
+// ── KPI grids ───────────────────────────────────────────────────────────────
+
+.kpi-grid {
+  display: grid;
+  gap: 16px;
+
+  &--4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// ── Charts row ──────────────────────────────────────────────────────────────
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 60% 1fr;
+  gap: 16px;
+
+  &__left,
+  &__right {
+    padding: 20px;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+}
+
+.chart-subtitle {
+  font-size: 12px;
+}
+
+.chart-container {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+}
+
+// ── Bottom row ──────────────────────────────────────────────────────────────
+
+.bottom-row {
+  display: grid;
+  grid-template-columns: 65% 1fr;
+  gap: 16px;
+
+  &__table,
+  &__scadenze {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.section-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h5 {
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+.link-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.link-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}
+
+// ── Transactions table ──────────────────────────────────────────────────────
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead tr {
+    border-bottom: 2px solid var(--border);
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .tx-row:last-child td {
+    border-bottom: none;
+  }
+
+  .tx-row:hover td {
+    background: rgba(45, 106, 79, 0.04);
+  }
+}
+
+.tx-date {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.tx-desc {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tx-bu,
+.tx-fonte {
+  white-space: nowrap;
+}
+
+.col-amount {
+  text-align: right !important;
+}
+
+.tx-amount {
+  text-align: right;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.amount--entrata { color: var(--success); }
+  &.amount--uscita  { color: var(--danger); }
+}
+
+// ── Scadenze list ────────────────────────────────────────────────────────────
+
+.scadenze-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.scadenza-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 12px 12px;
+  border-left: 3px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(45, 106, 79, 0.03);
+  }
+
+  &__icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    flex-shrink: 0;
+
+    &.urgenza-alta  { color: var(--danger); }
+    &.urgenza-media { color: var(--warning); }
+    &.urgenza-bassa { color: var(--text-sub); }
+  }
+
+  &__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__desc {
+    font-size: 13px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__amount {
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+
+  &__date {
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-right: 4px;
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: 1280px) {
+  .kpi-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-grid--3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .kpi-grid--4,
+  .kpi-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
