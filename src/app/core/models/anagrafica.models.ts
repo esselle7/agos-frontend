@@ -68,3 +68,24 @@ export interface CreateCategoriaRequest {
   buId: number;
   ordinamento: number;
 }
+
+export interface PianoContiCogeDTO {
+  id: number;
+  codice: string;
+  nome: string;
+  tipo: 'RICAVO' | 'COSTO' | 'ATTIVITA' | 'PASSIVITA';
+  parentId: number | null;
+  livello: number;
+}
+
+export interface MetodoPagamentoDTO {
+  id: number;
+  codice: string;
+  descrizione: string;
+}
+
+export interface AliquotaIvaDTO {
+  id: number;
+  aliquota: number;
+  descrizione: string;
+}

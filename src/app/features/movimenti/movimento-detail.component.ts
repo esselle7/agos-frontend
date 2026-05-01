@@ -21,14 +21,14 @@ import { MovimentiService } from '../../core/services/movimenti.service';
 import { BuService } from '../../core/services/bu.service';
 import { ContiService } from '../../core/services/conti.service';
 import { FornitoriService } from '../../core/services/fornitori.service';
+import { LookupService } from '../../core/services/lookup.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { MovimentoDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
-import { BusinessUnitDTO, ContoBancarioDTO } from '../../core/models/anagrafica.models';
+import { BusinessUnitDTO, ContoBancarioDTO, MetodoPagamentoDTO } from '../../core/models/anagrafica.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { METODI_PAGAMENTO } from '../../core/constants/metodi-pagamento';
 
 @Component({
   selector: 'app-movimento-detail',
@@ -56,6 +56,7 @@ export class MovimentoDetailComponent implements OnInit {
   private readonly buService = inject(BuService);
   private readonly contiService = inject(ContiService);
   private readonly fornitoriService = inject(FornitoriService);
+  private readonly lookupService = inject(LookupService);
   readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -69,9 +70,14 @@ export class MovimentoDetailComponent implements OnInit {
   contiMap = signal<Map<number, ContoBancarioDTO>>(new Map());
   fornitoreNome = signal<string | null>(null);
 
-  readonly metodiPagamento = METODI_PAGAMENTO;
+  metodiPagamento: MetodoPagamentoDTO[] = [];
 
   ngOnInit(): void {
+    this.lookupService.getMetodiPagamento().subscribe(metodi => {
+      this.metodiPagamento = metodi;
+      this.cdr.markForCheck();
+    });
+
     this.buService.getAll().subscribe(units => {
       this.buMap.set(new Map(units.map(u => [u.id, u])));
       this.cdr.markForCheck();
@@ -145,7 +151,7 @@ export class MovimentoDetailComponent implements OnInit {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      ATTIVO: '#6B7280',
+      REGISTRATO: '#6B7280',
       ANNULLATO: '#C62828',
       RICONCILIATO: '#2E7D32',
     };
@@ -154,8 +160,10 @@ export class MovimentoDetailComponent implements OnInit {
 
   fonteColor(fonte: string | null): string {
     const map: Record<string, string> = {
-      STRIPE: '#6B46C1', SATISPAY: '#E53E3E',
-      SHOPIFY: '#38A169', IMPORT_CSV: '#3182CE', BILLY: '#DD6B20',
+      IMPORT_BILLY:   '#DD6B20',
+      IMPORT_BANCA:   '#3182CE',
+      IMPORT_ALVEARE: '#6B46C1',
+      IMPORT_FATTURA: '#38A169',
     };
     return fonte ? (map[fonte] ?? '#6B7280') : '#6B7280';
   }
@@ -173,6 +181,6 @@ export class MovimentoDetailComponent implements OnInit {
   }
 
   metodoPagamentoNome(id: number): string {
-    return this.metodiPagamento.find(m => m.id === id)?.nome ?? `Metodo#${id}`;
+    return this.metodiPagamento.find(m => m.id === id)?.descrizione ?? `Metodo#${id}`;
   }
 }

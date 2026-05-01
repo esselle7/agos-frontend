@@ -117,6 +117,21 @@
     box-shadow: var(--shadow-sm) !important;
   }
 
+  &__coge-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--text-sub);
+    margin-right: 4px;
+  }
+
+  &__standalone-error {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--mat-mdc-form-field-error-text-color, #f44336);
+    padding: 4px 16px 0;
+  }
+
   &__footer {
     display: flex;
     justify-content: flex-end;

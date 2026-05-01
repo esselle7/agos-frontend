@@ -183,6 +183,31 @@ h4, h5, h6, p {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
+// CoGe autocomplete option layout
+.coge-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+
+  &__nome {
+    flex: 1;
+    font-size: 0.875rem;
+  }
+
+  &__codice {
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary);
+    background: rgba(45, 106, 79, 0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+}
+
 .badge-bu {
   display: inline-flex;
   align-items: center;

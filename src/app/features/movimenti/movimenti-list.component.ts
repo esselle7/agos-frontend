@@ -228,7 +228,7 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      ATTIVO: '#6B7280',
+      REGISTRATO: '#6B7280',
       ANNULLATO: '#C62828',
       RICONCILIATO: '#2E7D32',
     };
@@ -237,11 +237,10 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   fonteColor(fonte: string | null): string {
     const map: Record<string, string> = {
-      STRIPE: '#6B46C1',
-      SATISPAY: '#E53E3E',
-      SHOPIFY: '#38A169',
-      IMPORT_CSV: '#3182CE',
-      BILLY: '#DD6B20',
+      IMPORT_BILLY:   '#DD6B20',
+      IMPORT_BANCA:   '#3182CE',
+      IMPORT_ALVEARE: '#6B46C1',
+      IMPORT_FATTURA: '#38A169',
     };
     return fonte ? (map[fonte] ?? '#6B7280') : '#6B7280';
   }

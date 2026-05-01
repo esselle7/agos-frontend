@@ -35,16 +35,15 @@
 
         <div class="mov-form__row">
           <!-- Importo -->
-          <mat-form-field appearance="outline" class="mov-form__field--lg">
-            <mat-label>Importo *</mat-label>
-            <agos-currency-input formControlName="importo" label="Importo" [required]="true"></agos-currency-input>
-            @if (form.controls.importo.hasError('required')) {
-              <mat-error>Importo obbligatorio</mat-error>
+          <div class="mov-form__field--lg">
+            <agos-currency-input formControlName="importo" label="Importo *" [required]="true"></agos-currency-input>
+            @if (form.controls.importo.touched && form.controls.importo.hasError('required')) {
+              <span class="mov-form__standalone-error">Importo obbligatorio</span>
             }
-            @if (form.controls.importo.hasError('min')) {
-              <mat-error>Importo minimo 0,01 €</mat-error>
+            @if (form.controls.importo.touched && form.controls.importo.hasError('min')) {
+              <span class="mov-form__standalone-error">Importo minimo 0,01 €</span>
             }
-          </mat-form-field>
+          </div>
 
           <!-- Data movimento -->
           <mat-form-field appearance="outline" class="mov-form__field--md">
@@ -68,13 +67,12 @@
         </mat-form-field>
 
         <!-- BU -->
-        <mat-form-field appearance="outline" class="mov-form__field--full">
-          <mat-label>Business Unit *</mat-label>
-          <agos-bu-selector formControlName="businessUnitId" [required]="true"></agos-bu-selector>
-          @if (form.controls.businessUnitId.hasError('required')) {
-            <mat-error>Business unit obbligatoria</mat-error>
+        <div class="mov-form__field--full">
+          <agos-bu-selector formControlName="businessUnitId" label="Business Unit *" [required]="true"></agos-bu-selector>
+          @if (form.controls.businessUnitId.touched && form.controls.businessUnitId.hasError('required')) {
+            <span class="mov-form__standalone-error">Business unit obbligatoria</span>
           }
-        </mat-form-field>
+        </div>
       </div>
 
       <!-- ═══════════════════════════════ SEZIONE 2 — CLASSIFICAZIONE ══════ -->
@@ -101,8 +99,8 @@
           <mat-form-field appearance="outline" class="mov-form__field--md">
             <mat-label>Metodo di pagamento *</mat-label>
             <mat-select formControlName="metodoPagamentoId">
-              @for (m of metodiPagamento; track m.id) {
-                <mat-option [value]="m.id">{{ m.nome }}</mat-option>
+              @for (m of metodiPagamento(); track m.id) {
+                <mat-option [value]="m.id">{{ m.descrizione }}</mat-option>
               }
             </mat-select>
             @if (form.controls.metodoPagamentoId.hasError('required')) {
@@ -121,8 +119,10 @@
                 <mat-option [value]="cat.id">{{ cat.nome }}</mat-option>
               }
             </mat-select>
-            @if (categoriePadre().length === 0) {
-              <mat-hint>Seleziona prima BU e tipo</mat-hint>
+            @if (!hasBu) {
+              <mat-hint>Seleziona prima la Business Unit</mat-hint>
+            } @else if (categoriePadre().length === 0) {
+              <mat-hint>Nessuna categoria disponibile per questa BU</mat-hint>
             }
           </mat-form-field>
 
@@ -140,13 +140,41 @@
         </div>
 
         <div class="mov-form__row">
-          <!-- Conto CoGe -->
-          <mat-form-field appearance="outline" class="mov-form__field--sm">
+          <!-- Conto CoGe — autocomplete con piano dei conti dal backend, raggruppato per tipo -->
+          <mat-form-field appearance="outline" class="mov-form__field--lg">
             <mat-label>Conto CoGe *</mat-label>
-            <input matInput type="number" formControlName="contoCoge" placeholder="es. 4000">
-            <mat-hint>Codice piano dei conti</mat-hint>
-            @if (form.controls.contoCoge.hasError('required')) {
+            <mat-icon matPrefix class="mov-form__coge-icon">account_tree</mat-icon>
+            <input matInput
+                   [formControl]="cogeSearch"
+                   [matAutocomplete]="autoCoge"
+                   placeholder="Cerca per nome o codice...">
+            <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
+              @for (gruppo of filteredGruppiCoge; track gruppo.nomeGruppo) {
+                <mat-optgroup [label]="gruppo.nomeGruppo">
+                  @for (conto of gruppo.conti; track conto.id) {
+                    <mat-option [value]="conto">
+                      <span class="coge-option">
+                        <span class="coge-option__nome"
+                              [style.padding-left.px]="(conto.livello - 1) * 12">
+                          {{ conto.nome }}
+                        </span>
+                        <span class="coge-option__codice">{{ conto.codice }}</span>
+                      </span>
+                    </mat-option>
+                  }
+                </mat-optgroup>
+              }
+            </mat-autocomplete>
+            @if (form.controls.contoCoge.value) {
+              <button matSuffix mat-icon-button type="button" (click)="clearCoge()" matTooltip="Rimuovi">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+            @if (form.controls.contoCoge.touched && form.controls.contoCoge.hasError('required')) {
               <mat-error>Conto CoGe obbligatorio</mat-error>
+            }
+            @if (!form.controls.contoCoge.value && !form.controls.contoCoge.touched) {
+              <mat-hint>Seleziona dal piano dei conti o cerca per nome</mat-hint>
             }
           </mat-form-field>
 
@@ -166,6 +194,7 @@
                 <mat-icon>close</mat-icon>
               </button>
             }
+            <mat-hint>Il CoGe del fornitore viene auto-compilato</mat-hint>
           </mat-form-field>
         </div>
       </div>
@@ -261,19 +290,17 @@
 
         <div class="mov-form__row">
           <!-- Importo lordo -->
-          <mat-form-field appearance="outline" class="mov-form__field--md">
-            <mat-label>Importo lordo</mat-label>
+          <div class="mov-form__field--md">
             <agos-currency-input formControlName="importoLordo" label="Importo lordo"></agos-currency-input>
-            <mat-hint>Prima delle commissioni</mat-hint>
-          </mat-form-field>
+          </div>
 
           <!-- Aliquota IVA -->
           <mat-form-field appearance="outline" class="mov-form__field--sm">
             <mat-label>Aliquota IVA</mat-label>
             <mat-select formControlName="aliquotaIva">
               <mat-option [value]="null">— Nessuna —</mat-option>
-              @for (a of aliquoteIva; track a.valore) {
-                <mat-option [value]="a.valore">{{ a.label }}</mat-option>
+              @for (a of aliquoteIva(); track a.id) {
+                <mat-option [value]="a.aliquota">{{ a.descrizione }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
