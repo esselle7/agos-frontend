@@ -45,7 +45,7 @@
         <span>Errori: <strong>{{ importResult()!.errori }}</strong></span>
       </div>
 
-      @if (importResult()!.dettaglioErrori?.length) {
+      @if (importResult()?.dettaglioErrori?.length) {
         <mat-divider></mat-divider>
         <div class="import-dialog__errors">
           <h4>Dettaglio errori</h4>

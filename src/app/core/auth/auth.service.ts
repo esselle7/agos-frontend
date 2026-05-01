@@ -6,6 +6,13 @@ import { UserInfo, TokenResponse, RefreshRequest } from '../models/auth.models';
 import { API_PATHS } from '../constants/api-paths';
 import { environment } from '../../../environments/environment';
 
+const STORAGE = {
+  ACCESS_TOKEN: 'auth_access_token',
+  REFRESH_TOKEN: 'auth_refresh_token',
+  USER: 'auth_user',
+  EXPIRES_AT: 'auth_expires_at',
+} as const;
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -15,10 +22,22 @@ export class AuthService {
   private readonly _refreshToken = signal<string | null>(null);
   private readonly _user = signal<UserInfo | null>(null);
   private refreshTimerId: ReturnType<typeof setTimeout> | null = null;
+  private readonly syncChannel = new BroadcastChannel('auth_sync');
 
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._accessToken() !== null);
   readonly isAdmin = computed(() => this._user()?.ruolo === 'ADMIN');
+
+  constructor() {
+    this.restoreSession();
+    // Sync logout across all open tabs
+    this.syncChannel.onmessage = ({ data }) => {
+      if (data === 'logout') {
+        this.clearSession();
+        this.router.navigate(['/login']);
+      }
+    };
+  }
 
   loginWithGoogle(): void {
     window.location.href = environment.apiBaseUrl + API_PATHS.AUTH.GOOGLE_LOGIN;
@@ -33,6 +52,7 @@ export class AuthService {
     this._accessToken.set(accessToken);
     this._refreshToken.set(refreshToken);
     this._user.set(user);
+    this.persistSession(accessToken, refreshToken, user, expiresIn);
     this.scheduleTokenRefresh(expiresIn);
   }
 
@@ -46,8 +66,10 @@ export class AuthService {
       .post<TokenResponse>(environment.apiBaseUrl + API_PATHS.AUTH.REFRESH, body)
       .pipe(
         tap(tokens => {
+          const user = this._user()!;
           this._accessToken.set(tokens.accessToken);
           this._refreshToken.set(tokens.refreshToken);
+          this.persistSession(tokens.accessToken, tokens.refreshToken, user, tokens.expiresIn);
           this.scheduleTokenRefresh(tokens.expiresIn);
         }),
         catchError(err => {
@@ -72,6 +94,8 @@ export class AuthService {
         )
         .subscribe({ error: () => {} });
     }
+    // Notify all other open tabs to also logout
+    this.syncChannel.postMessage('logout');
     this.clearSession();
     this.router.navigate(['/login']);
   }
@@ -92,6 +116,44 @@ export class AuthService {
     return this._accessToken();
   }
 
+  private persistSession(
+    accessToken: string,
+    refreshToken: string,
+    user: UserInfo,
+    expiresIn: number
+  ): void {
+    const expiresAt = Date.now() + expiresIn * 1000;
+    localStorage.setItem(STORAGE.ACCESS_TOKEN, accessToken);
+    localStorage.setItem(STORAGE.REFRESH_TOKEN, refreshToken);
+    localStorage.setItem(STORAGE.USER, JSON.stringify(user));
+    localStorage.setItem(STORAGE.EXPIRES_AT, String(expiresAt));
+  }
+
+  private restoreSession(): void {
+    const accessToken = localStorage.getItem(STORAGE.ACCESS_TOKEN);
+    const refreshToken = localStorage.getItem(STORAGE.REFRESH_TOKEN);
+    const userJson = localStorage.getItem(STORAGE.USER);
+    const expiresAt = localStorage.getItem(STORAGE.EXPIRES_AT);
+
+    if (!accessToken || !refreshToken || !userJson || !expiresAt) return;
+
+    const remainingMs = Number(expiresAt) - Date.now();
+    if (remainingMs <= 0) {
+      this.clearStorage();
+      return;
+    }
+
+    try {
+      const user = JSON.parse(userJson) as UserInfo;
+      this._accessToken.set(accessToken);
+      this._refreshToken.set(refreshToken);
+      this._user.set(user);
+      this.scheduleTokenRefresh(Math.floor(remainingMs / 1000));
+    } catch {
+      this.clearStorage();
+    }
+  }
+
   private clearSession(): void {
     this._accessToken.set(null);
     this._refreshToken.set(null);
@@ -100,5 +162,13 @@ export class AuthService {
       clearTimeout(this.refreshTimerId);
       this.refreshTimerId = null;
     }
+    this.clearStorage();
+  }
+
+  private clearStorage(): void {
+    localStorage.removeItem(STORAGE.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE.USER);
+    localStorage.removeItem(STORAGE.EXPIRES_AT);
   }
 }
