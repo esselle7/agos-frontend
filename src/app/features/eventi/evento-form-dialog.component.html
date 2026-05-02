@@ -1,0 +1,130 @@
+<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Evento' : 'Nuovo Evento' }}</h2>
+
+<mat-dialog-content>
+  @if (loadingForm()) {
+    <div style="padding: 24px 0">
+      <agos-skeleton-loader [rows]="3" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="evento-form">
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome evento *</mat-label>
+          <input matInput formControlName="nome" placeholder="es. Matrimonio Rossi" />
+          @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo evento *</mat-label>
+          <mat-select formControlName="tipo">
+            @for (t of tipiEvento; track t.value) {
+              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.tipo.hasError('required') && form.controls.tipo.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Business Unit</mat-label>
+          <mat-select formControlName="businessUnitId">
+            @for (bu of businessUnits(); track bu.id) {
+              <mat-option [value]="bu.id">{{ bu.nome }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Data evento *</mat-label>
+          <input matInput [matDatepicker]="pickerEvento" formControlName="dataEvento" />
+          <mat-datepicker-toggle matSuffix [for]="pickerEvento" />
+          <mat-datepicker #pickerEvento />
+          @if (form.controls.dataEvento.hasError('required') && form.controls.dataEvento.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data preventivo</mat-label>
+          <input matInput [matDatepicker]="pickerPreventivo" formControlName="dataPreventivo" />
+          <mat-datepicker-toggle matSuffix [for]="pickerPreventivo" />
+          <mat-datepicker #pickerPreventivo />
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <agos-currency-input
+          formControlName="importoTotalePreviventivato"
+          label="Importo preventivato"
+          placeholder="0,00"
+        />
+      </div>
+
+      <mat-divider style="margin: 12px 0" />
+      <p class="section-label">Dati contatto</p>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome contatto *</mat-label>
+          <input matInput formControlName="contattoNome" />
+          @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Telefono</mat-label>
+          <input matInput formControlName="contattoTelefono" type="tel" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="contattoEmail" type="email" />
+          @if (form.controls.contattoEmail.hasError('email') && form.controls.contattoEmail.touched) {
+            <mat-error>Email non valida</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-col">
+        <mat-form-field appearance="outline">
+          <mat-label>N° ospiti</mat-label>
+          <input matInput formControlName="nOspiti" type="number" min="1" />
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Note</mat-label>
+          <textarea matInput formControlName="note" rows="3"></textarea>
+        </mat-form-field>
+      </div>
+
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="saving() || loadingForm()"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    }
+    {{ isEdit() ? 'Salva modifiche' : 'Crea evento' }}
+  </button>
+</mat-dialog-actions>

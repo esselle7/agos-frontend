@@ -1,0 +1,70 @@
+.fornitori {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+
+    h2 { font-size: 1.6rem; margin: 0; }
+  }
+
+  &__search {
+    padding: 16px;
+
+    .search-field {
+      width: 100%;
+      max-width: 420px;
+    }
+  }
+
+  &__table-wrapper {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  &__table {
+    width: 100%;
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: rgba(0,0,0,0.03); }
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.cell-primary {
+  font-weight: 500;
+}
+
+.mono {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.azioni-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.text-sub {
+  color: var(--text-sub, #6B7280);
+  font-size: 0.875rem;
+}

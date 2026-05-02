@@ -1,0 +1,81 @@
+<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Fornitore' : 'Nuovo Fornitore' }}</h2>
+
+<mat-dialog-content>
+  @if (loadingForm()) {
+    <div style="padding: 24px 0">
+      <agos-skeleton-loader [rows]="4" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="fornitore-form">
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Ragione Sociale *</mat-label>
+          <input matInput formControlName="ragioneSociale" maxlength="255" />
+          @if (form.controls.ragioneSociale.hasError('required') && form.controls.ragioneSociale.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Alias breve</mat-label>
+          <input matInput formControlName="alias" maxlength="100" />
+          <mat-hint>Nome abbreviato per visualizzazione rapida</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-col">
+        <mat-form-field appearance="outline">
+          <mat-label>Partita IVA</mat-label>
+          <input matInput formControlName="piva" maxlength="11" inputmode="numeric" />
+          @if (form.controls.piva.hasError('pattern') && form.controls.piva.touched) {
+            <mat-error>Solo cifre (max 11)</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Codice SDI</mat-label>
+          <input matInput formControlName="codiceSdi" maxlength="7" />
+        </mat-form-field>
+      </div>
+
+      <div class="form-row two-col">
+        <agos-bu-selector
+          formControlName="buDefaultId"
+          label="BU Default"
+          placeholder="Nessuna"
+        />
+
+        <mat-form-field appearance="outline">
+          <mat-label>Conto Coge default</mat-label>
+          <input matInput formControlName="cogeDefaultId" type="number" min="1" />
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Note</mat-label>
+          <textarea matInput formControlName="note" rows="3"></textarea>
+        </mat-form-field>
+      </div>
+
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="saving() || loadingForm()"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    }
+    {{ isEdit() ? 'Salva modifiche' : 'Crea fornitore' }}
+  </button>
+</mat-dialog-actions>

@@ -71,3 +71,48 @@ File creati in `src/app/features/movimenti/` e `src/app/core/constants/`:
 
 **Why:** Step 6 implementa il modulo core del gestionale — tutti i movimenti economico-finanziari.
 **How to apply:** `MatSlideToggle` richiede `MatSlideToggleModule` nell'imports; usare `[checked]/(change)` invece di `[(ngModel)]` per evitare dipendenza da FormsModule. Skeleton loader supporta solo `card|table|stat|text` (non `form`).
+
+### Step 07 — Modulo Eventi (completato 2026-05-02)
+
+File creati in `src/app/features/eventi/`:
+
+- **eventi.routes.ts** — route `''` (tab lista+calendario) + `:id` (dettaglio)
+- **EventiComponent** — tab wrapper Lista/Calendario; bottone Nuovo Evento; refreshTrigger signal condiviso con i figli
+- **EventiListComponent** — card list (NON tabella) con chip-group stato colorati, filtri date, search debounce 300ms, paginazione server-side; progress bar pagamento per card; ruoli ADMIN/DIPENDENTE
+- **EventiCalendarioComponent** — calendario mensile custom con CSS Grid 7 colonne, navigazione prev/next/oggi, event chips per giorno (coloreStato), tooltip, click su giorno vuoto apre form con data precompilata
+- **EventoFormDialogComponent** — form creazione/modifica; lazy-loaded da dialog.open tramite import() dinamico
+- **EventoDetailComponent** — 5 sezioni: riepilogo finanziario (progress bar + 4 KPI), timeline pagamenti, dati contatto, info evento, partecipanti (solo ADMIN); bottoni transizione stato dinamici per stato corrente
+- **PagamentoFormDialogComponent** — MatButtonToggle CAPARRA/ACCONTO/SALDO/RIMBORSO; precompila importo con residuo se SALDO; gestisce header `X-Suggest-Completamento` aprendo ConfirmDialog per completare l'evento
+- **CambioStatoDialogComponent** — messaggi contestuali per transizione; textarea noteAnnullamento obbligatoria se stato=ANNULLATO
+
+**Correzioni importanti scoperte:**
+- Pipe `EuroPipe` ha name `'euro'` (non `agosEuro`)
+- `SkeletonLoaderComponent` accetta input `rows` (non `lines`), nessun `height`
+- `MetodoPagamentoDTO` ha campo `descrizione` (non `nome`)
+- Lazy-load dialogs con `import('./dialog.component')` evita circular imports
+- Aggiungere `SlicePipe`, `DecimalPipe` da `@angular/common` quando usati nel template
+
+**Why:** Step 7 implementa il modulo eventi/cerimonie con ciclo di vita PREVENTIVO→CONFERMATO→COMPLETATO.
+**How to apply:** I dialog sono caricati lazy (`import('./x.component')`) dal componente che li apre per evitare circular import.
+
+### Step 08 — Cassa & Anagrafica (completato 2026-05-02)
+
+File creati:
+
+- **CassaComponent** (`features/cassa/`) — saldo prominente con skeleton loader, form rapido inline (MatButtonToggle prelievo/versamento + CurrencyInput + datepicker + select conto), filtri data, tabella paginata server-side con badge tipo/stato, lazy dialog modifica, ConfirmDialog elimina (solo ADMIN); nota quadratura in fondo
+- **CassaEditDialogComponent** — form modifica movimento cassa (stessi campi del form rapido)
+- **FornitoriComponent** (`features/anagrafica/fornitori/`) — lista paginata con search debounce 300ms; tabella: ragioneSociale, alias, piva (con `$any()` cast per campi non in FornitoreSummaryDTO), buDefault badge, n.alias; azioni: dettaglio, modifica, elimina
+- **FornitoreDetailDialogComponent** — mostra FornitoreDTO completo; sezione alias con lista pattern/matchType colorati (EXACT=blu, CONTAINS=verde, REGEX=viola); form inline aggiungi alias (POST /fornitori/:id/alias); elimina con ConfirmDialog
+- **FornitoreFormDialogComponent** — ReactiveForm creazione/modifica; gestisce errore 409 P.IVA duplicata; usa BuSelectorComponent per buDefaultId
+- **CategorieComponent** (`features/anagrafica/categorie/`) — MatTree nested con NestedTreeControl; BuSelectorComponent + MatButtonToggle ENTRATA/USCITA; azioni nodo: modifica, aggiungi sottocategoria; lazy dialog form; invalidate cache dopo write
+- **CategoriaFormDialogComponent** — form nome+ordinamento; mostra contesto (BU, tipo, parentNome) come label read-only; POST o PUT in base a categoriaId presente
+- **anagrafica.routes.ts** aggiornato — route `fornitori`, `categorie`, redirect `''→fornitori`
+
+**Correzioni scoperte:**
+- `BadgeComponent` usa input `[text]` (non `[label]`)
+- `EmptyStateComponent` usa output `(action)` (non `(actionClick)`)
+- `FornitoreSummaryDTO` ha solo `id`+`ragioneSociale`; campi extra (alias, piva, buDefaultId, aliasList) richiedono `$any(row)` nei template
+- MatTree nested usa `MatTreeNestedDataSource` + `NestedTreeControl` + `matTreeNodeOutlet` per render figli
+
+**Why:** Step 8 implementa cassa fisica e anagrafica (fornitori + categorie piano dei conti).
+**How to apply:** MatTree nested richiede `mat-nested-tree-node` con `*matTreeNodeDef="let node; when: hasChildren"` e `ng-container matTreeNodeOutlet` per i figli; il flat tree non funziona con struttura nestata ricorsiva.

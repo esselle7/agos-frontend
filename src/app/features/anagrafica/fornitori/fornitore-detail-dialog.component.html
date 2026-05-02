@@ -1,0 +1,123 @@
+<h2 mat-dialog-title>
+  @if (fornitore(); as f) { {{ f.ragioneSociale }} }
+  @else { Fornitore }
+</h2>
+
+<mat-dialog-content>
+
+  @if (loading()) {
+    <agos-skeleton-loader [rows]="4" />
+  } @else if (fornitore(); as f) {
+
+    <!-- Dati anagrafici -->
+    <section class="detail-section">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Ragione Sociale</span>
+          <span class="detail-value">{{ f.ragioneSociale }}</span>
+        </div>
+        @if (f.alias) {
+          <div class="detail-item">
+            <span class="detail-label">Alias</span>
+            <span class="detail-value">{{ f.alias }}</span>
+          </div>
+        }
+        @if (f.piva) {
+          <div class="detail-item">
+            <span class="detail-label">Partita IVA</span>
+            <span class="detail-value mono">{{ f.piva }}</span>
+          </div>
+        }
+        @if (f.codiceSdi) {
+          <div class="detail-item">
+            <span class="detail-label">Codice SDI</span>
+            <span class="detail-value mono">{{ f.codiceSdi }}</span>
+          </div>
+        }
+        @if (f.buDefaultId != null) {
+          <div class="detail-item">
+            <span class="detail-label">BU Default</span>
+            <agos-badge [color]="buColore(f.buDefaultId)" [text]="buNome(f.buDefaultId)" />
+          </div>
+        }
+      </div>
+      @if (f.note) {
+        <div class="detail-item full-width" style="margin-top:12px">
+          <span class="detail-label">Note</span>
+          <p class="detail-value note-text">{{ f.note }}</p>
+        </div>
+      }
+    </section>
+
+    <mat-divider style="margin: 16px 0" />
+
+    <!-- Sezione alias -->
+    <section class="detail-section">
+      <div class="section-header">
+        <h3 class="section-title">Pattern di matching ({{ f.aliasList.length }})</h3>
+        <button mat-stroked-button (click)="toggleAddAlias()">
+          <mat-icon>{{ addingAlias() ? 'close' : 'add' }}</mat-icon>
+          {{ addingAlias() ? 'Annulla' : 'Aggiungi alias' }}
+        </button>
+      </div>
+
+      @if (addingAlias()) {
+        <form [formGroup]="aliasForm" (ngSubmit)="submitAlias()" class="alias-form">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Pattern *</mat-label>
+            <input matInput formControlName="pattern" placeholder="es. Rossi S.r.l." />
+            @if (aliasForm.controls.pattern.hasError('required') && aliasForm.controls.pattern.touched) {
+              <mat-error>Campo obbligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Tipo match</mat-label>
+            <mat-select formControlName="matchType">
+              <mat-option value="EXACT">EXACT – corrispondenza esatta</mat-option>
+              <mat-option value="CONTAINS">CONTAINS – contiene il testo</mat-option>
+              <mat-option value="REGEX">REGEX – espressione regolare</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="savingAlias()">
+            @if (savingAlias()) {
+              <mat-spinner diameter="16" style="display:inline-block;margin-right:4px" />
+            }
+            Salva
+          </button>
+        </form>
+      }
+
+      @if (f.aliasList.length === 0 && !addingAlias()) {
+        <p class="text-sub" style="margin-top: 8px">Nessun pattern configurato.</p>
+      } @else {
+        <div class="alias-list">
+          @for (a of f.aliasList; track a.id) {
+            <div class="alias-row">
+              <code class="alias-pattern">{{ a.pattern }}</code>
+              <agos-badge [color]="aliasColor(a.matchType)" [text]="a.matchType" size="sm" />
+              <button
+                mat-icon-button
+                matTooltip="Elimina alias"
+                color="warn"
+                class="alias-delete"
+                (click)="deleteAlias(a)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+  } @else {
+    <p class="text-sub">Impossibile caricare i dati del fornitore.</p>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Chiudi</button>
+</mat-dialog-actions>

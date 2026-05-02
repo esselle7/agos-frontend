@@ -1,0 +1,93 @@
+<div class="categorie">
+
+  <!-- Header -->
+  <div class="categorie__header">
+    <h2>Categorie</h2>
+    <button mat-flat-button color="primary" (click)="openCreate()" [disabled]="selectedBuId() == null">
+      <mat-icon>add</mat-icon>
+      Nuova Categoria
+    </button>
+  </div>
+
+  <!-- Toolbar selezione -->
+  <div class="categorie__toolbar card">
+    <agos-bu-selector
+      [formControl]="buControl"
+      label="Business Unit"
+      placeholder="Seleziona BU"
+    />
+
+    <mat-button-toggle-group
+      [value]="selectedTipo()"
+      (change)="selectTipo($event.value)"
+      class="tipo-toggle"
+    >
+      <mat-button-toggle value="ENTRATA">
+        <mat-icon>arrow_downward</mat-icon> Entrate
+      </mat-button-toggle>
+      <mat-button-toggle value="USCITA">
+        <mat-icon>arrow_upward</mat-icon> Uscite
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <!-- Albero -->
+  <div class="categorie__tree-wrapper card">
+
+    @if (loading()) {
+      <agos-skeleton-loader type="text" [rows]="6" />
+    } @else if (dataSource.data.length === 0) {
+      <agos-empty-state
+        icon="category"
+        [title]="'Nessuna categoria ' + selectedTipo().toLowerCase()"
+        subtitle="Crea la prima categoria con il pulsante in alto"
+        actionLabel="Nuova Categoria"
+        (action)="openCreate()"
+      />
+    } @else {
+      <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="cat-tree">
+
+        <!-- Nodo foglia (no figli) -->
+        <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+          <button mat-icon-button disabled></button>
+          <span class="node-name">{{ node.nome }}</span>
+          <span class="node-order text-sub">ord. {{ node.ordinamento }}</span>
+          <div class="node-actions">
+            <button mat-icon-button matTooltip="Aggiungi sottocategoria" (click)="openSubcategoria(node)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Modifica" (click)="openEdit(node)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        </mat-tree-node>
+
+        <!-- Nodo con figli -->
+        <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChildren">
+          <div class="mat-tree-node node-parent">
+            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Espandi ' + node.nome">
+              <mat-icon>
+                {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+              </mat-icon>
+            </button>
+            <span class="node-name node-name--parent">{{ node.nome }}</span>
+            <span class="node-order text-sub">ord. {{ node.ordinamento }}</span>
+            <div class="node-actions">
+              <button mat-icon-button matTooltip="Aggiungi sottocategoria" (click)="openSubcategoria(node)">
+                <mat-icon>add</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Modifica" (click)="openEdit(node)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div [class.tree-invisible]="!treeControl.isExpanded(node)" role="group">
+            <ng-container matTreeNodeOutlet></ng-container>
+          </div>
+        </mat-nested-tree-node>
+
+      </mat-tree>
+    }
+  </div>
+
+</div>

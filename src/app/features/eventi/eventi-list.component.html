@@ -1,0 +1,173 @@
+<div class="eventi-list">
+
+  <!-- Toolbar filtri -->
+  <div class="filters-bar">
+    <!-- Chip group stati -->
+    <div class="stato-chips">
+      @for (s of stati; track s.value) {
+        <button
+          class="stato-chip"
+          [class.active]="selectedStato() === s.value"
+          [style.--chip-color]="s.value ? statoColors[s.value] : '#6B7280'"
+          (click)="selectStato(s.value)"
+        >
+          {{ s.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Ricerca -->
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>Cerca evento o contatto</mat-label>
+      <input matInput [formControl]="searchControl" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <!-- Date range -->
+    <mat-form-field appearance="outline" class="date-field">
+      <mat-label>Da</mat-label>
+      <input matInput [matDatepicker]="pickerFrom" [formControl]="fromControl" (dateChange)="onFilterChange()" />
+      <mat-datepicker-toggle matSuffix [for]="pickerFrom" />
+      <mat-datepicker #pickerFrom />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="date-field">
+      <mat-label>A</mat-label>
+      <input matInput [matDatepicker]="pickerTo" [formControl]="toControl" (dateChange)="onFilterChange()" />
+      <mat-datepicker-toggle matSuffix [for]="pickerTo" />
+      <mat-datepicker #pickerTo />
+    </mat-form-field>
+
+    <!-- Reset -->
+    <button mat-icon-button matTooltip="Azzera filtri" (click)="resetFilters()">
+      <mat-icon>filter_list_off</mat-icon>
+    </button>
+  </div>
+
+  <!-- Contatore -->
+  @if (result(); as r) {
+    <p class="result-count">{{ r.totalElements }} eventi trovati</p>
+  }
+
+  <!-- Skeleton loader -->
+  @if (loading() && !result()) {
+    <div class="cards-grid">
+      @for (i of [1,2,3,4]; track i) {
+        <agos-skeleton-loader [rows]="3" />
+      }
+    </div>
+  }
+
+  <!-- Card list -->
+  @if (!loading() || result()) {
+    @if (result()?.content?.length === 0) {
+      <agos-empty-state
+        icon="event_busy"
+        title="Nessun evento trovato"
+        message="Prova a cambiare i filtri o crea un nuovo evento."
+      />
+    } @else {
+      <div class="cards-grid">
+        @for (evento of result()?.content ?? []; track evento.id) {
+          <div class="evento-card" (click)="goToDetail(evento)">
+
+            <!-- Card header -->
+            <div class="card-header">
+              <div class="card-header-left">
+                <span class="evento-nome">{{ evento.nome }}</span>
+                <span
+                  class="stato-badge"
+                  [style.background-color]="statoColor(evento.stato) + '22'"
+                  [style.color]="statoColor(evento.stato)"
+                  [style.border-color]="statoColor(evento.stato) + '44'"
+                >
+                  {{ evento.stato }}
+                </span>
+              </div>
+              <span class="evento-data">{{ formatDate(evento.dataEvento) }}</span>
+            </div>
+
+            <!-- Card body -->
+            <div class="card-body">
+              <div class="info-row">
+                <mat-icon class="info-icon">person</mat-icon>
+                <span>{{ evento.contattoNome }}
+                  @if (evento.contattoTelefono) {
+                    · {{ evento.contattoTelefono }}
+                  }
+                </span>
+              </div>
+
+              @if (evento.nOspiti) {
+                <div class="info-row">
+                  <mat-icon class="info-icon">group</mat-icon>
+                  <span>{{ evento.nOspiti }} ospiti</span>
+                </div>
+              }
+
+              <div class="info-row">
+                <span
+                  class="bu-badge"
+                  [style.background-color]="buColore(evento.businessUnitId) + '22'"
+                  [style.color]="buColore(evento.businessUnitId)"
+                >
+                  {{ buNome(evento.businessUnitId) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Progress pagamento -->
+            <div class="card-progress">
+              <div class="progress-labels">
+                <span class="incassato-label">
+                  Incassato: <strong>{{ evento.importoIncassato | euro }}</strong>
+                </span>
+                <span
+                  class="residuo-label"
+                  [style.color]="evento.importoResiduo > 0 ? '#FFA500' : '#4CAF50'"
+                >
+                  Residuo: <strong>{{ evento.importoResiduo | euro }}</strong>
+                </span>
+              </div>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="evento.percentualeIncassata"
+                [style.--mdc-linear-progress-active-indicator-color]="progressColor(evento.percentualeIncassata)"
+              />
+            </div>
+
+            <!-- Card actions -->
+            <div class="card-actions" (click)="$event.stopPropagation()">
+              <button mat-button (click)="goToDetail(evento)">
+                <mat-icon>visibility</mat-icon>
+                Dettaglio
+              </button>
+              <button mat-button (click)="openModifica(evento, $event)">
+                <mat-icon>edit</mat-icon>
+                Modifica
+              </button>
+              @if (authService.isAdmin()) {
+                <button mat-button color="warn" (click)="deleteEvento(evento, $event)">
+                  <mat-icon>delete</mat-icon>
+                  Elimina
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Paginazione -->
+      @if ((result()?.totalElements ?? 0) > pageSize) {
+        <mat-paginator
+          [length]="result()?.totalElements ?? 0"
+          [pageSize]="pageSize"
+          [pageIndex]="currentPage"
+          [pageSizeOptions]="[20, 50, 100]"
+          (page)="onPage($event)"
+        />
+      }
+    }
+  }
+
+</div>
