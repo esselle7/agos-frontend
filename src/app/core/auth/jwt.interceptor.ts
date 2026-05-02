@@ -6,13 +6,16 @@ import {
   HttpRequest,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take } from 'rxjs/operators';
+import { Observable, Subject, throwError } from 'rxjs';
+import { catchError, switchMap, take } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 // Module-level state serializes concurrent refresh calls across all in-flight requests
 let isRefreshing = false;
-const refreshSubject = new BehaviorSubject<string | null>(null);
+// Subject (not BehaviorSubject) so waiting requests only receive future emissions;
+// null means refresh failed, non-null string is the new access token.
+const refreshSubject = new Subject<string | null>();
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -35,7 +38,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function isAuthEndpoint(url: string): boolean {
-  return url.includes('/auth/');
+  return url.startsWith(environment.apiBaseUrl) && url.includes('/auth/');
 }
 
 function withBearer(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
@@ -49,7 +52,6 @@ function handleUnauthorized(
 ): Observable<HttpEvent<unknown>> {
   if (!isRefreshing) {
     isRefreshing = true;
-    refreshSubject.next(null);
 
     return authService.refresh().pipe(
       switchMap(tokens => {
@@ -59,16 +61,19 @@ function handleUnauthorized(
       }),
       catchError(err => {
         isRefreshing = false;
+        // Emit null so all queued requests unblock and fail gracefully
         refreshSubject.next(null);
         return throwError(() => err);
       })
     );
   }
 
-  // Another refresh is in progress — wait for its result then retry
+  // Another refresh is in progress — wait for its result then retry or propagate error
   return refreshSubject.pipe(
-    filter((token): token is string => token !== null),
     take(1),
-    switchMap(token => next(withBearer(req, token)))
+    switchMap(token => {
+      if (!token) return throwError(() => new Error('Session expired'));
+      return next(withBearer(req, token));
+    })
   );
 }

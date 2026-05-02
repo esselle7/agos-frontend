@@ -128,9 +128,13 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
 
   reloadEvento(): void {
     const id = this.evento()!.id;
-    this.eventiService.getById(id).subscribe({
+    this.eventiService.getById(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: ev => {
         this.evento.set(ev);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.snackBar.open('Errore nel ricaricamento dell\'evento', 'OK', { duration: 3000 });
         this.cdr.markForCheck();
       },
     });
@@ -138,49 +142,55 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
 
   openPagamento(): void {
     const ev = this.evento()!;
-    import('./pagamento-form-dialog.component').then(m => {
-      this.dialog
-        .open(m.PagamentoFormDialogComponent, {
-          width: '560px',
-          maxHeight: '90vh',
-          data: { eventoId: ev.id, importoResiduo: ev.importoResiduo },
-        })
-        .afterClosed()
-        .subscribe(result => {
-          if (result) this.reloadEvento();
-        });
-    });
+    import('./pagamento-form-dialog.component')
+      .then(m => {
+        this.dialog
+          .open(m.PagamentoFormDialogComponent, {
+            width: '560px',
+            maxHeight: '90vh',
+            data: { eventoId: ev.id, importoResiduo: ev.importoResiduo },
+          })
+          .afterClosed()
+          .subscribe(result => {
+            if (result) this.reloadEvento();
+          });
+      })
+      .catch(() => this.snackBar.open('Errore nel caricamento del dialogo', 'OK', { duration: 3000 }));
   }
 
   openCambioStato(nuovoStato: StatoEvento): void {
     const ev = this.evento()!;
-    import('./cambio-stato-dialog.component').then(m => {
-      this.dialog
-        .open(m.CambioStatoDialogComponent, {
-          width: '480px',
-          data: { eventoId: ev.id, statoCorrente: ev.stato, nuovoStato },
-        })
-        .afterClosed()
-        .subscribe(updated => {
-          if (updated) this.reloadEvento();
-        });
-    });
+    import('./cambio-stato-dialog.component')
+      .then(m => {
+        this.dialog
+          .open(m.CambioStatoDialogComponent, {
+            width: '480px',
+            data: { eventoId: ev.id, statoCorrente: ev.stato, nuovoStato },
+          })
+          .afterClosed()
+          .subscribe(updated => {
+            if (updated) this.reloadEvento();
+          });
+      })
+      .catch(() => this.snackBar.open('Errore nel caricamento del dialogo', 'OK', { duration: 3000 }));
   }
 
   openModifica(): void {
     const ev = this.evento()!;
-    import('./evento-form-dialog.component').then(m => {
-      this.dialog
-        .open(m.EventoFormDialogComponent, {
-          width: '700px',
-          maxHeight: '90vh',
-          data: { eventoId: ev.id },
-        })
-        .afterClosed()
-        .subscribe(updated => {
-          if (updated) this.reloadEvento();
-        });
-    });
+    import('./evento-form-dialog.component')
+      .then(m => {
+        this.dialog
+          .open(m.EventoFormDialogComponent, {
+            width: '700px',
+            maxHeight: '90vh',
+            data: { eventoId: ev.id },
+          })
+          .afterClosed()
+          .subscribe(updated => {
+            if (updated) this.reloadEvento();
+          });
+      })
+      .catch(() => this.snackBar.open('Errore nel caricamento del dialogo', 'OK', { duration: 3000 }));
   }
 
   deleteEvento(): void {

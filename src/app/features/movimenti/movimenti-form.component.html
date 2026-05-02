@@ -186,7 +186,7 @@
                    placeholder="Cerca per ragione sociale...">
             <mat-autocomplete #autoFornitore (optionSelected)="onFornitoreSelected($event)">
               @for (f of filteredFornitori(); track f.id) {
-                <mat-option [value]="f.ragioneSociale">{{ f.ragioneSociale }}</mat-option>
+                <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option>
               }
             </mat-autocomplete>
             @if (form.controls.fornitoreId.value) {

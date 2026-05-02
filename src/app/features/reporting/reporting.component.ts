@@ -1,13 +1,19 @@
 import { Component } from '@angular/core';
+import { MatTabsModule } from '@angular/material/tabs';
+import { PlComparativoComponent } from './pl-comparativo.component';
+import { CashFlowComponent } from './cash-flow.component';
+import { ExportComponent } from './export.component';
 
 @Component({
   selector: 'app-reporting',
   standalone: true,
-  template: `
-    <div style="padding: 24px">
-      <h2>Reporting</h2>
-      <p style="color: var(--text-sub)">Il modulo reporting sarà implementato in uno step successivo.</p>
-    </div>
-  `,
+  imports: [
+    MatTabsModule,
+    PlComparativoComponent,
+    CashFlowComponent,
+    ExportComponent,
+  ],
+  templateUrl: './reporting.component.html',
+  styleUrls: ['./reporting.component.scss'],
 })
 export class ReportingComponent {}

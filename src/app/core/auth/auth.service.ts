@@ -123,17 +123,17 @@ export class AuthService {
     expiresIn: number
   ): void {
     const expiresAt = Date.now() + expiresIn * 1000;
-    localStorage.setItem(STORAGE.ACCESS_TOKEN, accessToken);
-    localStorage.setItem(STORAGE.REFRESH_TOKEN, refreshToken);
-    localStorage.setItem(STORAGE.USER, JSON.stringify(user));
-    localStorage.setItem(STORAGE.EXPIRES_AT, String(expiresAt));
+    sessionStorage.setItem(STORAGE.ACCESS_TOKEN, accessToken);
+    sessionStorage.setItem(STORAGE.REFRESH_TOKEN, refreshToken);
+    sessionStorage.setItem(STORAGE.USER, JSON.stringify(user));
+    sessionStorage.setItem(STORAGE.EXPIRES_AT, String(expiresAt));
   }
 
   private restoreSession(): void {
-    const accessToken = localStorage.getItem(STORAGE.ACCESS_TOKEN);
-    const refreshToken = localStorage.getItem(STORAGE.REFRESH_TOKEN);
-    const userJson = localStorage.getItem(STORAGE.USER);
-    const expiresAt = localStorage.getItem(STORAGE.EXPIRES_AT);
+    const accessToken = sessionStorage.getItem(STORAGE.ACCESS_TOKEN);
+    const refreshToken = sessionStorage.getItem(STORAGE.REFRESH_TOKEN);
+    const userJson = sessionStorage.getItem(STORAGE.USER);
+    const expiresAt = sessionStorage.getItem(STORAGE.EXPIRES_AT);
 
     if (!accessToken || !refreshToken || !userJson || !expiresAt) return;
 
@@ -166,9 +166,9 @@ export class AuthService {
   }
 
   private clearStorage(): void {
-    localStorage.removeItem(STORAGE.ACCESS_TOKEN);
-    localStorage.removeItem(STORAGE.REFRESH_TOKEN);
-    localStorage.removeItem(STORAGE.USER);
-    localStorage.removeItem(STORAGE.EXPIRES_AT);
+    sessionStorage.removeItem(STORAGE.ACCESS_TOKEN);
+    sessionStorage.removeItem(STORAGE.REFRESH_TOKEN);
+    sessionStorage.removeItem(STORAGE.USER);
+    sessionStorage.removeItem(STORAGE.EXPIRES_AT);
   }
 }

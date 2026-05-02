@@ -209,17 +209,19 @@ export class CassaComponent implements OnInit, OnDestroy {
 
   openEdit(mov: CassaMovimentoDTO, event: Event): void {
     event.stopPropagation();
-    import('./cassa-edit-dialog.component').then(m => {
-      this.dialog.open(m.CassaEditDialogComponent, {
-        width: '500px',
-        data: { movimento: mov, contiBancari: this.contiBancari() },
-      }).afterClosed().subscribe(updated => {
-        if (updated) {
-          this.loadSaldo();
-          this.loadData();
-        }
-      });
-    });
+    import('./cassa-edit-dialog.component')
+      .then(m => {
+        this.dialog.open(m.CassaEditDialogComponent, {
+          width: '500px',
+          data: { movimento: mov, contiBancari: this.contiBancari() },
+        }).afterClosed().subscribe(updated => {
+          if (updated) {
+            this.loadSaldo();
+            this.loadData();
+          }
+        });
+      })
+      .catch(() => this.snackBar.open('Errore nel caricamento del dialogo', 'OK', { duration: 3000 }));
   }
 
   deleteMovimento(mov: CassaMovimentoDTO, event: Event): void {
@@ -249,7 +251,11 @@ export class CassaComponent implements OnInit, OnDestroy {
   }
 
   tipoLabel(tipo: string): string {
-    return tipo === 'VERSAMENTO_IN_BANCA' ? 'Versamento' : 'Prelievo';
+    const map: Record<string, string> = {
+      VERSAMENTO_IN_BANCA: 'Versamento',
+      PRELIEVO_DA_BANCA: 'Prelievo',
+    };
+    return map[tipo] ?? tipo;
   }
 
   statoColor(stato: string): string {

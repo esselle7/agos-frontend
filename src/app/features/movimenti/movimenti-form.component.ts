@@ -33,7 +33,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import {
   Subject, merge, switchMap, debounceTime,
-  distinctUntilChanged, of, takeUntil, forkJoin,
+  distinctUntilChanged, of, takeUntil, forkJoin, EMPTY,
 } from 'rxjs';
 
 import { MovimentiService } from '../../core/services/movimenti.service';
@@ -56,13 +56,13 @@ import { EventoDTO } from '../../core/models/eventi.models';
 const FONTI = ['MANUALE', 'IMPORT_BILLY', 'IMPORT_BANCA', 'IMPORT_ALVEARE', 'IMPORT_FATTURA'];
 
 const TIPO_COGE_LABEL: Record<string, string> = {
-  RICAVO:    'Ricavi',
-  COSTO:     'Costi',
-  ATTIVITA:  'Attività',
-  PASSIVITA: 'Passività',
+  RICAVI:       'Ricavi',
+  COSTI:        'Costi',
+  PATRIMONIALE: 'Patrimoniale',
 };
 
 interface GruppoCogeDisplay {
+  tipo: string;
   nomeGruppo: string;
   conti: PianoContiCogeDTO[];
 }
@@ -196,8 +196,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       this.aliquoteIva.set(aliquote);
       this.pianoContiAll = piano;
       this.gruppiCoge = this.buildGruppi(piano);
-      this.filteredGruppiCoge = this.gruppiCoge;
-      this.cdr.markForCheck();
+      this.rebuildCogeFilter('');
 
       if (this.isEditMode) {
         this.loadMovimento();
@@ -209,14 +208,46 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       buId ? this.form.controls.categoriaPadreId.enable() : this.form.controls.categoriaPadreId.disable();
     });
 
-    // Reload categories when BU OR tipo changes — batched to avoid double calls on patchValue
+    // Reload categories when BU OR tipo changes — switchMap cancels in-flight requests on rapid changes
     merge(
       this.form.controls.businessUnitId.valueChanges,
       this.form.controls.tipo.valueChanges,
     ).pipe(
       debounceTime(0),
+      switchMap(() => {
+        const buId = this.form.controls.businessUnitId.value;
+        if (!buId) {
+          this.categoriePadre.set([]);
+          this.categorieFiglio.set([]);
+          this.pendingCategoriaId = null;
+          return EMPTY;
+        }
+        return this.categorieService.getAlbero(buId);
+      }),
       takeUntil(this.destroy$),
-    ).subscribe(() => this.reloadCategorie());
+    ).subscribe(data => {
+      const tipo = this.form.controls.tipo.value;
+      const filtrate = data.filter(c => c.tipo === tipo);
+      this.categoriePadre.set(filtrate);
+      this.categorieFiglio.set([]);
+
+      if (this.pendingCategoriaId !== null) {
+        this.restoreCategoria(filtrate, this.pendingCategoriaId);
+        this.pendingCategoriaId = null;
+      } else {
+        this.form.controls.categoriaPadreId.setValue(null, { emitEvent: false });
+        this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
+      }
+
+      this.cdr.markForCheck();
+    });
+
+    // When tipo changes, reset the CoGe selection (conti for the new tipo may differ)
+    this.form.controls.tipo.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.form.controls.contoCoge.setValue('', { emitEvent: false });
+      this.cogeSearch.setValue('', { emitEvent: false });
+      this.rebuildCogeFilter('');
+    });
 
     // When parent category changes, load children
     this.form.controls.categoriaPadreId.valueChanges.pipe(takeUntil(this.destroy$))
@@ -227,28 +258,13 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    // CoGe search filter — guard against non-string value emitted by mat-autocomplete on selection
+    // CoGe search filter — delegates to rebuildCogeFilter which also applies tipo constraint
     this.cogeSearch.valueChanges.pipe(
       debounceTime(150),
       distinctUntilChanged(),
       takeUntil(this.destroy$),
     ).subscribe(raw => {
-      const q = typeof raw === 'string' ? raw : '';
-      if (!q) {
-        this.filteredGruppiCoge = this.gruppiCoge;
-      } else {
-        const lower = q.toLowerCase().trim();
-        this.filteredGruppiCoge = this.gruppiCoge
-          .map(g => ({
-            ...g,
-            conti: g.conti.filter(c =>
-              c.nome.toLowerCase().includes(lower) ||
-              c.codice.toLowerCase().includes(lower)
-            ),
-          }))
-          .filter(g => g.conti.length > 0);
-      }
-      this.cdr.markForCheck();
+      this.rebuildCogeFilter(typeof raw === 'string' ? raw : '');
     });
 
     // Fornitore autocomplete
@@ -319,7 +335,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       dataCompetenza: mov.dataCompetenza ? this.parseDate(mov.dataCompetenza) : null,
       dataLiquidita: mov.dataLiquidita ? this.parseDate(mov.dataLiquidita) : null,
       importoLordo: null,
-      aliquotaIva: mov.importoIva && mov.importo ? Math.round((mov.importoIva / mov.importo) * 100) / 100 : null,
+      aliquotaIva: this.findAliquota(mov.importoIva, mov.importoImponibile),
       note: mov.note,
       riferimentoEsterno: mov.riferimentoEsterno,
       fonte: mov.fonte ?? 'MANUALE',
@@ -337,32 +353,6 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
     }
-  }
-
-  private reloadCategorie(): void {
-    const buId = this.form.controls.businessUnitId.value;
-    const tipo = this.form.controls.tipo.value;
-    if (!buId) {
-      this.categoriePadre.set([]);
-      this.categorieFiglio.set([]);
-      this.pendingCategoriaId = null;
-      return;
-    }
-    this.categorieService.getAlbero(buId).subscribe(data => {
-      const filtrate = data.filter(c => c.tipo === tipo);
-      this.categoriePadre.set(filtrate);
-      this.categorieFiglio.set([]);
-
-      if (this.pendingCategoriaId !== null) {
-        this.restoreCategoria(filtrate, this.pendingCategoriaId);
-        this.pendingCategoriaId = null;
-      } else {
-        this.form.controls.categoriaPadreId.setValue(null, { emitEvent: false });
-        this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
-      }
-
-      this.cdr.markForCheck();
-    });
   }
 
   private restoreCategoria(categorie: CategoriaNode[], id: number): void {
@@ -383,13 +373,14 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   }
 
   onFornitoreSelected(event: MatAutocompleteSelectedEvent): void {
-    const nome = event.option.value as string;
-    const found = this.filteredFornitori().find(f => f.ragioneSociale === nome);
+    const id = event.option.value as string;
+    const found = this.filteredFornitori().find(f => f.id === id);
     if (!found) return;
-    this.form.controls.fornitoreId.setValue(found.id);
+    this.form.controls.fornitoreId.setValue(id);
+    this.fornitoreSearch.setValue(found.ragioneSociale, { emitEvent: false });
 
     if (!this.form.controls.contoCoge.value) {
-      this.fornitoriService.getById(found.id).subscribe(f => {
+      this.fornitoriService.getById(id).subscribe(f => {
         if (f.cogeDefaultId) {
           this.form.controls.contoCoge.setValue(String(f.cogeDefaultId), { emitEvent: false });
           this.cogeSearch.setValue(this.cogeDisplayLabel(f.cogeDefaultId), { emitEvent: false });
@@ -419,14 +410,13 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     const conto = event.option.value as PianoContiCogeDTO;
     this.form.controls.contoCoge.setValue(conto.id.toString(), { emitEvent: false });
     this.cogeSearch.setValue(`${conto.nome} (${conto.codice})`, { emitEvent: false });
-    this.filteredGruppiCoge = this.gruppiCoge;
-    this.cdr.markForCheck();
+    this.rebuildCogeFilter('');
   }
 
   clearCoge(): void {
     this.form.controls.contoCoge.setValue('', { emitEvent: false });
     this.cogeSearch.setValue('');
-    this.filteredGruppiCoge = this.gruppiCoge;
+    this.rebuildCogeFilter('');
   }
 
   onSubmit(): void {
@@ -505,12 +495,36 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       lista.push(conto);
       byTipo.set(conto.tipo, lista);
     }
-    return ['RICAVO', 'COSTO', 'ATTIVITA', 'PASSIVITA']
+    return ['RICAVI', 'COSTI', 'PATRIMONIALE']
       .filter(tipo => byTipo.has(tipo))
       .map(tipo => ({
+        tipo,
         nomeGruppo: TIPO_COGE_LABEL[tipo] ?? tipo,
         conti: byTipo.get(tipo)!,
       }));
+  }
+
+  // Filters and re-applies CoGe groups based on current tipo and optional search query.
+  // ENTRATA maps to RICAVI, USCITA maps to COSTI.
+  private rebuildCogeFilter(q = this.cogeSearch.value): void {
+    const tipo = this.form.controls.tipo.value;
+    const allowedTipo = tipo === 'ENTRATA' ? 'RICAVI' : 'COSTI';
+    const base = this.gruppiCoge.filter(g => g.tipo === allowedTipo);
+    const search = typeof q === 'string' ? q.toLowerCase().trim() : '';
+
+    this.filteredGruppiCoge = search
+      ? base
+          .map(g => ({
+            ...g,
+            conti: g.conti.filter(c =>
+              c.nome.toLowerCase().includes(search) ||
+              c.codice.toLowerCase().includes(search)
+            ),
+          }))
+          .filter(g => g.conti.length > 0)
+      : base;
+
+    this.cdr.markForCheck();
   }
 
   // Resolves a conto CoGe DB id to a human-readable label for display
@@ -519,6 +533,14 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     const numId = +id;
     const found = this.pianoContiAll.find(c => c.id === numId);
     return found ? `${found.nome} (${found.codice})` : String(id);
+  }
+
+  // Back-calculates aliquota from IVA/imponibile amounts and matches against known rates.
+  private findAliquota(importoIva: number | null, importoImponibile: number | null): number | null {
+    if (!importoIva || !importoImponibile) return null;
+    const rate = importoIva / importoImponibile;
+    const match = this.aliquoteIva().find(a => Math.abs(a.aliquota - rate) < 0.001);
+    return match ? match.aliquota : Math.round(rate * 10000) / 10000;
   }
 
   private parseDate(str: string): Date {

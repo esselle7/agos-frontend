@@ -73,7 +73,7 @@ export interface PianoContiCogeDTO {
   id: number;
   codice: string;
   nome: string;
-  tipo: 'RICAVO' | 'COSTO' | 'ATTIVITA' | 'PASSIVITA';
+  tipo: 'RICAVI' | 'COSTI' | 'PATRIMONIALE';
   parentId: number | null;
   livello: number;
 }
