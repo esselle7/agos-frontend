@@ -140,16 +140,19 @@
         </div>
 
         <div class="mov-form__row">
-          <!-- Conto CoGe — menu a discesa ordinato dal backend, filtrato per tipo movimento -->
+          <!-- Conto CoGe — autocomplete con piano dei conti dal backend, raggruppato per tipo -->
           <mat-form-field appearance="outline" class="mov-form__field--lg">
             <mat-label>Conto CoGe *</mat-label>
             <mat-icon matPrefix class="mov-form__coge-icon">account_tree</mat-icon>
-            <mat-select formControlName="contoCoge">
-              <mat-option [value]="null">— Nessuno —</mat-option>
-              @for (gruppo of cogeGruppi(); track gruppo.tipo) {
+            <input matInput
+                   [formControl]="cogeSearch"
+                   [matAutocomplete]="autoCoge"
+                   placeholder="Cerca per nome o codice...">
+            <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
+              @for (gruppo of filteredGruppiCoge; track gruppo.nomeGruppo) {
                 <mat-optgroup [label]="gruppo.nomeGruppo">
                   @for (conto of gruppo.conti; track conto.id) {
-                    <mat-option [value]="conto.id">
+                    <mat-option [value]="conto">
                       <span class="coge-option">
                         <span class="coge-option__nome"
                               [style.padding-left.px]="(conto.livello - 1) * 12">
@@ -161,9 +164,17 @@
                   }
                 </mat-optgroup>
               }
-            </mat-select>
+            </mat-autocomplete>
+            @if (form.controls.contoCoge.value) {
+              <button matSuffix mat-icon-button type="button" (click)="clearCoge()" matTooltip="Rimuovi">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
             @if (form.controls.contoCoge.touched && form.controls.contoCoge.hasError('required')) {
               <mat-error>Conto CoGe obbligatorio</mat-error>
+            }
+            @if (!form.controls.contoCoge.value && !form.controls.contoCoge.touched) {
+              <mat-hint>Seleziona dal piano dei conti o cerca per nome</mat-hint>
             }
           </mat-form-field>
 
@@ -175,7 +186,7 @@
                    placeholder="Cerca per ragione sociale...">
             <mat-autocomplete #autoFornitore (optionSelected)="onFornitoreSelected($event)">
               @for (f of filteredFornitori(); track f.id) {
-                <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option>
+                <mat-option [value]="f.ragioneSociale">{{ f.ragioneSociale }}</mat-option>
               }
             </mat-autocomplete>
             @if (form.controls.fornitoreId.value) {

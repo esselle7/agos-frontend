@@ -33,7 +33,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import {
   Subject, merge, switchMap, debounceTime,
-  distinctUntilChanged, of, takeUntil, forkJoin, EMPTY,
+  distinctUntilChanged, of, takeUntil, forkJoin,
 } from 'rxjs';
 
 import { MovimentiService } from '../../core/services/movimenti.service';
@@ -53,16 +53,16 @@ import {
 } from '../../core/models/anagrafica.models';
 import { EventoDTO } from '../../core/models/eventi.models';
 
-const FONTI = ['MANUALE', 'IMPORT_CSV', 'STRIPE', 'SATISPAY', 'SHOPIFY', 'BILLY'];
+const FONTI = ['MANUALE', 'IMPORT_BILLY', 'IMPORT_BANCA', 'IMPORT_ALVEARE', 'IMPORT_FATTURA'];
 
 const TIPO_COGE_LABEL: Record<string, string> = {
-  RICAVI:       'Ricavi',
-  COSTI:        'Costi',
-  PATRIMONIALE: 'Patrimoniale',
+  RICAVO:    'Ricavi',
+  COSTO:     'Costi',
+  ATTIVITA:  'Attività',
+  PASSIVITA: 'Passività',
 };
 
 interface GruppoCogeDisplay {
-  tipo: string;
   nomeGruppo: string;
   conti: PianoContiCogeDTO[];
 }
@@ -125,8 +125,11 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   showEventoSection = false;
   showDateAvanzate = false;
 
-  cogeGruppi = signal<GruppoCogeDisplay[]>([]);
+  // CoGe autocomplete state
+  filteredGruppiCoge: GruppoCogeDisplay[] = [];
+  readonly cogeSearch = new FormControl<string>('', { nonNullable: true });
   private pianoContiAll: PianoContiCogeDTO[] = [];
+  private gruppiCoge: GruppoCogeDisplay[] = [];
 
   // Separate controls for autocompletes (display values)
   readonly fornitoreSearch = new FormControl<string>('', { nonNullable: true });
@@ -145,7 +148,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     metodoPagamentoId: new FormControl<number | null>(null, Validators.required),
     categoriaPadreId: new FormControl<number | null>({ value: null, disabled: true }),
     categoriaFiglioId: new FormControl<number | null>(null),
-    contoCoge: new FormControl<number | null>(null, Validators.required),
+    contoCoge: new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
     fornitoreId: new FormControl<string | null>(null),
     eventoId: new FormControl<string | null>(null),
     tipoEventoMovimento: new FormControl<string | null>(null),
@@ -192,7 +195,9 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       this.metodiPagamento.set(metodi);
       this.aliquoteIva.set(aliquote);
       this.pianoContiAll = piano;
-      this.rebuildCogeGruppi();
+      this.gruppiCoge = this.buildGruppi(piano);
+      this.filteredGruppiCoge = this.gruppiCoge;
+      this.cdr.markForCheck();
 
       if (this.isEditMode) {
         this.loadMovimento();
@@ -204,45 +209,14 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       buId ? this.form.controls.categoriaPadreId.enable() : this.form.controls.categoriaPadreId.disable();
     });
 
-    // Reload categories when BU OR tipo changes — switchMap cancels in-flight requests on rapid changes
+    // Reload categories when BU OR tipo changes — batched to avoid double calls on patchValue
     merge(
       this.form.controls.businessUnitId.valueChanges,
       this.form.controls.tipo.valueChanges,
     ).pipe(
       debounceTime(0),
-      switchMap(() => {
-        const buId = this.form.controls.businessUnitId.value;
-        if (!buId) {
-          this.categoriePadre.set([]);
-          this.categorieFiglio.set([]);
-          this.pendingCategoriaId = null;
-          return EMPTY;
-        }
-        return this.categorieService.getAlbero(buId);
-      }),
       takeUntil(this.destroy$),
-    ).subscribe(data => {
-      const tipo = this.form.controls.tipo.value;
-      const filtrate = data.filter(c => c.tipo === tipo);
-      this.categoriePadre.set(filtrate);
-      this.categorieFiglio.set([]);
-
-      if (this.pendingCategoriaId !== null) {
-        this.restoreCategoria(filtrate, this.pendingCategoriaId);
-        this.pendingCategoriaId = null;
-      } else {
-        this.form.controls.categoriaPadreId.setValue(null, { emitEvent: false });
-        this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
-      }
-
-      this.cdr.markForCheck();
-    });
-
-    // When tipo changes, reset CoGe and rebuild the filtered group for the new tipo
-    this.form.controls.tipo.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.form.controls.contoCoge.setValue(null, { emitEvent: false });
-      this.rebuildCogeGruppi();
-    });
+    ).subscribe(() => this.reloadCategorie());
 
     // When parent category changes, load children
     this.form.controls.categoriaPadreId.valueChanges.pipe(takeUntil(this.destroy$))
@@ -252,6 +226,30 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
         this.cdr.markForCheck();
       });
+
+    // CoGe search filter — guard against non-string value emitted by mat-autocomplete on selection
+    this.cogeSearch.valueChanges.pipe(
+      debounceTime(150),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$),
+    ).subscribe(raw => {
+      const q = typeof raw === 'string' ? raw : '';
+      if (!q) {
+        this.filteredGruppiCoge = this.gruppiCoge;
+      } else {
+        const lower = q.toLowerCase().trim();
+        this.filteredGruppiCoge = this.gruppiCoge
+          .map(g => ({
+            ...g,
+            conti: g.conti.filter(c =>
+              c.nome.toLowerCase().includes(lower) ||
+              c.codice.toLowerCase().includes(lower)
+            ),
+          }))
+          .filter(g => g.conti.length > 0);
+      }
+      this.cdr.markForCheck();
+    });
 
     // Fornitore autocomplete
     this.fornitoreSearch.valueChanges.pipe(
@@ -314,18 +312,21 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       businessUnitId: mov.businessUnitId,
       contoBancarioId: mov.contoBancarioId,
       metodoPagamentoId: mov.metodoPagamentoId,
-      contoCoge: mov.contoCoge,
+      contoCoge: String(mov.contoCoge),
       fornitoreId: mov.fornitoreId,
       eventoId: mov.eventoId,
       tipoEventoMovimento: mov.tipoEventoMovimento,
       dataCompetenza: mov.dataCompetenza ? this.parseDate(mov.dataCompetenza) : null,
       dataLiquidita: mov.dataLiquidita ? this.parseDate(mov.dataLiquidita) : null,
       importoLordo: null,
-      aliquotaIva: this.findAliquota(mov.importoIva, mov.importoImponibile),
+      aliquotaIva: mov.importoIva && mov.importo ? Math.round((mov.importoIva / mov.importo) * 100) / 100 : null,
       note: mov.note,
       riferimentoEsterno: mov.riferimentoEsterno,
       fonte: mov.fonte ?? 'MANUALE',
     });
+
+    // Piano conti is guaranteed loaded at this point (forkJoin before loadMovimento)
+    this.cogeSearch.setValue(this.cogeDisplayLabel(mov.contoCoge), { emitEvent: false });
 
     if (mov.eventoId) this.showEventoSection = true;
     if (mov.dataCompetenza || mov.dataLiquidita) this.showDateAvanzate = true;
@@ -336,6 +337,32 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
     }
+  }
+
+  private reloadCategorie(): void {
+    const buId = this.form.controls.businessUnitId.value;
+    const tipo = this.form.controls.tipo.value;
+    if (!buId) {
+      this.categoriePadre.set([]);
+      this.categorieFiglio.set([]);
+      this.pendingCategoriaId = null;
+      return;
+    }
+    this.categorieService.getAlbero(buId).subscribe(data => {
+      const filtrate = data.filter(c => c.tipo === tipo);
+      this.categoriePadre.set(filtrate);
+      this.categorieFiglio.set([]);
+
+      if (this.pendingCategoriaId !== null) {
+        this.restoreCategoria(filtrate, this.pendingCategoriaId);
+        this.pendingCategoriaId = null;
+      } else {
+        this.form.controls.categoriaPadreId.setValue(null, { emitEvent: false });
+        this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
+      }
+
+      this.cdr.markForCheck();
+    });
   }
 
   private restoreCategoria(categorie: CategoriaNode[], id: number): void {
@@ -356,16 +383,16 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   }
 
   onFornitoreSelected(event: MatAutocompleteSelectedEvent): void {
-    const id = event.option.value as string;
-    const found = this.filteredFornitori().find(f => f.id === id);
+    const nome = event.option.value as string;
+    const found = this.filteredFornitori().find(f => f.ragioneSociale === nome);
     if (!found) return;
-    this.form.controls.fornitoreId.setValue(id);
-    this.fornitoreSearch.setValue(found.ragioneSociale, { emitEvent: false });
+    this.form.controls.fornitoreId.setValue(found.id);
 
     if (!this.form.controls.contoCoge.value) {
-      this.fornitoriService.getById(id).subscribe(f => {
+      this.fornitoriService.getById(found.id).subscribe(f => {
         if (f.cogeDefaultId) {
-          this.form.controls.contoCoge.setValue(f.cogeDefaultId, { emitEvent: false });
+          this.form.controls.contoCoge.setValue(String(f.cogeDefaultId), { emitEvent: false });
+          this.cogeSearch.setValue(this.cogeDisplayLabel(f.cogeDefaultId), { emitEvent: false });
           this.cdr.markForCheck();
         }
       });
@@ -386,6 +413,20 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   clearEvento(): void {
     this.eventoSearch.setValue('');
     this.form.controls.eventoId.setValue(null);
+  }
+
+  onCogeSelected(event: MatAutocompleteSelectedEvent): void {
+    const conto = event.option.value as PianoContiCogeDTO;
+    this.form.controls.contoCoge.setValue(conto.id.toString(), { emitEvent: false });
+    this.cogeSearch.setValue(`${conto.nome} (${conto.codice})`, { emitEvent: false });
+    this.filteredGruppiCoge = this.gruppiCoge;
+    this.cdr.markForCheck();
+  }
+
+  clearCoge(): void {
+    this.form.controls.contoCoge.setValue('', { emitEvent: false });
+    this.cogeSearch.setValue('');
+    this.filteredGruppiCoge = this.gruppiCoge;
   }
 
   onSubmit(): void {
@@ -436,7 +477,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       contoBancarioId: v.contoBancarioId!,
       metodoPagamentoId: v.metodoPagamentoId!,
       businessUnitId: v.businessUnitId!,
-      contoCoge: v.contoCoge!,
+      contoCoge: parseInt(v.contoCoge, 10),
       categoriaId,
       fornitoreId: v.fornitoreId,
       eventoId: v.eventoId,
@@ -456,27 +497,28 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Builds the CoGe optgroup for the current tipo: ENTRATA→RICAVI, USCITA→COSTI, sorted by codice.
-  private rebuildCogeGruppi(): void {
-    const tipo = this.form.controls.tipo.value;
-    const allowedTipo = tipo === 'ENTRATA' ? 'RICAVI' : 'COSTI';
-    const conti = this.pianoContiAll
-      .filter(c => c.tipo === allowedTipo)
-      .sort((a, b) => a.codice.localeCompare(b.codice));
-    this.cogeGruppi.set(conti.length > 0 ? [{
-      tipo: allowedTipo,
-      nomeGruppo: TIPO_COGE_LABEL[allowedTipo] ?? allowedTipo,
-      conti,
-    }] : []);
-    this.cdr.markForCheck();
+  // Builds grouped display structure from flat API response, ordered by tipo
+  private buildGruppi(conti: PianoContiCogeDTO[]): GruppoCogeDisplay[] {
+    const byTipo = new Map<string, PianoContiCogeDTO[]>();
+    for (const conto of conti) {
+      const lista = byTipo.get(conto.tipo) ?? [];
+      lista.push(conto);
+      byTipo.set(conto.tipo, lista);
+    }
+    return ['RICAVO', 'COSTO', 'ATTIVITA', 'PASSIVITA']
+      .filter(tipo => byTipo.has(tipo))
+      .map(tipo => ({
+        nomeGruppo: TIPO_COGE_LABEL[tipo] ?? tipo,
+        conti: byTipo.get(tipo)!,
+      }));
   }
 
-  // Back-calculates aliquota from IVA/imponibile amounts and matches against known rates.
-  private findAliquota(importoIva: number | null, importoImponibile: number | null): number | null {
-    if (!importoIva || !importoImponibile) return null;
-    const rate = importoIva / importoImponibile;
-    const match = this.aliquoteIva().find(a => Math.abs(a.aliquota - rate) < 0.001);
-    return match ? match.aliquota : Math.round(rate * 10000) / 10000;
+  // Resolves a conto CoGe DB id to a human-readable label for display
+  private cogeDisplayLabel(id: number | string | null | undefined): string {
+    if (id === null || id === undefined || id === '') return '';
+    const numId = +id;
+    const found = this.pianoContiAll.find(c => c.id === numId);
+    return found ? `${found.nome} (${found.codice})` : String(id);
   }
 
   private parseDate(str: string): Date {
