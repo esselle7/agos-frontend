@@ -27,16 +27,18 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Subject, takeUntil } from 'rxjs';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { CassaService } from '../../core/services/cassa.service';
 import { ContiService } from '../../core/services/conti.service';
+import { LookupService } from '../../core/services/lookup.service';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   CassaMovimentoDTO,
   CreateCassaMovimentoRequest,
   SaldoResponse,
 } from '../../core/models/cassa.models';
-import { ContoBancarioDTO } from '../../core/models/anagrafica.models';
+import { ContoBancarioDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
 import { PagedResponse } from '../../core/models/shared.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
@@ -44,6 +46,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { BuSelectorComponent } from '../../shared/components/bu-selector/bu-selector.component';
 
 @Component({
   selector: 'app-cassa',
@@ -63,11 +66,13 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule,
+    MatAutocompleteModule,
     EuroPipe,
     BadgeComponent,
     EmptyStateComponent,
     SkeletonLoaderComponent,
     CurrencyInputComponent,
+    BuSelectorComponent,
   ],
   templateUrl: './cassa.component.html',
   styleUrls: ['./cassa.component.scss'],
@@ -75,6 +80,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
 export class CassaComponent implements OnInit, OnDestroy {
   private readonly cassaService = inject(CassaService);
   private readonly contiService = inject(ContiService);
+  private readonly lookupService = inject(LookupService);
   readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -91,15 +97,22 @@ export class CassaComponent implements OnInit, OnDestroy {
   contiBancari = signal<ContoBancarioDTO[]>([]);
   contiMap = signal<Map<number, string>>(new Map());
 
+  // CoGe autocomplete for quick form
+  filteredCoge = signal<PianoContiCogeDTO[]>([]);
+  readonly cogeSearch = new FormControl<string>('', { nonNullable: true });
+  private pianoContiAll: PianoContiCogeDTO[] = [];
+
   readonly fromControl = new FormControl<Date | null>(null);
   readonly toControl = new FormControl<Date | null>(null);
 
   readonly quickForm = new FormGroup({
-    tipo:          new FormControl<string>('PRELIEVO_DA_BANCA', { nonNullable: true }),
-    importo:       new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    dataMovimento: new FormControl<Date>(new Date(), { nonNullable: true, validators: [Validators.required] }),
-    descrizione:   new FormControl<string | null>(null),
-    contoBancaId:  new FormControl<number | null>(null, [Validators.required]),
+    tipo:           new FormControl<string>('PRELIEVO_DA_BANCA', { nonNullable: true }),
+    importo:        new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    dataMovimento:  new FormControl<Date>(new Date(), { nonNullable: true, validators: [Validators.required] }),
+    descrizione:    new FormControl<string | null>(null),
+    contoBancaId:   new FormControl<number | null>(null, [Validators.required]),
+    businessUnitId: new FormControl<number | null>(null),
+    contoCoge:      new FormControl<number | null>(null),
   });
 
   private currentPage = 0;
@@ -111,6 +124,26 @@ export class CassaComponent implements OnInit, OnDestroy {
       const bancari = conti.filter(c => c.tipo === 'BANCARIO');
       this.contiBancari.set(bancari);
       this.contiMap.set(new Map(conti.map(c => [c.id, c.nome])));
+      this.cdr.markForCheck();
+    });
+    this.lookupService.getPianoConti().subscribe(piano => {
+      this.pianoContiAll = piano;
+      this.filteredCoge.set(piano);
+      this.cdr.markForCheck();
+    });
+    this.cogeSearch.valueChanges.pipe(
+      debounceTime(150),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$),
+    ).subscribe(q => {
+      const search = q.toLowerCase().trim();
+      this.filteredCoge.set(
+        search
+          ? this.pianoContiAll.filter(c =>
+              c.nome.toLowerCase().includes(search) || c.codice.toLowerCase().includes(search)
+            )
+          : this.pianoContiAll
+      );
       this.cdr.markForCheck();
     });
     this.loadData();
@@ -172,6 +205,17 @@ export class CassaComponent implements OnInit, OnDestroy {
     this.loadData();
   }
 
+  onCogeSelected(event: MatAutocompleteSelectedEvent): void {
+    const conto = event.option.value as PianoContiCogeDTO;
+    this.quickForm.controls.contoCoge.setValue(conto.id);
+    this.cogeSearch.setValue(`${conto.nome} (${conto.codice})`, { emitEvent: false });
+  }
+
+  clearCoge(): void {
+    this.quickForm.controls.contoCoge.setValue(null);
+    this.cogeSearch.setValue('');
+  }
+
   submitQuickForm(): void {
     if (this.quickForm.invalid) {
       this.quickForm.markAllAsTouched();
@@ -180,19 +224,20 @@ export class CassaComponent implements OnInit, OnDestroy {
     this.saving.set(true);
     const v = this.quickForm.getRawValue();
     const body: CreateCassaMovimentoRequest = {
-      tipo:          v.tipo,
-      importo:       v.importo!,
-      dataMovimento: this.toIso(v.dataMovimento),
-      descrizione:   v.descrizione,
-      contoCoge:     null,
-      businessUnitId:null,
-      contoBancaId:  v.contoBancaId,
+      tipo:           v.tipo,
+      importo:        v.importo!,
+      dataMovimento:  this.toIso(v.dataMovimento),
+      descrizione:    v.descrizione,
+      contoCoge:      v.contoCoge,
+      businessUnitId: v.businessUnitId,
+      contoBancaId:   v.contoBancaId,
     };
     this.cassaService.create(body).subscribe({
       next: () => {
         this.saving.set(false);
         this.snackBar.open('Movimento registrato', 'OK', { duration: 3000 });
-        this.quickForm.patchValue({ importo: null, descrizione: null, dataMovimento: new Date() });
+        this.quickForm.patchValue({ importo: null, descrizione: null, dataMovimento: new Date(), businessUnitId: null, contoCoge: null });
+        this.cogeSearch.setValue('', { emitEvent: false });
         this.quickForm.markAsPristine();
         this.loadSaldo();
         this.currentPage = 0;

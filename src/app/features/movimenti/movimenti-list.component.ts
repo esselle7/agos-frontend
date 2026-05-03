@@ -237,10 +237,12 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   fonteColor(fonte: string | null): string {
     const map: Record<string, string> = {
-      IMPORT_BILLY:   '#DD6B20',
-      IMPORT_BANCA:   '#3182CE',
-      IMPORT_ALVEARE: '#6B46C1',
-      IMPORT_FATTURA: '#38A169',
+      MANUALE:    '#6B7280',
+      IMPORT_CSV: '#3182CE',
+      STRIPE:     '#6772E5',
+      SATISPAY:   '#FF466C',
+      SHOPIFY:    '#95BF47',
+      BILLY:      '#DD6B20',
     };
     return fonte ? (map[fonte] ?? '#6B7280') : '#6B7280';
   }

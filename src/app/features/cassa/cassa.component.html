@@ -61,6 +61,34 @@
         }
       </mat-form-field>
 
+      <agos-bu-selector
+        formControlName="businessUnitId"
+        label="Business Unit"
+        placeholder="— Nessuna —"
+        class="bu-field"
+      />
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="coge-field">
+        <mat-label>Conto CoGe</mat-label>
+        <input matInput
+               [formControl]="cogeSearch"
+               [matAutocomplete]="autoCoge"
+               placeholder="Cerca...">
+        <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
+          @for (c of filteredCoge(); track c.id) {
+            <mat-option [value]="c">
+              <span style="font-size:13px">{{ c.nome }}</span>
+              <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (quickForm.controls.contoCoge.value) {
+          <button matSuffix mat-icon-button type="button" (click)="clearCoge()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
       <button
         mat-flat-button
         color="primary"

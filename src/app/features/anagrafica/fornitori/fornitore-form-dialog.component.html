@@ -49,8 +49,25 @@
         />
 
         <mat-form-field appearance="outline">
-          <mat-label>Conto Coge default</mat-label>
-          <input matInput formControlName="cogeDefaultId" type="number" min="1" />
+          <mat-label>Conto CoGe default</mat-label>
+          <input matInput
+                 [formControl]="cogeSearch"
+                 [matAutocomplete]="autoCoge"
+                 placeholder="Cerca per nome o codice...">
+          <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
+            @for (c of filteredCoge(); track c.id) {
+              <mat-option [value]="c">
+                <span style="font-size:13px">{{ c.nome }}</span>
+                <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+          @if (form.controls.cogeDefaultId.value) {
+            <button matSuffix mat-icon-button type="button" (click)="clearCoge()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          <mat-hint>Auto-compilato su nuovi movimenti di questo fornitore</mat-hint>
         </mat-form-field>
       </div>
 

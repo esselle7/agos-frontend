@@ -140,19 +140,16 @@
         </div>
 
         <div class="mov-form__row">
-          <!-- Conto CoGe — autocomplete con piano dei conti dal backend, raggruppato per tipo -->
+          <!-- Conto CoGe — menu a discesa ordinato dal backend, filtrato per tipo movimento -->
           <mat-form-field appearance="outline" class="mov-form__field--lg">
             <mat-label>Conto CoGe *</mat-label>
             <mat-icon matPrefix class="mov-form__coge-icon">account_tree</mat-icon>
-            <input matInput
-                   [formControl]="cogeSearch"
-                   [matAutocomplete]="autoCoge"
-                   placeholder="Cerca per nome o codice...">
-            <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
-              @for (gruppo of filteredGruppiCoge; track gruppo.nomeGruppo) {
+            <mat-select formControlName="contoCoge">
+              <mat-option [value]="null">— Nessuno —</mat-option>
+              @for (gruppo of cogeGruppi(); track gruppo.tipo) {
                 <mat-optgroup [label]="gruppo.nomeGruppo">
                   @for (conto of gruppo.conti; track conto.id) {
-                    <mat-option [value]="conto">
+                    <mat-option [value]="conto.id">
                       <span class="coge-option">
                         <span class="coge-option__nome"
                               [style.padding-left.px]="(conto.livello - 1) * 12">
@@ -164,17 +161,9 @@
                   }
                 </mat-optgroup>
               }
-            </mat-autocomplete>
-            @if (form.controls.contoCoge.value) {
-              <button matSuffix mat-icon-button type="button" (click)="clearCoge()" matTooltip="Rimuovi">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
+            </mat-select>
             @if (form.controls.contoCoge.touched && form.controls.contoCoge.hasError('required')) {
               <mat-error>Conto CoGe obbligatorio</mat-error>
-            }
-            @if (!form.controls.contoCoge.value && !form.controls.contoCoge.touched) {
-              <mat-hint>Seleziona dal piano dei conti o cerca per nome</mat-hint>
             }
           </mat-form-field>
 

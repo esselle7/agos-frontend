@@ -80,14 +80,8 @@
         </div>
         <div class="mov-detail__field">
           <span class="mov-detail__field-label">Conto CoGe</span>
-          <span class="mov-detail__field-value">{{ mov.contoCoge }}</span>
+          <span class="mov-detail__field-value">{{ cogeNome(mov.contoCoge) }}</span>
         </div>
-        @if (mov.categoriaId) {
-          <div class="mov-detail__field">
-            <span class="mov-detail__field-label">Categoria ID</span>
-            <span class="mov-detail__field-value">{{ mov.categoriaId }}</span>
-          </div>
-        }
       </div>
     </div>
 
