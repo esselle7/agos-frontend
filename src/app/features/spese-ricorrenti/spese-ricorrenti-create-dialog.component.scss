@@ -1,0 +1,208 @@
+// ── Dialog title
+.src-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+
+  &__icon {
+    color: var(--primary, #1565c0);
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+// ── Content scroll area
+.src-content {
+  padding-top: 4px !important;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.src-spinner { display: flex; justify-content: center; padding: 48px; }
+
+// ── Form grid
+.src-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+  padding: 4px 2px 8px;
+}
+
+.src-field {
+  width: 100%;
+  &--full { grid-column: 1 / -1; }
+}
+
+.src-field-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-sub);
+}
+
+// ── Section header pills
+.src-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(21, 101, 192, 0.07);
+  border-left: 3px solid var(--primary, #1565c0);
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--primary, #1565c0);
+  }
+
+  span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary, #1565c0);
+  }
+}
+
+// ── Frequency pills
+.src-freq-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.src-freq-label {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.src-freq-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.src-freq-pill {
+  flex: 1;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border, #dde1e7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  cursor: pointer;
+  transition: all .15s;
+
+  &__label { font-size: 0.82rem; font-weight: 600; color: var(--text-main); }
+  &__sub   { font-size: 0.7rem; color: var(--text-sub); }
+
+  &:hover {
+    border-color: var(--primary, #1565c0);
+    background: rgba(21, 101, 192, 0.04);
+  }
+
+  &--active {
+    border-color: var(--primary, #1565c0);
+    background: rgba(21, 101, 192, 0.10);
+
+    .src-freq-pill__label { color: var(--primary, #1565c0); }
+    .src-freq-pill__sub   { color: var(--primary, #1565c0); opacity: .7; }
+  }
+}
+
+// ── Month + year picker
+.src-month-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+
+  &__row {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__mese { flex: 2; }
+  &__anno { flex: 1; }
+}
+
+.src-month-hint {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  padding-left: 2px;
+}
+
+// ── Preview card
+.src-preview {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: linear-gradient(135deg, rgba(21,101,192,.08) 0%, rgba(21,101,192,.04) 100%);
+  border: 1px solid rgba(21,101,192,.2);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin: 4px 0 8px;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  &__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary, #1565c0);
+    opacity: .7;
+  }
+
+  &__value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+
+    &--total {
+      color: var(--primary, #1565c0);
+      font-size: 1rem;
+    }
+  }
+
+  &__divider {
+    width: 1px;
+    background: rgba(21,101,192,.2);
+    align-self: stretch;
+    margin: 0 4px;
+  }
+}
+
+// ── Actions
+.src-actions {
+  padding: 12px 24px 16px !important;
+  gap: 8px;
+}
+
+.src-submit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  justify-content: center;
+}

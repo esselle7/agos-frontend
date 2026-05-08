@@ -1,0 +1,200 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { SpeseRicorrentiService } from '../../core/services/spese-ricorrenti.service';
+import { PlanDetailDTO, InstallmentDTO } from './spese-ricorrenti.models';
+import { EuroPipe } from '../../shared/pipes/euro.pipe';
+
+@Component({
+  selector: 'app-spese-ricorrenti-detail',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule,
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatChipsModule,
+    MatTooltipModule, MatDialogModule, MatMenuModule, MatDividerModule,
+    MatFormFieldModule, MatInputModule,
+    DatePipe, EuroPipe,
+  ],
+  templateUrl: './spese-ricorrenti-detail.component.html',
+  styleUrls: ['./spese-ricorrenti-detail.component.scss'],
+})
+export class SpeseRicorrentiDetailComponent implements OnInit {
+  private readonly service = inject(SpeseRicorrentiService);
+  private readonly route   = inject(ActivatedRoute);
+  private readonly router  = inject(Router);
+  private readonly dialog  = inject(MatDialog);
+
+  readonly plan    = signal<PlanDetailDTO | null>(null);
+  readonly loading = signal(true);
+  readonly error   = signal<string | null>(null);
+  readonly working = signal(false);
+
+  // inline edit state
+  editingRataId = signal<string | null>(null);
+  editImporto   = 0;
+  editData      = '';
+  editNote      = '';
+
+  // liquidate / cancel dialogs
+  liquidateNote     = '';
+  liquidateImporto: number | null = null;
+  liquidateError    = signal<string | null>(null);
+  showLiquidate     = signal(false);
+
+  cancelNote    = '';
+  cancelPenale  = 0;
+  showCancel    = signal(false);
+
+  private planId!: string;
+
+  ngOnInit(): void {
+    this.planId = this.route.snapshot.paramMap.get('id')!;
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.service.getPlan(this.planId).subscribe({
+      next: data => { this.plan.set(data); this.loading.set(false); },
+      error: ()   => { this.error.set('Errore caricamento piano'); this.loading.set(false); },
+    });
+  }
+
+  back(): void { this.router.navigate(['/spese-ricorrenti']); }
+
+  // ── Inline edit ──────────────────────────────────────────────────────────
+
+  startEdit(rata: InstallmentDTO): void {
+    this.editingRataId.set(rata.id);
+    this.editImporto = rata.importo;
+    this.editData    = rata.dataScadenza;
+    this.editNote    = rata.note ?? '';
+  }
+
+  cancelEdit(): void { this.editingRataId.set(null); }
+
+  saveEdit(rata: InstallmentDTO): void {
+    this.working.set(true);
+    this.service.updateInstallment(
+      this.planId, rata.id,
+      this.editImporto, this.editData, this.editNote
+    ).subscribe({
+      next: () => { this.editingRataId.set(null); this.load(); },
+      error: () => this.working.set(false),
+    });
+  }
+
+  // ── Pay single installment ───────────────────────────────────────────────
+
+  payInstallment(rata: InstallmentDTO): void {
+    this.working.set(true);
+    this.service.payInstallment(this.planId, rata.id).subscribe({
+      next: data => { this.plan.set(data); this.working.set(false); },
+      error: () => this.working.set(false),
+    });
+  }
+
+  // ── Skip ─────────────────────────────────────────────────────────────────
+
+  skip(rata: InstallmentDTO, modalita: 'RIMANDA' | 'ACCORPA'): void {
+    this.working.set(true);
+    this.service.skipInstallment(this.planId, rata.id, modalita).subscribe({
+      next: () => this.load(),
+      error: () => this.working.set(false),
+    });
+  }
+
+  // ── Liquidate ─────────────────────────────────────────────────────────────
+
+  openLiquidate(): void {
+    this.liquidateImporto = null;
+    this.liquidateNote    = '';
+    this.liquidateError.set(null);
+    this.showLiquidate.set(true);
+  }
+
+  confirmLiquidate(): void {
+    this.working.set(true);
+    this.liquidateError.set(null);
+    this.service.liquidatePlan(
+      this.planId,
+      this.liquidateImporto ?? undefined,
+      this.liquidateNote
+    ).subscribe({
+      next: data => { this.plan.set(data); this.showLiquidate.set(false); this.working.set(false); },
+      error: (err) => {
+        const msg = err?.error?.message ?? 'Errore durante la liquidazione';
+        this.liquidateError.set(msg);
+        this.working.set(false);
+      },
+    });
+  }
+
+  // ── Cancel ───────────────────────────────────────────────────────────────
+
+  confirmCancel(): void {
+    this.working.set(true);
+    this.service.cancelPlan(this.planId, this.cancelPenale, this.cancelNote).subscribe({
+      next: () => { this.showCancel.set(false); this.load(); },
+      error: () => this.working.set(false),
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  isActive(): boolean { return this.plan()?.stato === 'ATTIVO'; }
+
+  isPast(rata: InstallmentDTO): boolean {
+    return rata.stato === 'PAID' || rata.stato === 'CANCELLED';
+  }
+
+  canEdit(rata: InstallmentDTO): boolean {
+    return rata.stato === 'PENDING' && this.isActive();
+  }
+
+  statoClass(stato: string): string {
+    return {
+      PENDING:   'badge--orange',
+      PAID:      'badge--green',
+      CANCELLED: 'badge--red',
+      SKIPPED:   'badge--gray',
+    }[stato] ?? '';
+  }
+
+  planStatoClass(stato: string): string {
+    return { ATTIVO: 'badge--green', COMPLETATO: 'badge--blue', ANNULLATO: 'badge--red' }[stato] ?? '';
+  }
+
+  progressPct(): number {
+    const p = this.plan();
+    if (!p || p.numeroRate === 0) return 0;
+    return Math.round((p.rate.filter(r => r.stato === 'PAID').length / p.numeroRate) * 100);
+  }
+
+  frequenzaLabel(f: string): string {
+    return { MENSILE: 'Mensile', BIMESTRALE: 'Bimestrale', TRIMESTRALE: 'Trimestrale' }[f] ?? f;
+  }
+
+  totaleResiduo(): number {
+    return this.plan()?.rate
+      .filter(r => r.stato === 'PENDING')
+      .reduce((s, r) => s + r.importo, 0) ?? 0;
+  }
+
+  saldoCoveragePct(saldo: number, residuo: number): number {
+    if (residuo <= 0) return 100;
+    if (saldo <= 0)   return 0;
+    return Math.min(100, Math.round((saldo / residuo) * 100));
+  }
+}

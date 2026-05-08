@@ -5,6 +5,7 @@ import {
   OnDestroy,
   inject,
   signal,
+  computed,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -14,6 +15,8 @@ import {
   FormControl,
   FormGroup,
   Validators,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -67,6 +70,16 @@ interface GruppoCogeDisplay {
   conti: PianoContiCogeDTO[];
 }
 
+export type TipoFlusso = 'immediato' | 'differito' | 'soloFinanziario';
+export type StatoFinanziario = 'incassato' | 'nonIncassato';
+
+interface PreviewImpatto {
+  economico: number;
+  finanziario: number;
+  previsto: number;
+  giorni: number | null;
+}
+
 @Component({
   selector: 'app-movimenti-form',
   standalone: true,
@@ -112,6 +125,63 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
 
   readonly fonti = FONTI;
 
+  // ── UI-only state: NOT stored in DTO, drives form behavior ─────────────────
+  readonly tipoFlusso = signal<TipoFlusso>('immediato');
+  readonly statoFinanziario = signal<StatoFinanziario>('incassato');
+
+  // Mirror form values into signals so computed() can react to them
+  private readonly _importo = signal<number | null>(null);
+  private readonly _dataLiquidita = signal<Date | null>(null);
+  private readonly _tipo = signal<TipoMovimento>('ENTRATA');
+
+  // ── Preview impatto (SOLO UI, non tocca backend) ────────────────────────────
+  readonly preview = computed<PreviewImpatto>(() => {
+    const importo = this._importo() ?? 0;
+    const tipo = this._tipo();
+    const flusso = this.tipoFlusso();
+    const stato = this.statoFinanziario();
+    const dataLiq = this._dataLiquidita();
+    const segno = tipo === 'ENTRATA' ? 1 : -1;
+
+    const economicoAttivo = flusso !== 'soloFinanziario';
+    const finanziarioOggi = flusso === 'soloFinanziario' || (flusso === 'immediato' && stato === 'incassato');
+    const previsione = flusso === 'differito' && stato === 'nonIncassato';
+
+    let giorni: number | null = null;
+    if (previsione && dataLiq) {
+      const oggi = new Date();
+      oggi.setHours(0, 0, 0, 0);
+      const liq = new Date(dataLiq);
+      liq.setHours(0, 0, 0, 0);
+      giorni = Math.round((liq.getTime() - oggi.getTime()) / 86_400_000);
+    }
+
+    return {
+      economico:   economicoAttivo   ? segno * importo : 0,
+      finanziario: finanziarioOggi   ? segno * importo : 0,
+      previsto:    previsione        ? segno * importo : 0,
+      giorni,
+    };
+  });
+
+  // ── Computed visibility helpers ─────────────────────────────────────────────
+  readonly showContoMetodo = computed(() =>
+    this.tipoFlusso() === 'soloFinanziario' || this.statoFinanziario() === 'incassato'
+  );
+
+  readonly dataLiquiditaRequired = computed(() =>
+    this.tipoFlusso() === 'differito' && this.statoFinanziario() === 'nonIncassato'
+  );
+
+  readonly labelDataMovimento = computed(() => {
+    switch (this.tipoFlusso()) {
+      case 'differito':       return 'Data competenza economica *';
+      case 'soloFinanziario': return 'Data movimento finanziario *';
+      default:                return 'Data operazione *';
+    }
+  });
+
+  // ── Lookup signals ──────────────────────────────────────────────────────────
   loading = signal(false);
   submitting = signal(false);
   conti = signal<ContoBancarioDTO[]>([]);
@@ -123,68 +193,56 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   filteredEventi = signal<EventoDTO[]>([]);
 
   showEventoSection = false;
-  showDateAvanzate = false;
 
-  // CoGe autocomplete state
   filteredGruppiCoge: GruppoCogeDisplay[] = [];
   readonly cogeSearch = new FormControl<string>('', { nonNullable: true });
   private pianoContiAll: PianoContiCogeDTO[] = [];
   private gruppiCoge: GruppoCogeDisplay[] = [];
 
-  // Separate controls for autocompletes (display values)
   readonly fornitoreSearch = new FormControl<string>('', { nonNullable: true });
   readonly eventoSearch = new FormControl<string>('', { nonNullable: true });
 
-  // Pending categoria to restore in edit mode
   private pendingCategoriaId: number | null = null;
 
   form = new FormGroup({
-    tipo: new FormControl<TipoMovimento>('ENTRATA', { nonNullable: true }),
-    importo: new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    dataMovimento: new FormControl<Date | null>(null, Validators.required),
-    descrizione: new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
-    businessUnitId: new FormControl<number | null>(null, Validators.required),
-    contoBancarioId: new FormControl<number | null>(null, Validators.required),
-    metodoPagamentoId: new FormControl<number | null>(null, Validators.required),
-    categoriaPadreId: new FormControl<number | null>({ value: null, disabled: true }),
-    categoriaFiglioId: new FormControl<number | null>(null),
-    contoCoge: new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
-    fornitoreId: new FormControl<string | null>(null),
-    eventoId: new FormControl<string | null>(null),
+    tipo:                new FormControl<TipoMovimento>('ENTRATA', { nonNullable: true }),
+    importo:             new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    dataMovimento:       new FormControl<Date | null>(new Date(), Validators.required),
+    descrizione:         new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
+    businessUnitId:      new FormControl<number | null>(null, Validators.required),
+    // Validators applied dynamically based on tipoFlusso + statoFinanziario
+    contoBancarioId:     new FormControl<number | null>(null),
+    metodoPagamentoId:   new FormControl<number | null>(null),
+    categoriaPadreId:    new FormControl<number | null>({ value: null, disabled: true }),
+    categoriaFiglioId:   new FormControl<number | null>(null),
+    contoCoge:           new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
+    fornitoreId:         new FormControl<string | null>(null),
+    eventoId:            new FormControl<string | null>(null),
     tipoEventoMovimento: new FormControl<string | null>(null),
-    dataCompetenza: new FormControl<Date | null>(null),
-    dataLiquidita: new FormControl<Date | null>(null),
-    importoLordo: new FormControl<number | null>(null),
-    aliquotaIva: new FormControl<number | null>(null),
-    note: new FormControl<string | null>(null),
-    riferimentoEsterno: new FormControl<string | null>(null),
-    fonte: new FormControl<string>('MANUALE', { nonNullable: true }),
+    /** Data di liquidazione effettiva. Visibile per differito+incassato. */
+    dataFinanziaria:     new FormControl<Date | null>(null),
+    /** Scadenza finanziaria attesa. Visibile per differito+nonIncassato. */
+    dataLiquidita:       new FormControl<Date | null>(null),
+    importoLordo:        new FormControl<number | null>(null),
+    aliquotaIva:         new FormControl<number | null>(null),
+    note:                new FormControl<string | null>(null),
+    riferimentoEsterno:  new FormControl<string | null>(null),
+    fonte:               new FormControl<string>('MANUALE', { nonNullable: true }),
   });
 
-  get isEditMode(): boolean {
-    return !!this.id;
-  }
-
-  get tipoValue(): TipoMovimento {
-    return this.form.controls.tipo.value;
-  }
+  get isEditMode(): boolean { return !!this.id; }
+  get tipoValue(): TipoMovimento { return this.form.controls.tipo.value; }
 
   get importoIvaCalcolato(): number | null {
     const imp = this.form.controls.importo.value;
     const aliq = this.form.controls.aliquotaIva.value;
-    if (imp != null && aliq != null) {
-      return Math.round(imp * aliq * 100) / 100;
-    }
+    if (imp != null && aliq != null) return Math.round(imp * aliq * 100) / 100;
     return null;
   }
 
-  get hasBu(): boolean {
-    return this.form.controls.businessUnitId.value !== null;
-  }
+  get hasBu(): boolean { return this.form.controls.businessUnitId.value !== null; }
 
   ngOnInit(): void {
-    // Load all lookup tables first; in edit mode, load the movimento only after
-    // they are ready so cogeDisplayLabel can resolve IDs to names immediately.
     forkJoin({
       conti:    this.contiService.getAll(),
       metodi:   this.lookupService.getMetodiPagamento(),
@@ -198,27 +256,30 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       this.gruppiCoge = this.buildGruppi(piano);
       this.filteredGruppiCoge = this.gruppiCoge;
       this.cdr.markForCheck();
-
-      if (this.isEditMode) {
-        this.loadMovimento();
-      }
+      if (this.isEditMode) this.loadMovimento();
     });
 
-    // Enable/disable categoria reactively (avoids [disabled] binding warning)
-    this.form.controls.businessUnitId.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(buId => {
-      buId ? this.form.controls.categoriaPadreId.enable() : this.form.controls.categoriaPadreId.disable();
-    });
+    // Sync mirror signals so computed preview() reacts to form changes
+    this.form.controls.importo.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(v => { this._importo.set(v); this.cdr.markForCheck(); });
+    this.form.controls.tipo.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(v => { this._tipo.set(v); this.cdr.markForCheck(); });
+    this.form.controls.dataLiquidita.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(v => { this._dataLiquidita.set(v); this.cdr.markForCheck(); });
 
-    // Reload categories when BU OR tipo changes — batched to avoid double calls on patchValue
+    this.form.controls.businessUnitId.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(buId => {
+        buId
+          ? this.form.controls.categoriaPadreId.enable()
+          : this.form.controls.categoriaPadreId.disable();
+      });
+
     merge(
       this.form.controls.businessUnitId.valueChanges,
       this.form.controls.tipo.valueChanges,
-    ).pipe(
-      debounceTime(0),
-      takeUntil(this.destroy$),
-    ).subscribe(() => this.reloadCategorie());
+    ).pipe(debounceTime(0), takeUntil(this.destroy$))
+      .subscribe(() => this.reloadCategorie());
 
-    // When parent category changes, load children
     this.form.controls.categoriaPadreId.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(parentId => {
         const parent = this.categoriePadre().find(c => c.id === parentId);
@@ -227,11 +288,8 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    // CoGe search filter — guard against non-string value emitted by mat-autocomplete on selection
     this.cogeSearch.valueChanges.pipe(
-      debounceTime(150),
-      distinctUntilChanged(),
-      takeUntil(this.destroy$),
+      debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$),
     ).subscribe(raw => {
       const q = typeof raw === 'string' ? raw : '';
       if (!q) {
@@ -242,8 +300,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
           .map(g => ({
             ...g,
             conti: g.conti.filter(c =>
-              c.nome.toLowerCase().includes(lower) ||
-              c.codice.toLowerCase().includes(lower)
+              c.nome.toLowerCase().includes(lower) || c.codice.toLowerCase().includes(lower)
             ),
           }))
           .filter(g => g.conti.length > 0);
@@ -251,39 +308,94 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    // Fornitore autocomplete
     this.fornitoreSearch.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
+      debounceTime(300), distinctUntilChanged(),
       switchMap(search => {
-        if (!search || search.length < 2) return of({ content: [] as FornitoreSummaryDTO[], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+        if (!search || search.length < 2)
+          return of({ content: [] as FornitoreSummaryDTO[], page: 0, size: 20, totalElements: 0, totalPages: 0 });
         return this.fornitoriService.getList({ search, size: 20 });
       }),
       takeUntil(this.destroy$),
-    ).subscribe(res => {
-      this.filteredFornitori.set(res.content);
-      this.cdr.markForCheck();
-    });
+    ).subscribe(res => { this.filteredFornitori.set(res.content); this.cdr.markForCheck(); });
 
-    // Evento autocomplete
     this.eventoSearch.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
+      debounceTime(300), distinctUntilChanged(),
       switchMap(search => {
-        if (!search || search.length < 2) return of({ content: [] as EventoDTO[], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+        if (!search || search.length < 2)
+          return of({ content: [] as EventoDTO[], page: 0, size: 20, totalElements: 0, totalPages: 0 });
         return this.eventiService.getList({ search, size: 20 });
       }),
       takeUntil(this.destroy$),
-    ).subscribe(res => {
-      this.filteredEventi.set(res.content);
-      this.cdr.markForCheck();
-    });
+    ).subscribe(res => { this.filteredEventi.set(res.content); this.cdr.markForCheck(); });
+
+    // Set initial validators for default state (immediato + incassato)
+    this.updateDynamicValidators();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+  // ── UI state change handlers ────────────────────────────────────────────────
+
+  onTipoFlussoChange(value: TipoFlusso): void {
+    this.tipoFlusso.set(value);
+    if (value === 'differito') {
+      this.statoFinanziario.set('nonIncassato');
+      this.form.controls.contoBancarioId.setValue(null, { emitEvent: false });
+      this.form.controls.metodoPagamentoId.setValue(null, { emitEvent: false });
+      this.form.controls.dataFinanziaria.setValue(null, { emitEvent: false });
+    } else if (value === 'soloFinanziario') {
+      this.statoFinanziario.set('incassato');
+      this.form.controls.dataLiquidita.setValue(null, { emitEvent: false });
+      this.form.controls.dataFinanziaria.setValue(null, { emitEvent: false });
+    } else {
+      this.statoFinanziario.set('incassato');
+      this.form.controls.dataLiquidita.setValue(null, { emitEvent: false });
+      this.form.controls.dataFinanziaria.setValue(null, { emitEvent: false });
+    }
+    this.updateDynamicValidators();
+    this.cdr.markForCheck();
+  }
+
+  onStatoFinanziarioChange(value: StatoFinanziario): void {
+    this.statoFinanziario.set(value);
+    if (value === 'nonIncassato') {
+      this.form.controls.contoBancarioId.setValue(null, { emitEvent: false });
+      this.form.controls.metodoPagamentoId.setValue(null, { emitEvent: false });
+      this.form.controls.dataFinanziaria.setValue(null, { emitEvent: false });
+    } else {
+      this.form.controls.dataLiquidita.setValue(null, { emitEvent: false });
+    }
+    this.updateDynamicValidators();
+    this.cdr.markForCheck();
+  }
+
+  private updateDynamicValidators(): void {
+    const flusso = this.tipoFlusso();
+    const stato = this.statoFinanziario();
+    const contoCtrl   = this.form.controls.contoBancarioId;
+    const metodoCtrl  = this.form.controls.metodoPagamentoId;
+    const dataLiqCtrl = this.form.controls.dataLiquidita;
+    const dataFinCtrl = this.form.controls.dataFinanziaria;
+
+    const bancariaRequired = flusso === 'soloFinanziario' || stato === 'incassato';
+    const liqRequired      = flusso === 'differito' && stato === 'nonIncassato';
+    const finRequired      = flusso === 'differito' && stato === 'incassato';
+
+    contoCtrl.setValidators(bancariaRequired ? Validators.required : null);
+    metodoCtrl.setValidators(bancariaRequired ? Validators.required : null);
+    dataLiqCtrl.setValidators(liqRequired ? [Validators.required, futureDateValidator] : null);
+    dataFinCtrl.setValidators(finRequired ? Validators.required : null);
+
+    contoCtrl.updateValueAndValidity({ emitEvent: false });
+    metodoCtrl.updateValueAndValidity({ emitEvent: false });
+    dataLiqCtrl.updateValueAndValidity({ emitEvent: false });
+    dataFinCtrl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  // ── Data loading ────────────────────────────────────────────────────────────
 
   private loadMovimento(): void {
     this.loading.set(true);
@@ -303,33 +415,48 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
 
   private populateForm(mov: MovimentoDTO): void {
     this.pendingCategoriaId = mov.categoriaId ?? null;
+    this.inferUiState(mov);
+
+    const flusso = this.tipoFlusso();
+    const stato  = this.statoFinanziario();
+
+    // Per differito+incassato: il campo dataFinanziaria mostra la data di liquidazione effettiva.
+    // Per differito+nonIncassato: il campo dataLiquidita mostra la scadenza finanziaria attesa.
+    const dataFinanziariaVal = mov.dataFinanziaria ? this.parseDate(mov.dataFinanziaria) : null;
+    const dataLiquiditaVal   = (flusso === 'differito' && stato === 'nonIncassato')
+      ? (mov.dataLiquidita ? this.parseDate(mov.dataLiquidita) : null)
+      : null;
 
     this.form.patchValue({
-      tipo: mov.tipo,
-      importo: mov.importo,
-      dataMovimento: mov.dataMovimento ? this.parseDate(mov.dataMovimento) : null,
-      descrizione: mov.descrizione,
-      businessUnitId: mov.businessUnitId,
-      contoBancarioId: mov.contoBancarioId,
-      metodoPagamentoId: mov.metodoPagamentoId,
-      contoCoge: String(mov.contoCoge),
-      fornitoreId: mov.fornitoreId,
-      eventoId: mov.eventoId,
+      tipo:                mov.tipo,
+      importo:             mov.importo,
+      dataMovimento:       mov.dataMovimento ? this.parseDate(mov.dataMovimento) : null,
+      descrizione:         mov.descrizione,
+      businessUnitId:      mov.businessUnitId,
+      contoBancarioId:     mov.contoBancarioId ?? null,
+      metodoPagamentoId:   mov.metodoPagamentoId ?? null,
+      contoCoge:           String(mov.contoCoge),
+      fornitoreId:         mov.fornitoreId,
+      eventoId:            mov.eventoId,
       tipoEventoMovimento: mov.tipoEventoMovimento,
-      dataCompetenza: mov.dataCompetenza ? this.parseDate(mov.dataCompetenza) : null,
-      dataLiquidita: mov.dataLiquidita ? this.parseDate(mov.dataLiquidita) : null,
-      importoLordo: null,
-      aliquotaIva: mov.importoIva && mov.importo ? Math.round((mov.importoIva / mov.importo) * 100) / 100 : null,
-      note: mov.note,
-      riferimentoEsterno: mov.riferimentoEsterno,
-      fonte: mov.fonte ?? 'MANUALE',
+      dataFinanziaria:     dataFinanziariaVal,
+      dataLiquidita:       dataLiquiditaVal,
+      importoLordo:        null,
+      aliquotaIva:         mov.importoIva && mov.importo
+                             ? Math.round((mov.importoIva / mov.importo) * 100) / 100
+                             : null,
+      note:                mov.note,
+      riferimentoEsterno:  mov.riferimentoEsterno,
+      fonte:               mov.fonte ?? 'MANUALE',
     });
 
-    // Piano conti is guaranteed loaded at this point (forkJoin before loadMovimento)
-    this.cogeSearch.setValue(this.cogeDisplayLabel(mov.contoCoge), { emitEvent: false });
+    // Sync mirror signals for preview
+    this._importo.set(mov.importo);
+    this._tipo.set(mov.tipo);
+    this._dataLiquidita.set(dataLiquiditaVal);
 
+    this.cogeSearch.setValue(this.cogeDisplayLabel(mov.contoCoge), { emitEvent: false });
     if (mov.eventoId) this.showEventoSection = true;
-    if (mov.dataCompetenza || mov.dataLiquidita) this.showDateAvanzate = true;
 
     if (mov.fornitoreId) {
       this.fornitoriService.getById(mov.fornitoreId).subscribe(f => {
@@ -337,6 +464,28 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
     }
+
+    this.updateDynamicValidators();
+  }
+
+  // Ricostruzione dello stato UI dal DTO salvato.
+  // Usa dataFinanziaria come sorgente di verità per lo stato di liquidazione.
+  private inferUiState(mov: MovimentoDTO): void {
+    if (mov.dataFinanziaria == null) {
+      // Nessuna data di liquidazione → DA_LIQUIDARE
+      this.tipoFlusso.set('differito');
+      this.statoFinanziario.set('nonIncassato');
+      return;
+    }
+    // Liquidato: se la data economica e quella finanziaria differiscono → differito+incassato
+    if (mov.dataMovimento !== mov.dataFinanziaria) {
+      this.tipoFlusso.set('differito');
+      this.statoFinanziario.set('incassato');
+      return;
+    }
+    // Stessa data → immediato
+    this.tipoFlusso.set('immediato');
+    this.statoFinanziario.set('incassato');
   }
 
   private reloadCategorie(): void {
@@ -352,7 +501,6 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       const filtrate = data.filter(c => c.tipo === tipo);
       this.categoriePadre.set(filtrate);
       this.categorieFiglio.set([]);
-
       if (this.pendingCategoriaId !== null) {
         this.restoreCategoria(filtrate, this.pendingCategoriaId);
         this.pendingCategoriaId = null;
@@ -360,7 +508,6 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
         this.form.controls.categoriaPadreId.setValue(null, { emitEvent: false });
         this.form.controls.categoriaFiglioId.setValue(null, { emitEvent: false });
       }
-
       this.cdr.markForCheck();
     });
   }
@@ -382,12 +529,13 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ── Autocomplete handlers ───────────────────────────────────────────────────
+
   onFornitoreSelected(event: MatAutocompleteSelectedEvent): void {
     const nome = event.option.value as string;
     const found = this.filteredFornitori().find(f => f.ragioneSociale === nome);
     if (!found) return;
     this.form.controls.fornitoreId.setValue(found.id);
-
     if (!this.form.controls.contoCoge.value) {
       this.fornitoriService.getById(found.id).subscribe(f => {
         if (f.cogeDefaultId) {
@@ -429,6 +577,8 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     this.filteredGruppiCoge = this.gruppiCoge;
   }
 
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -436,7 +586,6 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     }
     this.submitting.set(true);
     const body = this.buildRequest();
-
     const obs = this.isEditMode
       ? this.movimentiService.update(this.id!, body)
       : this.movimentiService.create(body);
@@ -459,34 +608,57 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  goBack(): void {
-    this.location.back();
-  }
+  goBack(): void { this.location.back(); }
 
   private buildRequest(): MovimentoCreateRequest {
     const v = this.form.getRawValue();
+    const flusso = this.tipoFlusso();
+    const stato  = this.statoFinanziario();
     const categoriaId = v.categoriaFiglioId ?? v.categoriaPadreId ?? null;
+
+    // LIQUIDATO = immediato, soloFinanziario, oppure differito+incassato
+    const isLiquidato = flusso === 'soloFinanziario' || stato === 'incassato';
+
+    // dataFinanziaria: data di liquidazione effettiva.
+    // Per differito+incassato: usa il campo dedicato del form.
+    // Per immediato/soloFinanziario: coincide con dataMovimento.
+    let dataFinanziaria: string | null = null;
+    if (isLiquidato) {
+      const raw = (flusso === 'differito') ? v.dataFinanziaria : v.dataMovimento;
+      dataFinanziaria = raw ? this.formatDate(raw) : this.formatDate(v.dataMovimento!);
+    }
+
+    // dataLiquidita (scadenzaFinanziaria):
+    // Se liquidato: auto-uguale a dataFinanziaria.
+    // Se DA_LIQUIDARE: data attesa inserita dall'utente.
+    const dataLiquidita = isLiquidato
+      ? dataFinanziaria
+      : (v.dataLiquidita ? this.formatDate(v.dataLiquidita) : null);
+
+    const dataMovimentoStr = this.formatDate(v.dataMovimento!);
+
     return {
-      tipo: v.tipo,
-      importo: v.importo!,
-      importoLordo: v.importoLordo,
-      aliquotaIva: v.aliquotaIva,
-      dataMovimento: this.formatDate(v.dataMovimento!),
-      dataCompetenza: v.dataCompetenza ? this.formatDate(v.dataCompetenza) : null,
-      dataLiquidita: v.dataLiquidita ? this.formatDate(v.dataLiquidita) : null,
-      contoBancarioId: v.contoBancarioId!,
-      metodoPagamentoId: v.metodoPagamentoId!,
-      businessUnitId: v.businessUnitId!,
-      contoCoge: parseInt(v.contoCoge, 10),
+      tipo:              v.tipo,
+      importo:           v.importo!,
+      importoLordo:      v.importoLordo,
+      aliquotaIva:       v.aliquotaIva,
+      dataMovimento:     dataMovimentoStr,
+      dataCompetenza:    dataMovimentoStr, // garantisce mv_conto_economico_mensile
+      dataFinanziaria,
+      dataLiquidita,
+      contoBancarioId:   isLiquidato ? v.contoBancarioId   : null,
+      metodoPagamentoId: isLiquidato ? v.metodoPagamentoId : null,
+      businessUnitId:    v.businessUnitId!,
+      contoCoge:         parseInt(v.contoCoge, 10),
       categoriaId,
-      fornitoreId: v.fornitoreId,
-      eventoId: v.eventoId,
+      fornitoreId:         v.fornitoreId,
+      eventoId:            v.eventoId,
       tipoEventoMovimento: v.tipoEventoMovimento,
-      descrizione: v.descrizione,
-      note: v.note,
-      riferimentoEsterno: v.riferimentoEsterno,
-      fonte: v.fonte || 'MANUALE',
-      allegatoPath: null,
+      descrizione:         v.descrizione,
+      note:                v.note,
+      riferimentoEsterno:  v.riferimentoEsterno,
+      fonte:               v.fonte || 'MANUALE',
+      allegatoPath:        null,
     };
   }
 
@@ -497,7 +669,6 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Builds grouped display structure from flat API response, ordered by tipo
   private buildGruppi(conti: PianoContiCogeDTO[]): GruppoCogeDisplay[] {
     const byTipo = new Map<string, PianoContiCogeDTO[]>();
     for (const conto of conti) {
@@ -507,13 +678,9 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     }
     return ['RICAVO', 'COSTO', 'ATTIVITA', 'PASSIVITA']
       .filter(tipo => byTipo.has(tipo))
-      .map(tipo => ({
-        nomeGruppo: TIPO_COGE_LABEL[tipo] ?? tipo,
-        conti: byTipo.get(tipo)!,
-      }));
+      .map(tipo => ({ nomeGruppo: TIPO_COGE_LABEL[tipo] ?? tipo, conti: byTipo.get(tipo)! }));
   }
 
-  // Resolves a conto CoGe DB id to a human-readable label for display
   private cogeDisplayLabel(id: number | string | null | undefined): string {
     if (id === null || id === undefined || id === '') return '';
     const numId = +id;
@@ -529,4 +696,12 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   private formatDate(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
+}
+
+// Standalone validator: data prevista non può essere nel passato
+function futureDateValidator(ctrl: AbstractControl): ValidationErrors | null {
+  if (!ctrl.value) return null;
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+  const d = new Date(ctrl.value); d.setHours(0, 0, 0, 0);
+  return d < oggi ? { dataPassata: true } : null;
 }

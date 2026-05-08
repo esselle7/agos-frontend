@@ -9,8 +9,12 @@ export interface MovimentoDTO {
   importoImponibile: number | null;
   importoIva: number | null;
   importoCommissione: number | null;
+  /** Data di competenza economica (impatto P&L / EBITDA). */
   dataMovimento: string;
   dataCompetenza: string | null;
+  /** Data di liquidazione effettiva. null = DA_LIQUIDARE. */
+  dataFinanziaria: string | null;
+  /** Scadenza finanziaria attesa. Obbligatoria se dataFinanziaria è null. */
   dataLiquidita: string | null;
   contoBancarioId: number;
   metodoPagamentoId: number;
@@ -35,11 +39,16 @@ export interface MovimentoCreateRequest {
   importo: number;
   importoLordo: number | null;
   aliquotaIva: number | null;
+  /** Data di competenza economica. Sempre valorizzata. */
   dataMovimento: string;
+  /** Alias economico (= dataMovimento). Garantisce mv_conto_economico_mensile. */
   dataCompetenza: string | null;
+  /** Data di liquidazione effettiva. null = DA_LIQUIDARE. */
+  dataFinanziaria: string | null;
+  /** Scadenza finanziaria attesa. Obbligatoria se dataFinanziaria è null. Auto-set = dataFinanziaria se liquidato. */
   dataLiquidita: string | null;
-  contoBancarioId: number;
-  metodoPagamentoId: number;
+  contoBancarioId: number | null;
+  metodoPagamentoId: number | null;
   businessUnitId: number;
   contoCoge: number;
   categoriaId: number | null;
@@ -60,6 +69,8 @@ export interface MovimentoUpdateRequest {
   aliquotaIva?: number | null;
   dataMovimento?: string | null;
   dataCompetenza?: string | null;
+  /** Impostare per liquidare il movimento. null = rimane DA_LIQUIDARE. */
+  dataFinanziaria?: string | null;
   dataLiquidita?: string | null;
   contoBancarioId?: number | null;
   metodoPagamentoId?: number | null;

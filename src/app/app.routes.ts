@@ -48,6 +48,24 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
+        path: 'spese-ricorrenti',
+        loadChildren: () =>
+          import('./features/spese-ricorrenti/spese-ricorrenti.routes').then(
+            m => m.speseRicorrentiRoutes
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'cash-flow',
+        loadComponent: () =>
+          import('./features/reporting/cash-flow.component').then(
+            m => m.CashFlowComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'eventi',
         loadChildren: () =>
           import('./features/eventi/eventi.routes').then(

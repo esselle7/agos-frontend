@@ -38,9 +38,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',    icon: 'dashboard',              route: '/dashboard',  adminOnly: false },
-  { label: 'Movimenti',    icon: 'swap_horiz',             route: '/movimenti',  adminOnly: true  },
-  { label: 'Cassa',        icon: 'account_balance_wallet', route: '/cassa',      adminOnly: true  },
+  { label: 'Dashboard',        icon: 'dashboard',              route: '/dashboard',         adminOnly: false },
+  { label: 'Movimenti',        icon: 'swap_horiz',             route: '/movimenti',         adminOnly: true  },
+  { label: 'Spese Ricorrenti', icon: 'repeat',                 route: '/spese-ricorrenti',  adminOnly: true  },
+  { label: 'Cassa',            icon: 'account_balance_wallet', route: '/cassa',             adminOnly: true  },
+  { label: 'Cash Flow',        icon: 'waterfall_chart',        route: '/cash-flow',         adminOnly: true  },
 ];
 
 const NAV_ITEMS_BOTTOM: NavItem[] = [
