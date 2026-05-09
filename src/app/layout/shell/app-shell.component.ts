@@ -23,7 +23,7 @@ import { BuService } from '../../core/services/bu.service';
 import { GlobalPeriodService } from '../../core/services/global-period.service';
 import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { MovimentoDTO } from '../../core/models/movimenti.models';
-import { ScadenzaDTO } from '../../core/models/dashboard.models';
+import { ScadenzeImminentiDTO } from '../../core/models/dashboard.models';
 import { DateRangePickerComponent, PeriodChangeEvent } from '../../shared/components/date-range-picker/date-range-picker.component';
 import { API_PATHS } from '../../core/constants/api-paths';
 import { environment } from '../../../environments/environment';
@@ -135,15 +135,15 @@ export class AppShellComponent implements OnInit {
 
   private loadScadenze(): void {
     this.http
-      .get<ScadenzaDTO[]>(
+      .get<ScadenzeImminentiDTO>(
         environment.apiBaseUrl + API_PATHS.DASHBOARD.SCADENZE_IMMINENTI,
-        { params: { giorni: '30' } }
+        { params: { period: 'MTD' } }
       )
       .subscribe({
-        next: list =>
-          this.scadenzeCount.set(
-            list.filter(s => s.urgenza === 'ALTA').length
-          ),
+        next: data => {
+          const all = [...data.eventi, ...data.rateRicorrenti];
+          this.scadenzeCount.set(all.filter(s => s.urgenza === 'ALTA').length);
+        },
         error: () => {},
       });
   }

@@ -44,13 +44,13 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: tabella + scadenze ──────────────────────────── -->
-    <div class="bottom-row">
-      <div class="bottom-row__table card">
-        <agos-skeleton-loader type="table" [rows]="5" />
+    <!-- ── Skeleton: agenda imminente ───────────────────────────── -->
+    <div class="agenda-grid">
+      <div class="card agenda-col">
+        <agos-skeleton-loader type="card" [rows]="6" />
       </div>
-      <div class="bottom-row__scadenze card">
-        <agos-skeleton-loader type="card" [rows]="5" />
+      <div class="card agenda-col">
+        <agos-skeleton-loader type="card" [rows]="6" />
       </div>
     </div>
 
@@ -197,112 +197,154 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- RIGA TABELLA + SCADENZE                                     -->
+    <!-- AGENDA IMMINENTE                                            -->
     <!-- ════════════════════════════════════════════════════════════ -->
-    <div class="bottom-row">
+    <div class="section-header section-header--agenda">
+      <mat-icon>calendar_month</mat-icon>
+      <h4>Agenda Imminente</h4>
+      <span class="section-note text-sub">prossimi 30 giorni</span>
+    </div>
 
-      <!-- Ultime Transazioni -->
-      <div class="bottom-row__table card">
-        <div class="section-subheader">
-          <h5>Ultime Transazioni</h5>
-          <a class="link-all" routerLink="/movimenti">
-            Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
-          </a>
-        </div>
+    @if (scadenzeError) {
+      <agos-empty-state icon="error_outline" title="Dati non disponibili"
+        subtitle="Impossibile caricare le scadenze" />
+    } @else {
+      <div class="agenda-grid">
 
-        @if (ultimeError) {
-          <agos-empty-state icon="error_outline" title="Dati non disponibili"
-            subtitle="Impossibile caricare le transazioni" />
-        } @else if (ultimeTransazioni().length === 0) {
-          <agos-empty-state icon="receipt_long" title="Nessuna transazione recente" />
-        } @else {
-          <div class="table-scroll">
-            <table class="tx-table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Descrizione</th>
-                  <th>BU</th>
-                  <th>Fonte</th>
-                  <th class="col-amount">Importo</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (tx of ultimeTransazioni(); track tx.id) {
-                  <tr class="tx-row">
-                    <td class="tx-date text-sub">{{ formatDate(tx.dataMovimento) }}</td>
-                    <td class="tx-desc">{{ tx.descrizione ?? '—' }}</td>
-                    <td class="tx-bu">
-                      @if (tx.businessUnitNome) {
-                        <agos-badge
-                          [text]="tx.businessUnitNome"
-                          [color]="getBuColor(tx.businessUnitNome)"
-                          size="sm" />
-                      } @else {
-                        <span class="text-sub">—</span>
-                      }
-                    </td>
-                    <td class="tx-fonte">
-                      <agos-badge
-                        [text]="tx.fonte ?? 'MANUALE'"
-                        [color]="getFonteColor(tx.fonte)"
-                        size="sm" />
-                    </td>
-                    <td class="tx-amount euro"
-                        [class.amount--entrata]="tx.tipo === 'ENTRATA'"
-                        [class.amount--uscita]="tx.tipo === 'USCITA'">
-                      {{ tx.tipo === 'USCITA' ? '−' : '+' }}{{ tx.importo | euro }}
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        <!-- ── Colonna: eventi ──────────────────────────────────── -->
+        <div class="agenda-col card">
+          <div class="agenda-col__header">
+            <mat-icon class="col-icon col-icon--eventi">event</mat-icon>
+            <span class="col-title">Eventi Imminenti</span>
+            @if (scadenzeEventi().length > 0) {
+              <span class="col-count">{{ scadenzeEventi().length }}</span>
+            }
+            <div class="col-pills">
+              @if (eventiByUrgenza().alta > 0) {
+                <span class="urgenza-pill urgenza-pill--alta">
+                  <mat-icon>warning</mat-icon>{{ eventiByUrgenza().alta }} urgenti
+                </span>
+              }
+              @if (eventiByUrgenza().media > 0) {
+                <span class="urgenza-pill urgenza-pill--media">
+                  {{ eventiByUrgenza().media }} in scadenza
+                </span>
+              }
+            </div>
+            <a class="link-all" routerLink="/eventi">
+              Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
+            </a>
           </div>
-        }
-      </div>
 
-      <!-- Scadenze Imminenti -->
-      <div class="bottom-row__scadenze card">
-        <div class="section-subheader">
-          <h5>Scadenze Imminenti</h5>
-          @if (scadenze().length > 0) {
-            <agos-badge
-              [text]="scadenze().length.toString()"
-              color="#2D6A4F"
-              size="sm" />
+          @if (scadenzeEventi().length === 0) {
+            <agos-empty-state icon="event_available" title="Nessun evento imminente"
+              subtitle="nel periodo selezionato" />
+          } @else {
+            <div class="agenda-list">
+              @for (s of scadenzeEventi(); track s.referenceId) {
+                <div class="agenda-item"
+                     [class.agenda-item--paid]="s.stato === 'PAID'"
+                     [class.agenda-item--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                     [class.agenda-item--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'">
+                  <div class="agenda-item__date"
+                       [class.date--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                       [class.date--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'"
+                       [class.date--paid]="s.stato === 'PAID'">
+                    <span class="date-day">{{ getDayFromDate(s.dataScadenza) }}</span>
+                    <span class="date-month">{{ getMonthFromDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__info">
+                    <span class="agenda-item__desc">{{ s.descrizione }}</span>
+                    <span class="agenda-item__when text-sub">{{ formatScadenzaDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__right">
+                    @if (s.stato === 'PAID') {
+                      <span class="paid-label">
+                        <mat-icon>check_circle</mat-icon> Saldato
+                      </span>
+                    } @else {
+                      <span class="agenda-item__amount euro">{{ s.importoAtteso | euro }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            @if (totalePendingEventi() > 0) {
+              <div class="agenda-col__total">
+                Totale da saldare: <strong class="euro">{{ totalePendingEventi() | euro }}</strong>
+              </div>
+            }
           }
         </div>
 
-        @if (scadenzeError) {
-          <agos-empty-state icon="error_outline" title="Dati non disponibili" />
-        } @else if (scadenze().length === 0) {
-          <agos-empty-state icon="event_available" title="Nessuna scadenza imminente"
-            subtitle="Tutto in ordine" />
-        } @else {
-          <div class="scadenze-list">
-            @for (s of scadenze(); track s.referenceId + s.tipo) {
-              <div class="scadenza-item"
-                   [style.border-left-color]="urgenzaBorderColor(s.urgenza)">
-                <mat-icon class="scadenza-item__icon"
-                          [class.urgenza-alta]="s.urgenza === 'ALTA'"
-                          [class.urgenza-media]="s.urgenza === 'MEDIA'"
-                          [class.urgenza-bassa]="s.urgenza === 'BASSA'">
-                  {{ urgenzaIcon(s.urgenza) }}
-                </mat-icon>
-                <div class="scadenza-item__body">
-                  <span class="scadenza-item__desc">{{ s.descrizione }}</span>
-                  <span class="scadenza-item__amount euro">{{ s.importoAtteso | euro }}</span>
+        <!-- ── Colonna: pagamenti ricorrenti ────────────────────── -->
+        <div class="agenda-col card">
+          <div class="agenda-col__header">
+            <mat-icon class="col-icon col-icon--rate">repeat</mat-icon>
+            <span class="col-title">Pagamenti Ricorrenti</span>
+            @if (scadenzeRate().length > 0) {
+              <span class="col-count">{{ scadenzeRate().length }}</span>
+            }
+            <div class="col-pills">
+              @if (rateByUrgenza().alta > 0) {
+                <span class="urgenza-pill urgenza-pill--alta">
+                  <mat-icon>warning</mat-icon>{{ rateByUrgenza().alta }} urgenti
+                </span>
+              }
+              @if (rateByUrgenza().media > 0) {
+                <span class="urgenza-pill urgenza-pill--media">
+                  {{ rateByUrgenza().media }} in scadenza
+                </span>
+              }
+            </div>
+            <a class="link-all" routerLink="/spese-ricorrenti">
+              Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
+            </a>
+          </div>
+
+          @if (scadenzeRate().length === 0) {
+            <agos-empty-state icon="event_available" title="Nessun pagamento imminente"
+              subtitle="nel periodo selezionato" />
+          } @else {
+            <div class="agenda-list">
+              @for (s of scadenzeRate(); track s.referenceId) {
+                <div class="agenda-item"
+                     [class.agenda-item--paid]="s.stato === 'PAID'"
+                     [class.agenda-item--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                     [class.agenda-item--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'">
+                  <div class="agenda-item__date"
+                       [class.date--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                       [class.date--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'"
+                       [class.date--paid]="s.stato === 'PAID'">
+                    <span class="date-day">{{ getDayFromDate(s.dataScadenza) }}</span>
+                    <span class="date-month">{{ getMonthFromDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__info">
+                    <span class="agenda-item__desc">{{ s.descrizione }}</span>
+                    <span class="agenda-item__when text-sub">{{ formatScadenzaDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__right">
+                    @if (s.stato === 'PAID') {
+                      <span class="paid-label">
+                        <mat-icon>check_circle</mat-icon> Pagato
+                      </span>
+                    } @else {
+                      <span class="agenda-item__amount euro">{{ s.importoAtteso | euro }}</span>
+                    }
+                  </div>
                 </div>
-                <div class="scadenza-item__date text-sub">
-                  {{ formatScadenzaDate(s.dataScadenza) }}
-                </div>
+              }
+            </div>
+            @if (totalePendingRate() > 0) {
+              <div class="agenda-col__total">
+                Totale da pagare: <strong class="euro">{{ totalePendingRate() | euro }}</strong>
               </div>
             }
-          </div>
-        }
-      </div>
+          }
+        </div>
 
-    </div>
+      </div>
+    }
 
   }
 </div>

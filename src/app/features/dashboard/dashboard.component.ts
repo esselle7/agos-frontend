@@ -19,32 +19,20 @@ import { BaseChartDirective } from 'ng2-charts';
 import type { ChartData, ChartOptions } from 'chart.js';
 
 import { DashboardService } from '../../core/services/dashboard.service';
-import { BuService } from '../../core/services/bu.service';
 import { GlobalPeriodService } from '../../core/services/global-period.service';
 import {
   DashboardKpiDTO,
   AndamentoMensileDTO,
   FatturatoPerBuDTO,
   ScadenzaDTO,
+  ScadenzeImminentiDTO,
 } from '../../core/models/dashboard.models';
-import { MovimentoDTOShared } from '../../core/models/shared.models';
-import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
-import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
-const FONTE_COLORS: Record<string, string> = {
-  MANUALE:    '#6B7280',
-  STRIPE:     '#7B1FA2',
-  SATISPAY:   '#00897B',
-  SHOPIFY:    '#4CAF50',
-  IMPORT_CSV: '#1565C0',
-  BILLY:      '#E65100',
-};
-
-const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 @Component({
   selector: 'app-dashboard',
@@ -56,7 +44,6 @@ const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ot
     MatDividerModule,
     BaseChartDirective,
     StatCardComponent,
-    BadgeComponent,
     SkeletonLoaderComponent,
     EmptyStateComponent,
     EuroPipe,
@@ -66,23 +53,20 @@ const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ot
 })
 export class DashboardComponent implements OnInit {
   private readonly dashboardSvc = inject(DashboardService);
-  private readonly buSvc = inject(BuService);
   readonly globalPeriod = inject(GlobalPeriodService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly kpi = signal<DashboardKpiDTO | null>(null);
   readonly andamento = signal<AndamentoMensileDTO[]>([]);
   readonly fatturatoPerBu = signal<FatturatoPerBuDTO[]>([]);
-  readonly ultimeTransazioni = signal<MovimentoDTOShared[]>([]);
-  readonly scadenze = signal<ScadenzaDTO[]>([]);
+  readonly scadenzeEventi = signal<ScadenzaDTO[]>([]);
+  readonly scadenzeRate   = signal<ScadenzaDTO[]>([]);
   readonly loading = signal(true);
   readonly loadingPeriod = signal(false);
-  readonly businessUnits = signal<BusinessUnitDTO[]>([]);
 
   kpiError = false;
   andamentoError = false;
   fatturatoError = false;
-  ultimeError = false;
   scadenzeError = false;
 
   private _initialized = false;
@@ -136,6 +120,34 @@ export class DashboardComponent implements OnInit {
       ],
     };
   });
+
+  readonly eventiByUrgenza = computed(() => {
+    const items = this.scadenzeEventi().filter(s => s.stato !== 'PAID');
+    return {
+      alta:  items.filter(s => s.urgenza === 'ALTA').length,
+      media: items.filter(s => s.urgenza === 'MEDIA').length,
+    };
+  });
+
+  readonly rateByUrgenza = computed(() => {
+    const items = this.scadenzeRate().filter(s => s.stato !== 'PAID');
+    return {
+      alta:  items.filter(s => s.urgenza === 'ALTA').length,
+      media: items.filter(s => s.urgenza === 'MEDIA').length,
+    };
+  });
+
+  readonly totalePendingEventi = computed(() =>
+    this.scadenzeEventi()
+      .filter(s => s.stato !== 'PAID')
+      .reduce((sum, s) => sum + (s.importoAtteso ?? 0), 0)
+  );
+
+  readonly totalePendingRate = computed(() =>
+    this.scadenzeRate()
+      .filter(s => s.stato !== 'PAID')
+      .reduce((sum, s) => sum + (s.importoAtteso ?? 0), 0)
+  );
 
   readonly lineChartOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -212,6 +224,7 @@ export class DashboardComponent implements OnInit {
         this.loadingPeriod.set(true);
         this.kpiError = false;
         this.fatturatoError = false;
+        this.scadenzeError = false;
         forkJoin({
           kpi: this.dashboardSvc
             .getKpi(period, from ?? undefined, to ?? undefined)
@@ -219,11 +232,16 @@ export class DashboardComponent implements OnInit {
           fatturato: this.dashboardSvc
             .getFatturatoPerBu(period, from ?? undefined, to ?? undefined)
             .pipe(catchError(() => { this.fatturatoError = true; return of([]); })),
+          scadenze: this.dashboardSvc
+            .getScadenzeImminenti(period, from ?? undefined, to ?? undefined)
+            .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [] }); })),
         })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(res => {
             if (res.kpi) this.kpi.set(res.kpi);
             this.fatturatoPerBu.set(res.fatturato);
+            this.scadenzeEventi.set(res.scadenze.eventi);
+            this.scadenzeRate.set(res.scadenze.rateRicorrenti);
             this.loadingPeriod.set(false);
           });
       });
@@ -235,9 +253,6 @@ export class DashboardComponent implements OnInit {
     const from = this.globalPeriod.from();
     const to = this.globalPeriod.to();
 
-    this.buSvc.getAll().pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(units => this.businessUnits.set(units));
-
     forkJoin({
       kpi: this.dashboardSvc
         .getKpi(period, from ?? undefined, to ?? undefined)
@@ -248,33 +263,20 @@ export class DashboardComponent implements OnInit {
       fatturato: this.dashboardSvc
         .getFatturatoPerBu(period, from ?? undefined, to ?? undefined)
         .pipe(catchError(() => { this.fatturatoError = true; return of([]); })),
-      ultime: this.dashboardSvc
-        .getUltimeTransazioni(10)
-        .pipe(catchError(() => { this.ultimeError = true; return of([]); })),
       scadenze: this.dashboardSvc
-        .getScadenzeImminenti(30)
-        .pipe(catchError(() => { this.scadenzeError = true; return of([]); })),
+        .getScadenzeImminenti(period, from ?? undefined, to ?? undefined)
+        .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [] }); })),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {
         if (res.kpi) this.kpi.set(res.kpi);
         this.andamento.set(res.andamento);
         this.fatturatoPerBu.set(res.fatturato);
-        this.ultimeTransazioni.set(res.ultime);
-        this.scadenze.set(res.scadenze);
+        this.scadenzeEventi.set(res.scadenze.eventi);
+        this.scadenzeRate.set(res.scadenze.rateRicorrenti);
         this.loading.set(false);
         this._initialized = true;
       });
-  }
-
-  getBuColor(buNome: string | null): string {
-    if (!buNome) return '#6B7280';
-    const bu = this.businessUnits().find(b => b.nome === buNome);
-    return bu?.colore ?? '#6B7280';
-  }
-
-  getFonteColor(fonte: string | null): string {
-    return FONTE_COLORS[fonte ?? ''] ?? '#6B7280';
   }
 
   formatDate(dateStr: string): string {
@@ -297,16 +299,13 @@ export class DashboardComponent implements OnInit {
     return this.formatDate(dateStr);
   }
 
-  urgenzaIcon(urgenza: string): string {
-    if (urgenza === 'ALTA') return 'warning';
-    if (urgenza === 'MEDIA') return 'info';
-    return 'schedule';
+  getDayFromDate(dateStr: string): string {
+    return dateStr?.split('-')[2] ?? '—';
   }
 
-  urgenzaBorderColor(urgenza: string): string {
-    if (urgenza === 'ALTA') return 'var(--danger)';
-    if (urgenza === 'MEDIA') return 'var(--warning)';
-    return 'var(--border)';
+  getMonthFromDate(dateStr: string): string {
+    const m = parseInt(dateStr?.split('-')[1] ?? '0', 10);
+    return MESI[m - 1] ?? '';
   }
 
   formatTimestamp(iso: string): string {

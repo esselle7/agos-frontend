@@ -61,4 +61,10 @@ export interface ScadenzaDTO {
   importoAtteso: number;
   dataScadenza: string;
   urgenza: 'BASSA' | 'MEDIA' | 'ALTA';
+  stato: 'PENDING' | 'PAID';
+}
+
+export interface ScadenzeImminentiDTO {
+  eventi: ScadenzaDTO[];
+  rateRicorrenti: ScadenzaDTO[];
 }
