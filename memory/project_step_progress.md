@@ -116,3 +116,17 @@ File creati:
 
 **Why:** Step 8 implementa cassa fisica e anagrafica (fornitori + categorie piano dei conti).
 **How to apply:** MatTree nested richiede `mat-nested-tree-node` con `*matTreeNodeDef="let node; when: hasChildren"` e `ng-container matTreeNodeOutlet` per i figli; il flat tree non funziona con struttura nestata ricorsiva.
+
+### Bug Discovery & Fix — 2026-05-03 (post Step 08)
+
+Audit completo contro il contratto API backend. Bug corretti:
+
+1. **FonteMovimento enum completamente errato** — il frontend usava `IMPORT_BILLY`, `IMPORT_BANCA`, `IMPORT_ALVEARE`, `IMPORT_FATTURA` che non esistono nel backend. Valori corretti: `IMPORT_CSV`, `STRIPE`, `SATISPAY`, `SHOPIFY`, `BILLY`. Corretti in: `movimenti.models.ts` (tipo), `movimenti-form.component.ts` (array FONTI), `movimenti-list.component.ts` (fonteColor map), `movimento-detail.component.ts` (fonteColor map).
+
+2. **movimento-detail: CoGe mostrava ID numerico grezzo** — `{{ mov.contoCoge }}` non risolveva a nome. Aggiunto `getPianoConti()` nel ngOnInit del MovimentoDetailComponent e metodo `cogeNome(id)`. Template aggiornato.
+
+3. **fornitore-form: cogeDefaultId era un `<input type="number">`** — nessuna connessione al piano dei conti API. Sostituito con autocomplete (LookupService + `cogeSearch` FormControl + `filteredCoge` signal + `onCogeSelected`/`clearCoge` methods), identico al pattern di movimenti-form.
+
+4. **cassa forms: `businessUnitId` e `contoCoge` hardcoded a null** — sia `CassaComponent` (quick form) che `CassaEditDialogComponent` (form modifica) non esponevano questi campi. Aggiunti: `BuSelectorComponent` per businessUnitId e CoGe autocomplete per contoCoge, con LookupService injected. Il form edit precarica i valori esistenti del movimento.
+
+**Contratto API confermato corretto** (nessun fix necessario): modelli DTO, endpoint paths, auth flow OAuth2, JWT interceptor con race-condition guard, paginazione, MovimentoDTOShared per dashboard.

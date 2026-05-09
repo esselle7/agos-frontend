@@ -83,7 +83,7 @@ export class EventoFormDialogComponent implements OnInit {
     dataEvento:                   new FormControl<Date | null>(null, [Validators.required]),
     dataPreventivo:               new FormControl<Date | null>(null),
     importoTotalePreviventivato:  new FormControl<number | null>(null),
-    businessUnitId:               new FormControl<number>(2, { nonNullable: true }),
+    businessUnitId:               new FormControl<number | null>(null, [Validators.required]),
     contattoNome:                 new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     contattoTelefono:             new FormControl<string | null>(null),
     contattoEmail:                new FormControl<string | null>(null, [Validators.email]),

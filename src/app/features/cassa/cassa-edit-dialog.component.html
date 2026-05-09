@@ -51,6 +51,38 @@
       </mat-form-field>
     </div>
 
+    <div class="form-row">
+      <agos-bu-selector
+        formControlName="businessUnitId"
+        label="Business Unit"
+        placeholder="— Nessuna —"
+        class="full-width"
+      />
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Conto CoGe</mat-label>
+        <input matInput
+               [formControl]="cogeSearch"
+               [matAutocomplete]="autoCoge"
+               placeholder="Cerca per nome o codice...">
+        <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
+          @for (c of filteredCoge(); track c.id) {
+            <mat-option [value]="c">
+              <span style="font-size:13px">{{ c.nome }}</span>
+              <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (form.controls.contoCoge.value) {
+          <button matSuffix mat-icon-button type="button" (click)="clearCoge()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+
   </form>
 </mat-dialog-content>
 

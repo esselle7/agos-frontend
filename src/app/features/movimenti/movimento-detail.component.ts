@@ -24,7 +24,7 @@ import { FornitoriService } from '../../core/services/fornitori.service';
 import { LookupService } from '../../core/services/lookup.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { MovimentoDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
-import { BusinessUnitDTO, ContoBancarioDTO, MetodoPagamentoDTO } from '../../core/models/anagrafica.models';
+import { BusinessUnitDTO, ContoBancarioDTO, MetodoPagamentoDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -71,10 +71,16 @@ export class MovimentoDetailComponent implements OnInit {
   fornitoreNome = signal<string | null>(null);
 
   metodiPagamento: MetodoPagamentoDTO[] = [];
+  private pianoConti: PianoContiCogeDTO[] = [];
 
   ngOnInit(): void {
     this.lookupService.getMetodiPagamento().subscribe(metodi => {
       this.metodiPagamento = metodi;
+      this.cdr.markForCheck();
+    });
+
+    this.lookupService.getPianoConti().subscribe(piano => {
+      this.pianoConti = piano;
       this.cdr.markForCheck();
     });
 
@@ -151,7 +157,7 @@ export class MovimentoDetailComponent implements OnInit {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      REGISTRATO: '#6B7280',
+      ATTIVO: '#6B7280',
       ANNULLATO: '#C62828',
       RICONCILIATO: '#2E7D32',
     };
@@ -160,10 +166,12 @@ export class MovimentoDetailComponent implements OnInit {
 
   fonteColor(fonte: string | null): string {
     const map: Record<string, string> = {
-      IMPORT_BILLY:   '#DD6B20',
-      IMPORT_BANCA:   '#3182CE',
-      IMPORT_ALVEARE: '#6B46C1',
-      IMPORT_FATTURA: '#38A169',
+      MANUALE:    '#6B7280',
+      IMPORT_CSV: '#3182CE',
+      STRIPE:     '#6772E5',
+      SATISPAY:   '#FF466C',
+      SHOPIFY:    '#95BF47',
+      BILLY:      '#DD6B20',
     };
     return fonte ? (map[fonte] ?? '#6B7280') : '#6B7280';
   }
@@ -182,5 +190,10 @@ export class MovimentoDetailComponent implements OnInit {
 
   metodoPagamentoNome(id: number): string {
     return this.metodiPagamento.find(m => m.id === id)?.descrizione ?? `Metodo#${id}`;
+  }
+
+  cogeNome(id: number): string {
+    const found = this.pianoConti.find(c => c.id === id);
+    return found ? `${found.nome} (${found.codice})` : `CoGe#${id}`;
   }
 }

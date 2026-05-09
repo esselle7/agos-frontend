@@ -1,0 +1,88 @@
+.plc {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.plc-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.plc-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.plc-skeleton-card {
+  padding: 16px;
+  min-height: 80px;
+}
+
+.plc-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  color: var(--danger);
+}
+
+.plc-card {
+  padding: 20px;
+
+  &__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-main);
+  }
+}
+
+.plc-table {
+  width: 100%;
+}
+
+.cell-right {
+  text-align: right !important;
+}
+
+.plc-total-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  padding: 12px 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--surface);
+  border-top: 2px solid var(--border);
+  margin-top: 4px;
+
+  & > * {
+    padding: 0 16px;
+  }
+}
+
+.plc-total-label {
+  color: var(--text-main);
+}
+
+.plc-total-val {
+  text-align: right;
+}
+
+.plc-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+.chart-wrap {
+  height: 280px;
+  position: relative;
+}

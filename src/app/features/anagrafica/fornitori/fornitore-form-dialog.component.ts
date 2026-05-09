@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   inject,
   signal,
   ChangeDetectionStrategy,
@@ -18,12 +19,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { forkJoin, of } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { FornitoriService } from '../../../core/services/fornitori.service';
-import { BuService } from '../../../core/services/bu.service';
-import { FornitoreDTO, CreateFornitoreRequest } from '../../../core/models/anagrafica.models';
-import { BusinessUnitDTO } from '../../../core/models/anagrafica.models';
+import { LookupService } from '../../../core/services/lookup.service';
+import { FornitoreDTO, CreateFornitoreRequest, PianoContiCogeDTO } from '../../../core/models/anagrafica.models';
 import { BuSelectorComponent } from '../../../shared/components/bu-selector/bu-selector.component';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 
@@ -43,21 +44,29 @@ export interface FornitoreFormDialogData {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatAutocompleteModule,
     BuSelectorComponent,
     SkeletonLoaderComponent,
   ],
   templateUrl: './fornitore-form-dialog.component.html',
 })
-export class FornitoreFormDialogComponent implements OnInit {
+export class FornitoreFormDialogComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(MatDialogRef<FornitoreFormDialogComponent>);
   private readonly data: FornitoreFormDialogData = inject(MAT_DIALOG_DATA);
   private readonly fornitoriService = inject(FornitoriService);
+  private readonly lookupService = inject(LookupService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroy$ = new Subject<void>();
 
   readonly isEdit = signal(false);
   readonly loadingForm = signal(false);
   readonly saving = signal(false);
+
+  // CoGe autocomplete state
+  filteredCoge = signal<PianoContiCogeDTO[]>([]);
+  readonly cogeSearch = new FormControl<string>('', { nonNullable: true });
+  private pianoContiAll: PianoContiCogeDTO[] = [];
 
   readonly form = new FormGroup({
     ragioneSociale: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(255)] }),
@@ -70,6 +79,28 @@ export class FornitoreFormDialogComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.lookupService.getPianoConti().subscribe(piano => {
+      this.pianoContiAll = piano;
+      this.filteredCoge.set(piano);
+      this.cdr.markForCheck();
+    });
+
+    this.cogeSearch.valueChanges.pipe(
+      debounceTime(150),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$),
+    ).subscribe(q => {
+      const search = q.toLowerCase().trim();
+      this.filteredCoge.set(
+        search
+          ? this.pianoContiAll.filter(c =>
+              c.nome.toLowerCase().includes(search) || c.codice.toLowerCase().includes(search)
+            )
+          : this.pianoContiAll
+      );
+      this.cdr.markForCheck();
+    });
+
     if (this.data.fornitoreId) {
       this.isEdit.set(true);
       this.loadingForm.set(true);
@@ -88,6 +119,22 @@ export class FornitoreFormDialogComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onCogeSelected(event: MatAutocompleteSelectedEvent): void {
+    const conto = event.option.value as PianoContiCogeDTO;
+    this.form.controls.cogeDefaultId.setValue(conto.id);
+    this.cogeSearch.setValue(`${conto.nome} (${conto.codice})`, { emitEvent: false });
+  }
+
+  clearCoge(): void {
+    this.form.controls.cogeDefaultId.setValue(null);
+    this.cogeSearch.setValue('');
+  }
+
   private patchForm(f: FornitoreDTO): void {
     this.form.patchValue({
       ragioneSociale: f.ragioneSociale,
@@ -98,6 +145,12 @@ export class FornitoreFormDialogComponent implements OnInit {
       cogeDefaultId:  f.cogeDefaultId,
       note:           f.note,
     });
+    if (f.cogeDefaultId != null) {
+      const found = this.pianoContiAll.find(c => c.id === f.cogeDefaultId);
+      if (found) {
+        this.cogeSearch.setValue(`${found.nome} (${found.codice})`, { emitEvent: false });
+      }
+    }
   }
 
   submit(): void {

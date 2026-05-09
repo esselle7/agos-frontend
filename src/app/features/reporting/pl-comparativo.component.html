@@ -1,0 +1,135 @@
+<div class="plc">
+
+  <!-- CONTROLS -->
+  <div class="plc-controls">
+    <agos-date-range-picker
+      [period]="selectedPeriod()"
+      (periodChange)="onPeriodChange($event)"
+    />
+    <button mat-raised-button color="primary" [disabled]="loading()" (click)="load()">
+      <mat-icon>refresh</mat-icon>
+      Aggiorna
+    </button>
+  </div>
+
+  <!-- LOADING -->
+  @if (loading()) {
+    <div class="plc-skeleton-grid">
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div class="card plc-skeleton-card">
+          <agos-skeleton-loader [rows]="3" />
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ERROR -->
+  @if (error(); as err) {
+    <div class="plc-error card">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ err }}</span>
+    </div>
+  }
+
+  @if (data(); as d) {
+
+    <!-- TABELLA COMPARATIVA -->
+    <div class="card plc-card">
+      <h3 class="plc-card__title">P&L Comparativo — tutte le Business Unit</h3>
+      <table mat-table [dataSource]="sortedRows()" class="plc-table">
+
+        <ng-container matColumnDef="bu">
+          <th mat-header-cell *matHeaderCellDef>Business Unit</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="badge-bu"
+              [style.background]="getBuColor(row.bu.id) + '22'"
+              [style.color]="getBuColor(row.bu.id)">
+              {{ row.bu.nome }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ricavi">
+          <th mat-header-cell *matHeaderCellDef class="cell-right">Ricavi</th>
+          <td mat-cell *matCellDef="let row" class="cell-right text-success euro">
+            {{ row.ricavi | euro }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="costi">
+          <th mat-header-cell *matHeaderCellDef class="cell-right">Costi</th>
+          <td mat-cell *matCellDef="let row" class="cell-right text-danger euro">
+            {{ row.costi | euro }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ebitda">
+          <th mat-header-cell *matHeaderCellDef class="cell-right">EBITDA</th>
+          <td mat-cell *matCellDef="let row" class="cell-right euro"
+            [class.text-success]="row.ebitda >= 0"
+            [class.text-danger]="row.ebitda < 0">
+            {{ row.ebitda | euro }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="marginePct">
+          <th mat-header-cell *matHeaderCellDef class="cell-right">Margine %</th>
+          <td mat-cell *matCellDef="let row" class="cell-right"
+            [class.text-success]="row.marginePct >= 0"
+            [class.text-danger]="row.marginePct < 0">
+            {{ row.marginePct.toFixed(1) }}%
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="tableColumns"></tr>
+        <tr mat-row *matRowDef="let r; columns: tableColumns"></tr>
+      </table>
+
+      <!-- RIGA TOTALE -->
+      <div class="plc-total-row">
+        <span class="plc-total-label">Totale Consolidato</span>
+        <span class="plc-total-val text-success euro">{{ d.totaleConsolidato.ricavi | euro }}</span>
+        <span class="plc-total-val text-danger euro">{{ d.totaleConsolidato.costi | euro }}</span>
+        <span class="plc-total-val euro"
+          [class.text-success]="d.totaleConsolidato.ebitda >= 0"
+          [class.text-danger]="d.totaleConsolidato.ebitda < 0">
+          {{ d.totaleConsolidato.ebitda | euro }}
+        </span>
+        <span class="plc-total-val"
+          [class.text-success]="d.totaleConsolidato.marginePct >= 0"
+          [class.text-danger]="d.totaleConsolidato.marginePct < 0">
+          {{ d.totaleConsolidato.marginePct.toFixed(1) }}%
+        </span>
+      </div>
+    </div>
+
+    <!-- GRAFICI -->
+    <div class="plc-charts-grid">
+
+      <div class="card plc-card">
+        <h3 class="plc-card__title">Ricavi vs Costi per Business Unit</h3>
+        <div class="chart-wrap">
+          <canvas baseChart
+            [data]="barChartData()"
+            [options]="barChartOptions"
+            type="bar">
+          </canvas>
+        </div>
+      </div>
+
+      <div class="card plc-card">
+        <h3 class="plc-card__title">Margine % per Business Unit</h3>
+        <div class="chart-wrap">
+          <canvas baseChart
+            [data]="margineChartData()"
+            [options]="margineChartOptions"
+            type="bar">
+          </canvas>
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+</div>

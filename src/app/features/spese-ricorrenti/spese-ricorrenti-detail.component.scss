@@ -1,0 +1,327 @@
+.srd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+}
+
+.srd-back { margin-left: -8px; color: var(--text-sub); }
+.srd-spinner { display: flex; justify-content: center; padding: 40px; }
+.srd-error   { color: var(--error); text-align: center; }
+
+// ── Header
+.srd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  h2 { margin: 0 0 8px; font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+
+  &__meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    font-size: 0.8rem; color: var(--text-sub);
+  }
+
+  &__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+}
+
+.srd-meta-item { display: flex; align-items: center; gap: 4px; }
+
+// ── KPI row
+.srd-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.srd-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &__label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--text-sub); }
+  &__value { font-size: 1.1rem; font-weight: 700; color: var(--text-main);
+    &--paid    { color: #2e7d32; }
+    &--residuo { color: #e65100; }
+  }
+  &__progress { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
+  &__bar  { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  &__fill { height: 100%; background: var(--primary); border-radius: 999px; }
+}
+
+// ── Saldo conto bancario
+.srd-saldo {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 18px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  background: var(--surface);
+  transition: border-color .2s;
+
+  &--ok     { border-left-color: #2e7d32; }
+  &--warn   { border-left-color: #e65100; }
+  &--danger { border-left-color: #c62828; }
+
+  // ── left: banca
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  &__bank-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: var(--text-sub);
+  }
+
+  &__bank-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__bank-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  &__bank-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-sub);
+  }
+
+  // ── center: importo + barra
+  &__center {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__amount {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    line-height: 1;
+
+    .srd-saldo--ok &     { color: #2e7d32; }
+    .srd-saldo--warn &   { color: #e65100; }
+    .srd-saldo--danger & { color: #c62828; }
+  }
+
+  &__bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  &__bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width .4s ease;
+
+    .srd-saldo--ok &     { background: #2e7d32; }
+    .srd-saldo--warn &   { background: #e65100; }
+    .srd-saldo--danger & { background: #c62828; }
+  }
+
+  &__bar-pct {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  // ── right: status badge
+  &__right { flex-shrink: 0; }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    &--ok {
+      background: rgba(46,125,50,.1);
+      color: #2e7d32;
+    }
+
+    &--warn {
+      background: rgba(230,81,0,.1);
+      color: #e65100;
+    }
+
+    &--danger {
+      background: rgba(198,40,40,.1);
+      color: #c62828;
+    }
+  }
+
+  &__status-sub {
+    font-size: 0.72rem;
+    font-weight: 400;
+    opacity: .85;
+  }
+}
+
+// ── Table
+.srd-table-wrap { overflow-x: auto; }
+
+.srd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text-sub);
+  }
+
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+  tr:last-child td { border-bottom: none; }
+}
+
+.srd-row {
+  &--past    { opacity: .55; background: var(--surface-dim, #f7f7f7); }
+  &--skipped { opacity: .65; text-decoration: line-through; }
+}
+
+.srd-td--num    { width: 40px; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-sub); }
+.srd-td--amount { font-variant-numeric: tabular-nums; font-weight: 600; }
+.srd-td--note   { color: var(--text-sub); font-size: 0.8rem; max-width: 180px; }
+.srd-td--actions { width: 140px; white-space: nowrap; }
+
+// ── Inline input
+.srd-input-inline {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  width: 100%;
+  background: var(--surface);
+  color: var(--text-main);
+  &--sm { max-width: 100px; }
+  &:focus { outline: none; border-color: var(--primary); }
+}
+
+.srd-icon--link { font-size: 14px; width: 14px; height: 14px; vertical-align: middle; color: var(--primary); margin-left: 4px; }
+
+// ── Modal overlay
+.srd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.3);
+  z-index: 100;
+}
+
+.srd-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 28px;
+  width: min(480px, 90vw);
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+  .text-sub { margin: 0; font-size: 0.875rem; color: var(--text-sub); }
+
+  &--warn h3 { color: var(--error, #c62828); }
+
+  &__actions { display: flex; justify-content: flex-end; gap: 8px; }
+}
+
+.srd-field { width: 100%; }
+
+.srd-saldo-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--text-sub);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,.04);
+
+  &--warn {
+    background: rgba(198,40,40,.08);
+    color: #c62828;
+  }
+}
+
+.srd-saldo-warn { font-weight: 600; }
+
+.srd-error-inline {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--error, #c62828);
+  background: rgba(198,40,40,.08);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+// ── Badges
+.badge {
+  font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+  &--orange { background: rgba(230,81,0,.12); color: #e65100; }
+  &--green  { background: rgba(46,125,50,.12); color: #2e7d32; }
+  &--red    { background: rgba(198,40,40,.12); color: #c62828; }
+  &--gray   { background: rgba(0,0,0,.08);     color: #555; }
+  &--blue   { background: rgba(21,101,192,.12); color: #1565c0; }
+}
+
+.icon-xs { font-size: 14px; width: 14px; height: 14px; }

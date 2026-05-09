@@ -1,0 +1,197 @@
+<h2 mat-dialog-title class="src-dialog-title">
+  <mat-icon class="src-dialog-title__icon">repeat</mat-icon>
+  Nuovo piano di spesa ricorrente
+</h2>
+
+<mat-dialog-content class="src-content">
+
+  @if (loadingLookup()) {
+    <div class="src-spinner"><mat-spinner diameter="36" /></div>
+  } @else {
+
+    <form [formGroup]="form" class="src-form">
+
+      <!-- ── Descrizione ── -->
+      <mat-form-field appearance="outline" class="src-field src-field--full">
+        <mat-label>Nome del piano</mat-label>
+        <input matInput formControlName="descrizione" placeholder="Es. Mutuo ipotecario BPM, Leasing auto, Abbonamento..." />
+        <mat-icon matPrefix class="src-field-icon">label</mat-icon>
+        @if (form.get('descrizione')?.hasError('required') && form.get('descrizione')?.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- ── Sezione: Conti ── -->
+      <div class="src-section src-field--full">
+        <mat-icon>account_balance</mat-icon>
+        <span>Conti</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="src-field">
+        <mat-label>Conto bancario</mat-label>
+        <mat-select formControlName="contoBancarioId">
+          @for (c of contiBancari(); track c.id) {
+            <mat-option [value]="c.id">{{ c.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.get('contoBancarioId')?.hasError('required') && form.get('contoBancarioId')?.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="src-field">
+        <mat-label>Conto COGE (Passività)</mat-label>
+        <mat-select formControlName="contoCoge">
+          @for (c of contiCoge(); track c.id) {
+            <mat-option [value]="c.id">{{ c.codice }} – {{ c.descrizione }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Solo conti del ramo 20 – Passività e debiti</mat-hint>
+        @if (form.get('contoCoge')?.hasError('required') && form.get('contoCoge')?.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- ── Sezione: Importo ── -->
+      <div class="src-section src-field--full">
+        <mat-icon>euro</mat-icon>
+        <span>Importo</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="src-field">
+        <mat-label>Importo rata</mat-label>
+        <input matInput type="number" formControlName="importoRata" min="0.01" step="0.01" placeholder="0,00" />
+        <span matTextPrefix>€&nbsp;</span>
+        @if (form.get('importoRata')?.hasError('required') && form.get('importoRata')?.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+        @if (form.get('importoRata')?.hasError('min')) {
+          <mat-error>Importo minimo €0,01</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="src-field"
+                      matTooltip="0 = importo fisso. Positivo = aumenta ogni rata, negativo = diminuisce">
+        <mat-label>Variazione per rata</mat-label>
+        <input matInput type="number" formControlName="variazionePct" step="0.001" placeholder="0" />
+        <span matTextSuffix>&nbsp;%</span>
+        <mat-hint>0 = fisso &nbsp;·&nbsp; es. 1 = +1% per rata</mat-hint>
+      </mat-form-field>
+
+      <!-- ── Sezione: Scadenza ── -->
+      <div class="src-section src-field--full">
+        <mat-icon>event_repeat</mat-icon>
+        <span>Scadenza</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="src-field">
+        <mat-label>Giorno del mese</mat-label>
+        <input matInput type="number" formControlName="giornoDelMese" min="1" max="28" placeholder="Es. 20" />
+        <mat-hint>Pagamento ogni giorno X del mese (1–28)</mat-hint>
+        @if (form.get('giornoDelMese')?.hasError('required') && form.get('giornoDelMese')?.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+        @if (form.get('giornoDelMese')?.hasError('min') || form.get('giornoDelMese')?.hasError('max')) {
+          <mat-error>Valore tra 1 e 28</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="src-freq-group src-field">
+        <label class="src-freq-label">Frequenza</label>
+        <div class="src-freq-pills">
+          @for (f of frequenzaOptions; track f.value) {
+            <button type="button" class="src-freq-pill"
+                    [class.src-freq-pill--active]="form.get('frequenza')?.value === f.value"
+                    (click)="form.get('frequenza')?.setValue(f.value)">
+              <span class="src-freq-pill__label">{{ f.label }}</span>
+              <span class="src-freq-pill__sub">{{ f.sub }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- ── Sezione: Piano ── -->
+      <div class="src-section src-field--full">
+        <mat-icon>calendar_month</mat-icon>
+        <span>Durata e inizio</span>
+      </div>
+
+      <mat-form-field appearance="outline" class="src-field">
+        <mat-label>Numero di rate</mat-label>
+        <input matInput type="number" formControlName="numeroRate" min="1" placeholder="Es. 12, 60, 240" />
+        <mat-hint>Es. 240 = mutuo 20 anni mensile</mat-hint>
+        @if (form.get('numeroRate')?.hasError('required') && form.get('numeroRate')?.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <!-- Mese e anno di inizio -->
+      <div class="src-month-picker src-field">
+        <label class="src-freq-label">Mese di inizio</label>
+        <div class="src-month-picker__row">
+          <mat-form-field appearance="outline" class="src-month-picker__mese">
+            <mat-label>Mese</mat-label>
+            <mat-select formControlName="meseInizio">
+              @for (m of mesi; track m.v) {
+                <mat-option [value]="m.v">{{ m.l }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="src-month-picker__anno">
+            <mat-label>Anno</mat-label>
+            <mat-select formControlName="annoInizio">
+              @for (a of anni; track a) {
+                <mat-option [value]="a">{{ a }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <span class="src-month-hint">Il piano partirà dal giorno {{ form.get('giornoDelMese')?.value || '?' }} del mese selezionato</span>
+      </div>
+
+      <!-- ── Preview ── -->
+      @if (preview(); as p) {
+        <div class="src-preview src-field--full">
+          <div class="src-preview__item">
+            <span class="src-preview__label">Prima rata</span>
+            <span class="src-preview__value">{{ p.primaRata }}</span>
+          </div>
+          <div class="src-preview__divider"></div>
+          <div class="src-preview__item">
+            <span class="src-preview__label">Ultima rata</span>
+            <span class="src-preview__value">{{ p.ultimaRata }}</span>
+          </div>
+          <div class="src-preview__divider"></div>
+          <div class="src-preview__item">
+            <span class="src-preview__label">Totale piano</span>
+            <span class="src-preview__value src-preview__value--total">
+              {{ p.variabile ? '~' : '' }}{{ p.totale }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- ── Note ── -->
+      <mat-form-field appearance="outline" class="src-field src-field--full">
+        <mat-label>Note (opzionale)</mat-label>
+        <textarea matInput formControlName="note" rows="2" placeholder="Riferimento contratto, informazioni aggiuntive..."></textarea>
+        <mat-icon matPrefix class="src-field-icon">notes</mat-icon>
+      </mat-form-field>
+
+    </form>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="src-actions">
+  <button mat-button (click)="close()" [disabled]="saving()">Annulla</button>
+  <button mat-flat-button color="primary" (click)="submit()"
+          [disabled]="saving() || loadingLookup()" class="src-submit-btn">
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>check</mat-icon>
+    }
+    Crea piano
+  </button>
+</mat-dialog-actions>

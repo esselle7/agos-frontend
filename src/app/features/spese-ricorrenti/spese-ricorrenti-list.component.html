@@ -1,0 +1,67 @@
+<div class="sr-page">
+
+  <div class="sr-header">
+    <div>
+      <h2>Spese Ricorrenti</h2>
+      <p class="text-sub">Piani di pagamento: mutui, rate, addebiti periodici</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openCreate()">
+      <mat-icon>add</mat-icon> Nuovo piano
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="sr-spinner"><mat-spinner diameter="40" /></div>
+  } @else if (error()) {
+    <p class="sr-error">{{ error() }}</p>
+  } @else if (plans().length === 0) {
+    <div class="sr-empty">
+      <mat-icon class="sr-empty__icon">repeat</mat-icon>
+      <p>Nessun piano di spesa ricorrente</p>
+      <button mat-stroked-button (click)="openCreate()">Crea il primo</button>
+    </div>
+  } @else {
+    <div class="sr-grid">
+      @for (plan of plans(); track plan.id) {
+        <div class="sr-card" [class.sr-card--inactive]="plan.stato !== 'ATTIVO'" (click)="goToDetail(plan.id)">
+
+          <div class="sr-card__header">
+            <span class="sr-card__title">{{ plan.descrizione }}</span>
+            <span class="badge" [class]="statoClass(plan.stato)">{{ plan.stato }}</span>
+          </div>
+
+          <div class="sr-card__meta">
+            <span><mat-icon class="icon-xs">account_balance</mat-icon> {{ plan.contoBancarioNome }}</span>
+            <span><mat-icon class="icon-xs">category</mat-icon> {{ plan.contoCogeDescrizione }}</span>
+            <span><mat-icon class="icon-xs">event_repeat</mat-icon> {{ frequenzaLabel(plan.frequenza) }} – giorno {{ plan.giornoDelMese }}</span>
+          </div>
+
+          <div class="sr-card__amounts">
+            <div class="sr-card__amount">
+              <span class="sr-card__amount-label">Rata base</span>
+              <span class="sr-card__amount-value">{{ plan.importoRata | euro }}</span>
+            </div>
+            <div class="sr-card__amount">
+              <span class="sr-card__amount-label">Pagato</span>
+              <span class="sr-card__amount-value sr-card__amount-value--paid">{{ plan.totalePagato | euro }}</span>
+            </div>
+            <div class="sr-card__amount">
+              <span class="sr-card__amount-label">Residuo</span>
+              <span class="sr-card__amount-value sr-card__amount-value--residuo">{{ plan.totaleResiduo | euro }}</span>
+            </div>
+          </div>
+
+          <!-- progress bar rate -->
+          <div class="sr-card__progress">
+            <div class="sr-card__progress-bar">
+              <div class="sr-card__progress-fill" [style.width.%]="progressPct(plan)"></div>
+            </div>
+            <span class="sr-card__progress-label">{{ plan.ratePaid }}/{{ plan.numeroRate }} rate pagate</span>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

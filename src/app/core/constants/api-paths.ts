@@ -31,6 +31,16 @@ export const API_PATHS = {
     ULTIME_TRANSAZIONI: '/api/dashboard/ultime-transazioni',
     SCADENZE_IMMINENTI: '/api/dashboard/scadenze-imminenti',
   },
+  SPESE_RICORRENTI: {
+    PIANI:          '/api/spese-ricorrenti/piani',
+    PIANO:          (id: string) => `/api/spese-ricorrenti/piani/${id}`,
+    LIQUIDA:        (id: string) => `/api/spese-ricorrenti/piani/${id}/liquida`,
+    ANNULLA:        (id: string) => `/api/spese-ricorrenti/piani/${id}/annulla`,
+    UPDATE_RATA:    (pianoId: string, rataId: string) => `/api/spese-ricorrenti/piani/${pianoId}/rate/${rataId}`,
+    SKIP_RATA:      (pianoId: string, rataId: string) => `/api/spese-ricorrenti/piani/${pianoId}/rate/${rataId}/skip`,
+    PAGA_RATA:      (pianoId: string, rataId: string) => `/api/spese-ricorrenti/piani/${pianoId}/rate/${rataId}/paga`,
+    CONTI_COGE:     '/api/spese-ricorrenti/conti-coge',
+  },
   REPORTING: {
     PL:                    '/api/reporting/pl',
     PL_STATUS:             '/api/reporting/pl/status',

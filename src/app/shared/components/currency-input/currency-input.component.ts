@@ -97,8 +97,7 @@ export class CurrencyInputComponent implements ControlValueAccessor {
   }
 
   private parseItalian(raw: string): number {
-    // Remove thousand separators (dots) and replace comma decimal with period
-    const normalized = raw.replace(/\./g, '').replace(',', '.');
+    const normalized = raw.replace(/\./g, '').replace(/,/g, '.');
     return parseFloat(normalized);
   }
 }

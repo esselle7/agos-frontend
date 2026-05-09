@@ -6,7 +6,7 @@ import {
   DashboardKpiDTO,
   DashboardPeriod,
   FatturatoPerBuDTO,
-  ScadenzaDTO,
+  ScadenzeImminentiDTO,
 } from '../models/dashboard.models';
 import { MovimentoDTOShared } from '../models/shared.models';
 import { CacheService } from './cache.service';
@@ -68,14 +68,16 @@ export class DashboardService {
     );
   }
 
-  getScadenzeImminenti(giorni = 30): Observable<ScadenzaDTO[]> {
-    const key = `dashboard:scadenze:${giorni}`;
-    const cached = this.cache.get<ScadenzaDTO[]>(key);
+  getScadenzeImminenti(period: DashboardPeriod, from?: string, to?: string): Observable<ScadenzeImminentiDTO> {
+    const key = `dashboard:scadenze:${period}:${from ?? ''}:${to ?? ''}`;
+    const cached = this.cache.get<ScadenzeImminentiDTO>(key);
     if (cached) return of(cached);
 
-    const params = new HttpParams().set('giorni', giorni);
+    let params = new HttpParams().set('period', period);
+    if (from != null) params = params.set('from', from);
+    if (to != null) params = params.set('to', to);
     return this.http
-      .get<ScadenzaDTO[]>(environment.apiBaseUrl + API_PATHS.DASHBOARD.SCADENZE_IMMINENTI, { params })
+      .get<ScadenzeImminentiDTO>(environment.apiBaseUrl + API_PATHS.DASHBOARD.SCADENZE_IMMINENTI, { params })
       .pipe(tap(data => this.cache.set(key, data, SCADENZE_TTL_MS)));
   }
 }
