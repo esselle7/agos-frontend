@@ -8,3 +8,4 @@ export * from './cassa.service';
 export * from './eventi.service';
 export * from './dashboard.service';
 export * from './reporting.service';
+export * from './personale.service';

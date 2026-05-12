@@ -1,0 +1,165 @@
+<div class="personale">
+
+  <!-- Header -->
+  <div class="personale__header">
+    <div class="personale__title">
+      <h2>Personale</h2>
+      @if (result()?.totalElements != null) {
+        <span class="text-sub">{{ result()!.totalElements }} dipendenti</span>
+      }
+    </div>
+    <button mat-flat-button color="primary" (click)="openCreate()">
+      <mat-icon>person_add</mat-icon>
+      Nuovo Dipendente
+    </button>
+  </div>
+
+  <!-- Summary cards -->
+  @if (summary()) {
+    <div class="personale__summary">
+      <div class="summary-card card">
+        <div class="summary-card__label">Dipendenti attivi</div>
+        <div class="summary-card__value">{{ summary()!.totaleAttivi }}</div>
+      </div>
+      <div class="summary-card card">
+        <div class="summary-card__label">Costo mensile complessivo</div>
+        <div class="summary-card__value">
+          {{ summary()!.costoMensileComplessivo | number:'1.0-0' }} €
+        </div>
+      </div>
+      @for (bu of summary()!.perBu; track bu.businessUnitId) {
+        <div class="summary-card card">
+          <div class="summary-card__label">{{ bu.businessUnitNome ?? 'N/D' }}</div>
+          <div class="summary-card__value">{{ bu.costoMensile | number:'1.0-0' }} €</div>
+          <div class="summary-card__sub">{{ bu.count }} persone</div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Filters -->
+  <div class="personale__filters card">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-search">
+      <mat-label>Cerca per nome, cognome o mansione</mat-label>
+      <input matInput [formControl]="searchControl" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-bu">
+      <mat-label>Business Unit</mat-label>
+      <mat-select [formControl]="buControl">
+        <mat-option [value]="null">Tutte</mat-option>
+        @for (bu of buList(); track bu.id) {
+          <mat-option [value]="bu.id">{{ bu.nome }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-mansione">
+      <mat-label>Mansione</mat-label>
+      <mat-select [formControl]="mansioneControl">
+        <mat-option [value]="null">Tutte</mat-option>
+        @for (m of mansioni(); track m) {
+          <mat-option [value]="m">{{ m }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-slide-toggle [formControl]="activeOnlyControl" class="filter-active">
+      Solo attivi
+    </mat-slide-toggle>
+  </div>
+
+  <!-- Table -->
+  <div class="personale__table-wrapper card">
+
+    @if (loading()) {
+      <agos-skeleton-loader type="table" [rows]="8" />
+    } @else if (result()?.content?.length === 0) {
+      <agos-empty-state
+        icon="people"
+        title="Nessun dipendente"
+        subtitle="Aggiungi il primo dipendente tramite il pulsante in alto"
+        actionLabel="Nuovo Dipendente"
+        (action)="openCreate()"
+      />
+    } @else {
+      <div class="table-scroll">
+        <table mat-table [dataSource]="result()?.content ?? []" class="personale__table">
+
+          <!-- Nome/Cognome -->
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Dipendente</th>
+            <td mat-cell *matCellDef="let row" class="cell-primary">
+              {{ row.cognome }} {{ row.nome }}
+            </td>
+          </ng-container>
+
+          <!-- Mansione -->
+          <ng-container matColumnDef="mansione">
+            <th mat-header-cell *matHeaderCellDef>Mansione</th>
+            <td mat-cell *matCellDef="let row">{{ row.mansione ?? '—' }}</td>
+          </ng-container>
+
+          <!-- Business Unit -->
+          <ng-container matColumnDef="bu">
+            <th mat-header-cell *matHeaderCellDef>Business Unit</th>
+            <td mat-cell *matCellDef="let row">
+              @if (row.businessUnitId) {
+                <agos-badge [text]="buNome(row.businessUnitId)" [color]="buColore(row.businessUnitId)" />
+              } @else {
+                <span>—</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Costo mensile -->
+          <ng-container matColumnDef="costo">
+            <th mat-header-cell *matHeaderCellDef class="cell-right">Costo mensile</th>
+            <td mat-cell *matCellDef="let row" class="cell-right">
+              @if (row.costoAziendaleMensile != null) {
+                {{ row.costoAziendaleMensile | number:'1.0-0' }} €
+              } @else {
+                —
+              }
+            </td>
+          </ng-container>
+
+          <!-- Stato -->
+          <ng-container matColumnDef="stato">
+            <th mat-header-cell *matHeaderCellDef>Stato</th>
+            <td mat-cell *matCellDef="let row">
+              <agos-badge
+                [text]="row.isActive ? 'Attivo' : 'Inattivo'"
+                [color]="row.isActive ? '#16a34a' : '#6B7280'"
+              />
+            </td>
+          </ng-container>
+
+          <!-- Azioni -->
+          <ng-container matColumnDef="azioni">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row" class="cell-actions">
+              <button mat-icon-button matTooltip="Modifica" (click)="openEdit(row, $event)">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="result()?.totalElements ?? 0"
+        [pageSize]="20"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
+    }
+  </div>
+
+</div>

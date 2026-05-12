@@ -1,3 +1,8 @@
+export interface TipoEventoDTO {
+  codice: string;
+  descrizione: string;
+}
+
 export interface BusinessUnitDTO {
   id: number;
   codice: string;

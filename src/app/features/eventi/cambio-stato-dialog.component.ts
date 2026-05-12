@@ -29,13 +29,11 @@ export interface CambioStatoDialogData {
 
 const TITOLI: Partial<Record<StatoEvento, string>> = {
   CONFERMATO: 'Conferma Prenotazione',
-  COMPLETATO: 'Segna come Completato',
   ANNULLATO:  'Annulla Evento',
 };
 
 const MESSAGGI: Partial<Record<StatoEvento, string>> = {
   CONFERMATO: 'Confermare la prenotazione? L\'evento diventerà operativo e sarà possibile aggiungere pagamenti.',
-  COMPLETATO: 'Segnare l\'evento come completato? L\'azione non è reversibile.',
   ANNULLATO:  'Sei sicuro di voler annullare questo evento?',
 };
 
@@ -63,7 +61,7 @@ export class CambioStatoDialogComponent implements OnInit {
 
   saving = signal(false);
 
-  readonly noteAnnullamento = new FormControl<string>('', { nonNullable: true });
+  readonly motivazioneAnnullamento = new FormControl<string>('', { nonNullable: true });
 
   get isAnnullamento(): boolean {
     return this.data.nuovoStato === 'ANNULLATO';
@@ -79,21 +77,21 @@ export class CambioStatoDialogComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.isAnnullamento) {
-      this.noteAnnullamento.setValidators([Validators.required, Validators.minLength(5)]);
-      this.noteAnnullamento.updateValueAndValidity();
+      this.motivazioneAnnullamento.setValidators([Validators.required, Validators.minLength(5)]);
+      this.motivazioneAnnullamento.updateValueAndValidity();
     }
   }
 
   confirm(): void {
-    if (this.isAnnullamento && this.noteAnnullamento.invalid) {
-      this.noteAnnullamento.markAsTouched();
+    if (this.isAnnullamento && this.motivazioneAnnullamento.invalid) {
+      this.motivazioneAnnullamento.markAsTouched();
       return;
     }
 
     this.saving.set(true);
-    const body: { stato: StatoEvento; noteAnnullamento?: string } = { stato: this.data.nuovoStato };
+    const body: { stato: StatoEvento; motivazioneAnnullamento?: string } = { stato: this.data.nuovoStato };
     if (this.isAnnullamento) {
-      body.noteAnnullamento = this.noteAnnullamento.value;
+      body.motivazioneAnnullamento = this.motivazioneAnnullamento.value;
     }
 
     this.eventiService.update(this.data.eventoId, body).subscribe({

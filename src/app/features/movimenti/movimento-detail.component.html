@@ -70,14 +70,16 @@
           <span class="mov-detail__field-label">Business Unit</span>
           <agos-badge [text]="buNome(mov.businessUnitId)" [color]="buColore(mov.businessUnitId)"></agos-badge>
         </div>
-        <div class="mov-detail__field">
-          <span class="mov-detail__field-label">Conto bancario</span>
-          <span class="mov-detail__field-value">{{ contoNome(mov.contoBancarioId) }}</span>
-        </div>
-        <div class="mov-detail__field">
-          <span class="mov-detail__field-label">Metodo di pagamento</span>
-          <span class="mov-detail__field-value">{{ metodoPagamentoNome(mov.metodoPagamentoId) }}</span>
-        </div>
+        @if (mov.dataFinanziaria) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Conto bancario</span>
+            <span class="mov-detail__field-value">{{ contoNome(mov.contoBancarioId) }}</span>
+          </div>
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Metodo di pagamento</span>
+            <span class="mov-detail__field-value">{{ metodoPagamentoNome(mov.metodoPagamentoId) }}</span>
+          </div>
+        }
         <div class="mov-detail__field">
           <span class="mov-detail__field-label">Conto CoGe</span>
           <span class="mov-detail__field-value">{{ cogeNome(mov.contoCoge) }}</span>

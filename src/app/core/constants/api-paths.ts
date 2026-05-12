@@ -13,6 +13,16 @@ export const API_PATHS = {
   PIANO_DEI_CONTI: '/api/piano-dei-conti',
   METODI_PAGAMENTO:'/api/metodi-pagamento',
   ALIQUOTE_IVA:    '/api/aliquote-iva',
+  LOOKUP: {
+    TIPI_EVENTO:    '/api/lookup/tipi-evento',
+    CENTRI_DI_COSTO: '/api/lookup/centri-di-costo',
+  },
+  PERSONALE: {
+    BASE:          '/api/personale',
+    COSTO_SUMMARY: '/api/personale/costo-summary',
+    MANSIONI:      '/api/personale/mansioni',
+    BY_ID:         (id: string) => `/api/personale/${id}`,
+  },
   CASSA: {
     SALDO:     '/api/cassa/saldo',
     MOVIMENTI: '/api/cassa/movimenti',

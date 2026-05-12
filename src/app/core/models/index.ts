@@ -5,4 +5,5 @@ export * from './cassa.models';
 export * from './eventi.models';
 export * from './dashboard.models';
 export * from './reporting.models';
+export * from './personale.models';
 export * from './shared.models';

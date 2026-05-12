@@ -17,10 +17,10 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
 const STATO_COLORS: Record<StatoEvento, string> = {
-  PREVENTIVO: '#FFA500',
-  CONFERMATO: '#2196F3',
-  COMPLETATO: '#4CAF50',
-  ANNULLATO:  '#9E9E9E',
+  PREVENTIVATO: '#FFA500',
+  CONFERMATO:   '#2196F3',
+  SALDATO:      '#4CAF50',
+  ANNULLATO:    '#9E9E9E',
 };
 
 @Component({

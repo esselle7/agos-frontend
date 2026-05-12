@@ -8,14 +8,14 @@
       <mat-label>Motivo annullamento *</mat-label>
       <textarea
         matInput
-        [formControl]="noteAnnullamento"
+        [formControl]="motivazioneAnnullamento"
         rows="3"
         placeholder="Specificare il motivo dell'annullamento…"
       ></textarea>
-      @if (noteAnnullamento.hasError('required') && noteAnnullamento.touched) {
+      @if (motivazioneAnnullamento.hasError('required') && motivazioneAnnullamento.touched) {
         <mat-error>Il motivo è obbligatorio per l'annullamento</mat-error>
       }
-      @if (noteAnnullamento.hasError('minlength') && noteAnnullamento.touched) {
+      @if (motivazioneAnnullamento.hasError('minlength') && motivazioneAnnullamento.touched) {
         <mat-error>Inserire almeno 5 caratteri</mat-error>
       }
     </mat-form-field>

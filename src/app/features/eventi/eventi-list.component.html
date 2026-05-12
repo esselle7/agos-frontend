@@ -98,10 +98,10 @@
                 </span>
               </div>
 
-              @if (evento.nOspiti) {
+              @if (evento.numeroTotalePartecipanti) {
                 <div class="info-row">
                   <mat-icon class="info-icon">group</mat-icon>
-                  <span>{{ evento.nOspiti }} ospiti</span>
+                  <span>{{ evento.numeroTotalePartecipanti }} partecipanti</span>
                 </div>
               }
 
@@ -124,7 +124,7 @@
                 </span>
                 <span
                   class="residuo-label"
-                  [style.color]="evento.importoResiduo > 0 ? '#FFA500' : '#4CAF50'"
+                  [style.color]="(evento.importoResiduo ?? 0) > 0 ? '#FFA500' : '#4CAF50'"
                 >
                   Residuo: <strong>{{ evento.importoResiduo | euro }}</strong>
                 </span>
@@ -132,7 +132,7 @@
               <mat-progress-bar
                 mode="determinate"
                 [value]="evento.percentualeIncassata"
-                [style.--mdc-linear-progress-active-indicator-color]="progressColor(evento.percentualeIncassata)"
+                [style.--mdc-linear-progress-active-indicator-color]="progressColor(evento.percentualeIncassata ?? 0)"
               />
             </div>
 

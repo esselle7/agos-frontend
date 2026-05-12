@@ -114,8 +114,8 @@
                     {{ ev.importoIncassato | euro }}
                   </td>
                   <td class="col-amount euro"
-                      [class.text-warning]="ev.importoResiduo > 0"
-                      [class.text-success]="ev.importoResiduo === 0">
+                      [class.text-warning]="(ev.importoResiduo ?? 0) > 0"
+                      [class.text-success]="(ev.importoResiduo ?? 0) === 0">
                     {{ ev.importoResiduo | euro }}
                   </td>
                 </tr>

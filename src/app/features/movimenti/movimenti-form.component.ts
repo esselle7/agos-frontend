@@ -263,7 +263,14 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     this.form.controls.importo.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(v => { this._importo.set(v); this.cdr.markForCheck(); });
     this.form.controls.tipo.valueChanges.pipe(takeUntil(this.destroy$))
-      .subscribe(v => { this._tipo.set(v); this.cdr.markForCheck(); });
+      .subscribe(v => {
+        this._tipo.set(v);
+        if (v === 'ENTRATA' && this.showEventoSection) {
+          this.showEventoSection = false;
+          this.clearEvento();
+        }
+        this.cdr.markForCheck();
+      });
     this.form.controls.dataLiquidita.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe(v => { this._dataLiquidita.set(v); this.cdr.markForCheck(); });
 
@@ -561,6 +568,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   clearEvento(): void {
     this.eventoSearch.setValue('');
     this.form.controls.eventoId.setValue(null);
+    this.form.controls.tipoEventoMovimento.setValue(null);
   }
 
   onCogeSelected(event: MatAutocompleteSelectedEvent): void {

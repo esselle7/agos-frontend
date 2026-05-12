@@ -1,0 +1,80 @@
+<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Dipendente' : 'Nuovo Dipendente' }}</h2>
+
+<mat-dialog-content>
+  @if (loadingForm()) {
+    <agos-skeleton-loader type="text" [rows]="5" />
+  } @else {
+    <form [formGroup]="form" class="personale-form">
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Nome *</mat-label>
+          <input matInput formControlName="nome" />
+          @if (form.controls.nome.hasError('required')) {
+            <mat-error>Nome obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Cognome *</mat-label>
+          <input matInput formControlName="cognome" />
+          @if (form.controls.cognome.hasError('required')) {
+            <mat-error>Cognome obbligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Mansione</mat-label>
+        <input matInput formControlName="mansione" placeholder="es. Chef, Cameriere, Giardiniere..." />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Business Unit</mat-label>
+        <mat-select formControlName="businessUnitId">
+          <mat-option [value]="null">— Nessuna —</mat-option>
+          @for (bu of buList(); track bu.id) {
+            <mat-option [value]="bu.id">{{ bu.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Centro di costo</mat-label>
+        <mat-select formControlName="centroDiCostoId">
+          <mat-option [value]="null">— Nessuno —</mat-option>
+          @for (cdc of cdcFiltered(); track cdc.id) {
+            <mat-option [value]="cdc.id">{{ cdc.codice }} – {{ cdc.descrizione }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Costo aziendale mensile (€)</mat-label>
+        <input matInput type="number" formControlName="costoAziendaleMensile" min="0" step="0.01" />
+        <span matTextSuffix>€ / mese</span>
+      </mat-form-field>
+
+      <mat-slide-toggle formControlName="isActive">
+        Dipendente attivo
+      </mat-slide-toggle>
+
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="saving() || loadingForm()"
+  >
+    @if (saving()) {
+      <mat-progress-spinner diameter="18" mode="indeterminate" />
+    } @else {
+      {{ isEdit() ? 'Salva' : 'Crea' }}
+    }
+  </button>
+</mat-dialog-actions>

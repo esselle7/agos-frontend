@@ -1,11 +1,11 @@
-export type StatoEvento = 'PREVENTIVO' | 'CONFERMATO' | 'COMPLETATO' | 'ANNULLATO';
-export type TipoPagamentoEvento = 'CAPARRA' | 'ACCONTO' | 'SALDO' | 'RIMBORSO';
+export type StatoEvento = 'PREVENTIVATO' | 'CONFERMATO' | 'SALDATO' | 'ANNULLATO';
+export type TipoPagamentoEvento = 'CAPARRA' | 'ACCONTO' | 'SALDO' | 'PENALE';
 
 export interface PagamentoEventoDTO {
   movimentoId: string;
   tipo: TipoPagamentoEvento;
   importo: number;
-  data: string;
+  dataFinanziaria: string;
   note: string | null;
   stato: string;
 }
@@ -25,11 +25,13 @@ export interface EventoDTO {
   contattoNome: string;
   contattoTelefono: string | null;
   contattoEmail: string | null;
-  nOspiti: number | null;
+  numeroTotalePartecipanti: number;
+  numeroBambini: number | null;
+  allergie: string[];
   note: string | null;
-  noteAnnullamento: string | null;
-  importoResiduo: number;
-  percentualeIncassata: number;
+  motivazioneAnnullamento: string | null;
+  importoResiduo: number | null;
+  percentualeIncassata: number | null;
   costiReali: number;
   profitto: number;
   pagamenti: PagamentoEventoDTO[];
@@ -46,7 +48,9 @@ export interface EventoCreateRequest {
   contattoNome: string;
   contattoTelefono: string | null;
   contattoEmail: string | null;
-  nOspiti: number | null;
+  numeroTotalePartecipanti: number;
+  numeroBambini: number | null;
+  allergie: string[];
   note: string | null;
   businessUnitId: number | null;
 }
@@ -60,10 +64,12 @@ export interface EventoUpdateRequest {
   contattoNome?: string | null;
   contattoTelefono?: string | null;
   contattoEmail?: string | null;
-  nOspiti?: number | null;
+  numeroTotalePartecipanti?: number | null;
+  numeroBambini?: number | null;
+  allergie?: string[] | null;
   note?: string | null;
   stato?: StatoEvento | null;
-  noteAnnullamento?: string | null;
+  motivazioneAnnullamento?: string | null;
   businessUnitId?: number | null;
 }
 

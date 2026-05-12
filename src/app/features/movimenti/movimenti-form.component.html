@@ -394,7 +394,8 @@
         </div>
       </div>
 
-      <!-- ══════════════════ SEZIONE 3 — EVENTO (toggle) ════════════════════ -->
+      <!-- ══════════════════ SEZIONE 3 — EVENTO (solo USCITA) ════════════════ -->
+      @if (tipoValue === 'USCITA') {
       <div class="card mov-form__section">
         <div class="mov-form__toggle-header">
           <div>
@@ -409,7 +410,7 @@
         @if (showEventoSection) {
           <mat-divider class="mov-form__divider"></mat-divider>
           <div class="mov-form__row">
-            <mat-form-field appearance="outline" class="mov-form__field--md">
+            <mat-form-field appearance="outline" class="mov-form__field--full">
               <mat-label>Cerca evento</mat-label>
               <input matInput [formControl]="eventoSearch"
                      [matAutocomplete]="autoEvento"
@@ -420,19 +421,10 @@
                 }
               </mat-autocomplete>
             </mat-form-field>
-
-            <mat-form-field appearance="outline" class="mov-form__field--sm">
-              <mat-label>Tipo pagamento evento</mat-label>
-              <mat-select formControlName="tipoEventoMovimento">
-                <mat-option value="CAPARRA">Caparra</mat-option>
-                <mat-option value="ACCONTO">Acconto</mat-option>
-                <mat-option value="SALDO">Saldo</mat-option>
-                <mat-option value="RIMBORSO">Rimborso</mat-option>
-              </mat-select>
-            </mat-form-field>
           </div>
         }
       </div>
+      } <!-- end @if USCITA -->
 
       <!-- ══════════════════ SEZIONE 4 — DETTAGLI AGGIUNTIVI ═══════════════ -->
       <mat-expansion-panel class="mov-form__expansion">

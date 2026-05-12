@@ -37,18 +37,18 @@ import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 
 const STATO_COLORS: Record<StatoEvento, string> = {
-  PREVENTIVO: '#FFA500',
-  CONFERMATO: '#2196F3',
-  COMPLETATO: '#4CAF50',
-  ANNULLATO:  '#9E9E9E',
+  PREVENTIVATO: '#FFA500',
+  CONFERMATO:   '#2196F3',
+  SALDATO:      '#4CAF50',
+  ANNULLATO:    '#9E9E9E',
 };
 
 const STATI: { value: StatoEvento | ''; label: string }[] = [
-  { value: '',            label: 'Tutti' },
-  { value: 'PREVENTIVO',  label: 'Preventivo' },
-  { value: 'CONFERMATO',  label: 'Confermato' },
-  { value: 'COMPLETATO',  label: 'Completato' },
-  { value: 'ANNULLATO',   label: 'Annullato' },
+  { value: '',             label: 'Tutti' },
+  { value: 'PREVENTIVATO', label: 'Preventivato' },
+  { value: 'CONFERMATO',   label: 'Confermato' },
+  { value: 'SALDATO',      label: 'Saldato' },
+  { value: 'ANNULLATO',    label: 'Annullato' },
 ];
 
 @Component({

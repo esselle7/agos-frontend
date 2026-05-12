@@ -1,9 +1,7 @@
 <div class="detail-page">
 
-  <!-- Skeleton loading -->
   @if (loading()) {
     <div class="skeleton-wrap">
-      <agos-skeleton-loader [rows]="3" />
       <agos-skeleton-loader [rows]="3" />
       <agos-skeleton-loader [rows]="3" />
     </div>
@@ -11,10 +9,8 @@
 
   @if (!loading() && evento(); as ev) {
 
-    <!-- Back -->
     <button mat-button class="back-btn" (click)="goBack()">
-      <mat-icon>arrow_back</mat-icon>
-      Tutti gli eventi
+      <mat-icon>arrow_back</mat-icon> Tutti gli eventi
     </button>
 
     <!-- ====== HEADER ====== -->
@@ -36,77 +32,131 @@
         </div>
       </div>
 
-      <div class="header-actions">
-        <!-- Transizioni stato dinamiche -->
-        @if (ev.stato === 'PREVENTIVO') {
-          <button mat-raised-button color="primary" (click)="openCambioStato('CONFERMATO')">
-            <mat-icon>check_circle</mat-icon>
-            Conferma Prenotazione
-          </button>
-          <button mat-stroked-button (click)="openCambioStato('ANNULLATO')">
-            <mat-icon>cancel</mat-icon>
-            Annulla
-          </button>
-        }
-        @if (ev.stato === 'CONFERMATO') {
-          <button mat-raised-button style="background:#4CAF50;color:#fff" (click)="openCambioStato('COMPLETATO')">
-            <mat-icon>done_all</mat-icon>
-            Segna come Completato
-          </button>
-          <button mat-stroked-button (click)="openCambioStato('ANNULLATO')">
-            <mat-icon>cancel</mat-icon>
-            Annulla
-          </button>
-        }
-        @if (ev.stato === 'ANNULLATO' && ev.noteAnnullamento) {
-          <div class="annullato-note">
-            <mat-icon>info</mat-icon>
-            Annullato: {{ ev.noteAnnullamento }}
+      @if (authService.isAdmin()) {
+        <div class="header-actions">
+          @if (ev.stato === 'PREVENTIVATO') {
+            <button mat-raised-button color="primary" (click)="openCambioStato('CONFERMATO')">
+              <mat-icon>check_circle</mat-icon> Conferma
+            </button>
+            <button mat-stroked-button color="warn" (click)="openCambioStato('ANNULLATO')">
+              <mat-icon>cancel</mat-icon> Annulla
+            </button>
+          }
+          @if (ev.stato === 'CONFERMATO') {
+            <button mat-stroked-button color="warn" (click)="openCambioStato('ANNULLATO')">
+              <mat-icon>cancel</mat-icon> Annulla
+            </button>
+          }
+          @if (ev.stato !== 'SALDATO') {
+            <button mat-icon-button matTooltip="Modifica evento" (click)="openModifica()">
+              <mat-icon>edit</mat-icon>
+            </button>
+          }
+          @if (ev.stato === 'PREVENTIVATO') {
+            <button mat-icon-button matTooltip="Elimina evento" color="warn" (click)="deleteEvento()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ====== JOURNEY STEPPER ====== -->
+    <div class="journey-card">
+      @if (ev.stato === 'ANNULLATO') {
+        <div class="annullato-banner">
+          <mat-icon>cancel</mat-icon>
+          <div>
+            <strong>Evento annullato</strong>
+            @if (ev.motivazioneAnnullamento) {
+              <span> — {{ ev.motivazioneAnnullamento }}</span>
+            }
           </div>
-        }
-        <button mat-icon-button matTooltip="Modifica" (click)="openModifica()">
-          <mat-icon>edit</mat-icon>
-        </button>
-        @if (authService.isAdmin()) {
-          <button mat-icon-button matTooltip="Elimina" color="warn" (click)="deleteEvento()">
-            <mat-icon>delete</mat-icon>
-          </button>
-        }
+        </div>
+      }
+
+      <div class="journey-track">
+
+        <!-- Step 1: Preventivato -->
+        <div class="journey-step" [attr.data-state]="stepState('PREVENTIVATO')">
+          <div class="step-bubble">
+            <mat-icon>description</mat-icon>
+          </div>
+          <div class="step-body">
+            <span class="step-name">Preventivato</span>
+            <span class="step-sub">{{ formatDate(ev.createdAt.slice(0, 10)) }}</span>
+          </div>
+        </div>
+
+        <div class="journey-connector" [class.active]="stepLineActive('PREVENTIVATO')"></div>
+
+        <!-- Step 2: Confermato -->
+        <div class="journey-step" [attr.data-state]="stepState('CONFERMATO')">
+          <div class="step-bubble">
+            @if (stepState('CONFERMATO') === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else if (stepState('CONFERMATO') === 'active') {
+              <mat-icon>check_circle</mat-icon>
+            } @else {
+              <mat-icon>radio_button_unchecked</mat-icon>
+            }
+          </div>
+          <div class="step-body">
+            <span class="step-name">Confermato</span>
+            <span class="step-sub">{{ stepDateConferma() }}</span>
+          </div>
+        </div>
+
+        <div class="journey-connector" [class.active]="stepLineActive('CONFERMATO')"></div>
+
+        <!-- Step 3: Saldato -->
+        <div class="journey-step" [attr.data-state]="stepState('SALDATO')">
+          <div class="step-bubble">
+            @if (stepState('SALDATO') === 'done' || stepState('SALDATO') === 'active') {
+              <mat-icon>euro</mat-icon>
+            } @else {
+              <mat-icon>radio_button_unchecked</mat-icon>
+            }
+          </div>
+          <div class="step-body">
+            <span class="step-name">Saldato</span>
+            <span class="step-sub">{{ stepDateSaldo() }}</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <mat-divider />
-
-    <!-- ====== SEZIONE 1: RIEPILOGO FINANZIARIO ====== -->
+    <!-- ====== RIEPILOGO FINANZIARIO ====== -->
     <div class="section financial-card">
       <h2 class="section-title">Riepilogo Finanziario</h2>
 
       <div class="preventivo-row">
-        <span class="preventivo-label">Preventivo</span>
-        <span class="preventivo-amount">
-          {{ (ev.importoTotalePreviventivato ?? 0) | euro }}
-        </span>
+        <span class="preventivo-label">Preventivo totale</span>
+        <span class="preventivo-amount">{{ (ev.importoTotalePreviventivato ?? 0) | euro }}</span>
       </div>
 
-      <mat-progress-bar
-        mode="determinate"
-        [value]="ev.percentualeIncassata"
-        [style.--mdc-linear-progress-active-indicator-color]="progressColor(ev.percentualeIncassata)"
-        style="margin: 12px 0; height: 8px; border-radius: 4px"
-      />
-      <div class="pct-label">{{ ev.percentualeIncassata | number:'1.0-1' }}% incassato</div>
+      @if (ev.importoTotalePreviventivato) {
+        <mat-progress-bar
+          mode="determinate"
+          [value]="ev.percentualeIncassata ?? 0"
+          [style.--mdc-linear-progress-active-indicator-color]="progressColor(ev.percentualeIncassata)"
+          style="margin:12px 0;height:8px;border-radius:4px"
+        />
+        <div class="pct-label">{{ (ev.percentualeIncassata ?? 0) | number:'1.0-1' }}% incassato</div>
+      }
 
       <div class="financial-grid">
         <div class="fin-item green">
           <span class="fin-label">Incassato</span>
           <span class="fin-value">{{ ev.importoIncassato | euro }}</span>
         </div>
-        <div class="fin-item" [class.orange]="ev.importoResiduo > 0" [class.green]="ev.importoResiduo <= 0">
+        <div class="fin-item" [class.orange]="(ev.importoResiduo ?? 0) > 0" [class.green]="(ev.importoResiduo ?? 0) <= 0">
           <span class="fin-label">Residuo</span>
           <span class="fin-value">{{ ev.importoResiduo | euro }}</span>
         </div>
         <div class="fin-item red">
-          <span class="fin-label">Costi</span>
+          <span class="fin-label">Costi diretti</span>
           <span class="fin-value">{{ ev.costiReali | euro }}</span>
         </div>
         <div class="fin-item" [class.green]="ev.profitto >= 0" [class.red]="ev.profitto < 0">
@@ -116,81 +166,101 @@
       </div>
     </div>
 
-    <!-- ====== SEZIONE 2: PAGAMENTI ====== -->
+    <!-- ====== PAGAMENTI ====== -->
     <div class="section">
       <div class="section-header">
-        <h2 class="section-title">Pagamenti</h2>
-        @if (ev.stato !== 'COMPLETATO' && ev.stato !== 'ANNULLATO') {
+        <h2 class="section-title">Storico pagamenti</h2>
+        @if (authService.isAdmin() && ev.stato !== 'SALDATO') {
           <button mat-raised-button color="primary" (click)="openPagamento()">
-            <mat-icon>add</mat-icon>
-            Aggiungi Pagamento
+            <mat-icon>add</mat-icon> Aggiungi
           </button>
         }
       </div>
 
-      @if (loading()) {
-        <agos-skeleton-loader [rows]="3" />
-      } @else if (ev.pagamenti.length === 0) {
+      @if (authService.isAdmin() && ev.stato === 'CONFERMATO' && (ev.importoResiduo ?? 0) > 0.01) {
+        <div class="saldo-hint">
+          <mat-icon>info</mat-icon>
+          <span>Residuo <strong>{{ ev.importoResiduo | euro }}</strong> — aggiungi un pagamento di tipo <strong>SALDO</strong> per chiudere l'evento automaticamente.</span>
+        </div>
+      }
+
+      @if (ev.pagamenti.length === 0) {
         <p class="empty-hint">Nessun pagamento registrato.</p>
       } @else {
-        <div class="timeline">
+        <div class="pag-list">
           @for (pag of ev.pagamenti; track pag.movimentoId) {
-            <div class="timeline-item">
-              <div class="tl-icon" [style.color]="'#2196F3'">
-                <mat-icon>{{ pagIcona(pag.tipo) }}</mat-icon>
+            <div class="pag-row" [attr.data-stato]="pag.stato">
+              <div class="pag-dot" [style.background]="pagColors[pag.tipo]">
+                <mat-icon>{{ pagIcone[pag.tipo] }}</mat-icon>
               </div>
-              <div class="tl-content">
-                <div class="tl-header">
-                  <span class="pag-tipo">{{ pag.tipo }}</span>
-                  <span class="pag-data">{{ formatDate(pag.data) }}</span>
-                  <span class="pag-importo">{{ pag.importo | euro }}</span>
+              <div class="pag-main">
+                <div class="pag-top">
+                  <span class="pag-tipo" [style.color]="pagColors[pag.tipo]">{{ pag.tipo }}</span>
+                  <span class="pag-data">{{ formatDate(pag.dataFinanziaria) }}</span>
+                  @if (pag.stato === 'ANNULLATO') {
+                    <span class="pag-annullato-badge">annullato</span>
+                  }
                 </div>
                 @if (pag.note) {
                   <p class="pag-note">{{ pag.note }}</p>
                 }
               </div>
+              <span class="pag-importo" [class.annullato]="pag.stato === 'ANNULLATO'">
+                {{ pag.tipo === 'PENALE' ? '-' : '' }}{{ pag.importo | euro }}
+              </span>
             </div>
           }
         </div>
       }
     </div>
 
-    <!-- ====== SEZIONE 3: DATI CONTATTO ====== -->
+    <!-- ====== CONTATTO + PARTECIPANTI ====== -->
     <div class="section">
-      <h2 class="section-title">Contatto</h2>
+      <h2 class="section-title">Contatto e partecipanti</h2>
       <div class="info-grid">
         <div class="info-item">
           <mat-icon class="info-icon">person</mat-icon>
-          <span>{{ ev.contattoNome }}</span>
+          <span class="info-main">{{ ev.contattoNome }}</span>
         </div>
         @if (ev.contattoTelefono) {
           <div class="info-item">
             <mat-icon class="info-icon">phone</mat-icon>
-            <a [href]="'tel:' + ev.contattoTelefono">{{ ev.contattoTelefono }}</a>
+            <a [href]="'tel:' + ev.contattoTelefono" class="info-link">{{ ev.contattoTelefono }}</a>
           </div>
         }
         @if (ev.contattoEmail) {
           <div class="info-item">
             <mat-icon class="info-icon">email</mat-icon>
-            <a [href]="'mailto:' + ev.contattoEmail">{{ ev.contattoEmail }}</a>
+            <a [href]="'mailto:' + ev.contattoEmail" class="info-link">{{ ev.contattoEmail }}</a>
           </div>
         }
-        @if (ev.nOspiti) {
-          <div class="info-item">
-            <mat-icon class="info-icon">group</mat-icon>
-            <span>{{ ev.nOspiti }} ospiti</span>
+        <div class="info-item">
+          <mat-icon class="info-icon">group</mat-icon>
+          <span class="info-main">{{ ev.numeroTotalePartecipanti }} partecipanti</span>
+          @if (ev.numeroBambini) {
+            <span class="info-sub">di cui {{ ev.numeroBambini }} bambini</span>
+          }
+        </div>
+        @if (ev.allergie && ev.allergie.length > 0) {
+          <div class="info-item allergie-row">
+            <mat-icon class="info-icon">warning_amber</mat-icon>
+            <div class="allergie-chips">
+              @for (a of ev.allergie; track a) {
+                <span class="allergia-chip">{{ a }}</span>
+              }
+            </div>
           </div>
         }
       </div>
     </div>
 
-    <!-- ====== SEZIONE 4: INFO EVENTO ====== -->
+    <!-- ====== INFO EVENTO ====== -->
     <div class="section">
-      <h2 class="section-title">Informazioni Evento</h2>
+      <h2 class="section-title">Informazioni evento</h2>
       <div class="info-grid">
         <div class="info-item">
           <mat-icon class="info-icon">category</mat-icon>
-          <span>{{ ev.tipo.replace('_', ' ') }}</span>
+          <span class="info-main">{{ ev.tipo.replace('_', ' ') }}</span>
         </div>
         <div class="info-item">
           <mat-icon class="info-icon">business</mat-icon>
@@ -203,12 +273,12 @@
         @if (ev.dataPreventivo) {
           <div class="info-item">
             <mat-icon class="info-icon">description</mat-icon>
-            <span>Preventivo del {{ formatDate(ev.dataPreventivo) }}</span>
+            <span class="info-main">Preventivo del {{ formatDate(ev.dataPreventivo) }}</span>
           </div>
         }
         <div class="info-item">
           <mat-icon class="info-icon">schedule</mat-icon>
-          <span>Creato il {{ formatDatetime(ev.createdAt) }}</span>
+          <span class="info-sub">Creato il {{ formatDatetime(ev.createdAt) }}</span>
         </div>
       </div>
       @if (ev.note) {
@@ -219,13 +289,10 @@
       }
     </div>
 
-    <!-- ====== SEZIONE 5: PARTECIPANTI (solo ADMIN) ====== -->
+    <!-- ====== PARTECIPANTI (ADMIN) ====== -->
     @if (authService.isAdmin()) {
       <div class="section">
-        <div class="section-header">
-          <h2 class="section-title">Partecipanti</h2>
-        </div>
-
+        <h2 class="section-title">Personale impiegato</h2>
         @if (loadingPartecipanti()) {
           <agos-skeleton-loader [rows]="3" />
         } @else if (partecipanti().length === 0) {
@@ -239,9 +306,7 @@
                 @if (p.costo != null) {
                   <span class="part-costo">{{ p.costo | euro }}</span>
                 }
-                @if (p.note) {
-                  <span class="part-note">{{ p.note }}</span>
-                }
+                @if (p.note) { <span class="part-note">{{ p.note }}</span> }
                 <button mat-icon-button color="warn" matTooltip="Rimuovi" (click)="removePartecipante(p.id)">
                   <mat-icon>remove_circle_outline</mat-icon>
                 </button>

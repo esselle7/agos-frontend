@@ -22,8 +22,8 @@
         <mat-form-field appearance="outline">
           <mat-label>Tipo evento *</mat-label>
           <mat-select formControlName="tipo">
-            @for (t of tipiEvento; track t.value) {
-              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+            @for (t of tipiEvento(); track t.codice) {
+              <mat-option [value]="t.codice">{{ t.descrizione }}</mat-option>
             }
           </mat-select>
           @if (form.controls.tipo.hasError('required') && form.controls.tipo.touched) {
@@ -31,14 +31,11 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Business Unit</mat-label>
-          <mat-select formControlName="businessUnitId">
-            @for (bu of businessUnits(); track bu.id) {
-              <mat-option [value]="bu.id">{{ bu.nome }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <!-- BU fissa: solo visualizzazione, impostata automaticamente -->
+        <div class="bu-display">
+          <mat-icon>business</mat-icon>
+          <span class="bu-name">{{ selectedBu()?.nome ?? 'Caricamento…' }}</span>
+        </div>
       </div>
 
       <div class="form-row two-col">
@@ -96,11 +93,72 @@
         </mat-form-field>
       </div>
 
+      <mat-divider style="margin: 12px 0" />
+      <p class="section-label">Partecipanti</p>
+
       <div class="form-row two-col">
         <mat-form-field appearance="outline">
-          <mat-label>N° ospiti</mat-label>
-          <input matInput formControlName="nOspiti" type="number" min="1" />
+          <mat-label>Totale partecipanti *</mat-label>
+          <input matInput formControlName="numeroTotalePartecipanti" type="number" min="1" />
+          @if (form.controls.numeroTotalePartecipanti.hasError('required') && form.controls.numeroTotalePartecipanti.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.controls.numeroTotalePartecipanti.hasError('min') && form.controls.numeroTotalePartecipanti.touched) {
+            <mat-error>Minimo 1 partecipante</mat-error>
+          }
         </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Di cui bambini</mat-label>
+          <input matInput formControlName="numeroBambini" type="number" min="0" />
+        </mat-form-field>
+      </div>
+
+      <!-- ── Allergie ─────────────────────────────────────────────────── -->
+      <div class="form-row">
+        <div class="allergie-section">
+          <p class="allergie-label">Allergie e intolleranze</p>
+
+          <!-- Allergeni comuni EU: click per selezionare/deselezionare -->
+          <div class="allergie-comuni-grid">
+            @for (a of allergieComuni; track a) {
+              <button
+                type="button"
+                class="allergia-toggle"
+                [class.active]="hasAllergia(a)"
+                (click)="toggleAllergia(a)"
+              >{{ a }}</button>
+            }
+          </div>
+
+          <!-- Allergie custom (non nella lista comune) -->
+          @if (allergieCustom().length > 0) {
+            <div class="allergie-custom-list">
+              @for (a of allergieCustom(); track a) {
+                <span class="allergia-custom-chip">
+                  {{ a }}
+                  <button type="button" (click)="removeAllergia(a)" aria-label="Rimuovi">×</button>
+                </span>
+              }
+            </div>
+          }
+
+          <!-- Input allergia custom -->
+          <div class="allergie-input-row">
+            <mat-form-field appearance="outline" style="flex:1">
+              <mat-label>Altra allergia</mat-label>
+              <input
+                matInput
+                [formControl]="allergiaInputControl"
+                (keydown)="onAllergiaKeydown($event)"
+                placeholder="es. Kiwi, Nichel…"
+              />
+            </mat-form-field>
+            <button mat-icon-button type="button" (click)="addAllergia()" color="primary" matTooltip="Aggiungi">
+              <mat-icon>add_circle</mat-icon>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div class="form-row">

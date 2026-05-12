@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import {
   AggiungiPartecipanteRequest,
   EventoCalendarioDTO,
@@ -28,11 +28,6 @@ export interface EventiFilter {
   search?: string;
   page?: number;
   size?: number;
-}
-
-export interface PagamentoResult {
-  dto: PagamentoEventoDTO;
-  suggerisciCompletamento: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -89,19 +84,11 @@ export class EventiService {
     return this.http.delete<void>(`${environment.apiBaseUrl}${API_PATHS.EVENTI}/${id}`);
   }
 
-  addPagamento(eventoId: string, body: PagamentoRequest): Observable<PagamentoResult> {
-    return this.http
-      .post<PagamentoEventoDTO>(
-        `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/pagamenti`,
-        body,
-        { observe: 'response' }
-      )
-      .pipe(
-        map(resp => ({
-          dto: resp.body as PagamentoEventoDTO,
-          suggerisciCompletamento: resp.headers.get('X-Suggest-Completamento') === 'true',
-        }))
-      );
+  addPagamento(eventoId: string, body: PagamentoRequest): Observable<PagamentoEventoDTO> {
+    return this.http.post<PagamentoEventoDTO>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/pagamenti`,
+      body
+    );
   }
 
   getPartecipanti(eventoId: string): Observable<EventoPartecipanteDTO[]> {
