@@ -3,6 +3,7 @@ import {
   OnInit,
   OnDestroy,
   signal,
+  computed,
   inject,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -93,6 +94,19 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   loading = signal(true);
   loadingPartecipanti = signal(false);
 
+  /** Partecipanti raggruppati per mansione, ordinati alfabeticamente. */
+  readonly partecipantiPerMansione = computed(() => {
+    const map = new Map<string, EventoPartecipanteDTO[]>();
+    for (const p of this.partecipanti()) {
+      const key = p.mansione ?? 'Senza mansione';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return [...map.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], 'it'))
+      .map(([mansione, persone]) => ({ mansione, persone }));
+  });
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
     forkJoin({
@@ -104,7 +118,7 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
         this.evento.set(evento);
         this.loading.set(false);
         this.cdr.markForCheck();
-        if (this.authService.isAdmin()) this.loadPartecipanti(id);
+        this.loadPartecipanti(id);
       },
       error: () => {
         this.loading.set(false);
@@ -261,6 +275,7 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   buNome(buId: number): string { return this.buMap().get(buId)?.nome ?? `BU#${buId}`; }
   buColore(buId: number): string { return this.buMap().get(buId)?.colore ?? '#6B7280'; }
   progressColor(pct: number | null): string { return (pct ?? 0) >= 100 ? '#4CAF50' : '#FFA500'; }
+  iniziali(nome: string, cognome: string): string { return `${nome.charAt(0)}${cognome.charAt(0)}`.toUpperCase(); }
 
   formatDate(str: string | null): string {
     if (!str) return '—';

@@ -68,8 +68,8 @@
           <mat-icon>cancel</mat-icon>
           <div>
             <strong>Evento annullato</strong>
-            @if (ev.motivazioneAnnullamento) {
-              <span> — {{ ev.motivazioneAnnullamento }}</span>
+            @if (ev.noteAnnullamento) {
+              <span> — {{ ev.noteAnnullamento }}</span>
             }
           </div>
         </div>
@@ -289,33 +289,53 @@
       }
     </div>
 
-    <!-- ====== PARTECIPANTI (ADMIN) ====== -->
-    @if (authService.isAdmin()) {
-      <div class="section">
+    <!-- ====== PERSONALE IMPIEGATO ====== -->
+    <div class="section">
+      <div class="section-header">
         <h2 class="section-title">Personale impiegato</h2>
-        @if (loadingPartecipanti()) {
-          <agos-skeleton-loader [rows]="3" />
-        } @else if (partecipanti().length === 0) {
-          <p class="empty-hint">Nessun partecipante registrato.</p>
-        } @else {
-          <div class="partecipanti-list">
-            @for (p of partecipanti(); track p.id) {
-              <div class="partecipante-row">
-                <mat-icon class="info-icon">person_outline</mat-icon>
-                <span class="part-ruolo">{{ p.ruolo ?? '—' }}</span>
-                @if (p.costo != null) {
-                  <span class="part-costo">{{ p.costo | euro }}</span>
-                }
-                @if (p.note) { <span class="part-note">{{ p.note }}</span> }
-                <button mat-icon-button color="warn" matTooltip="Rimuovi" (click)="removePartecipante(p.id)">
-                  <mat-icon>remove_circle_outline</mat-icon>
-                </button>
-              </div>
-            }
-          </div>
+        @if (partecipanti().length > 0) {
+          <span style="font-size:13px;color:#6b7280">{{ partecipanti().length }} dipendente{{ partecipanti().length === 1 ? '' : 'i' }}</span>
         }
       </div>
-    }
+
+      @if (loadingPartecipanti()) {
+        <agos-skeleton-loader [rows]="3" />
+      } @else if (partecipanti().length === 0) {
+        <p class="empty-hint">Nessun personale assegnato a questo evento.</p>
+      } @else {
+        <!-- Gruppi per mansione -->
+        @for (gruppo of partecipantiPerMansione(); track gruppo.mansione) {
+          <div class="personale-gruppo-card">
+            <div class="personale-gruppo-header">
+              <mat-icon style="font-size:16px;width:16px;height:16px;color:#6b7280">work_outline</mat-icon>
+              <span class="personale-gruppo-titolo">{{ gruppo.mansione }}</span>
+              <span class="personale-gruppo-count">{{ gruppo.persone.length }}</span>
+            </div>
+            <div class="personale-persone-list">
+              @for (p of gruppo.persone; track p.id) {
+                <div class="personale-persona-row">
+                  <div class="personale-avatar">{{ iniziali(p.nome, p.cognome) }}</div>
+                  <div class="personale-persona-info">
+                    <span class="personale-persona-nome">{{ p.cognome }} {{ p.nome }}</span>
+                    @if (p.ruolo && p.ruolo !== p.mansione) {
+                      <span class="personale-persona-ruolo">{{ p.ruolo }}</span>
+                    }
+                  </div>
+                  @if (p.costo != null) {
+                    <span class="personale-persona-costo">{{ p.costo | euro }}</span>
+                  }
+                  @if (authService.isAdmin()) {
+                    <button mat-icon-button color="warn" matTooltip="Rimuovi" (click)="removePartecipante(p.id)" style="width:32px;height:32px">
+                      <mat-icon style="font-size:18px">remove_circle_outline</mat-icon>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
 
   }
 </div>

@@ -1,7 +1,14 @@
+export interface MansioneDTO {
+  id: string;
+  nome: string;
+  isActive: boolean;
+}
+
 export interface PersonaleSummaryDTO {
   id: string;
   nome: string;
   cognome: string;
+  mansioneId: string | null;
   mansione: string | null;
   businessUnitId: number | null;
   businessUnitNome: string | null;
@@ -18,9 +25,11 @@ export interface PersonaleDTO extends PersonaleSummaryDTO {
 export interface CreatePersonaleRequest {
   nome: string;
   cognome: string;
+  /** Nome della mansione: il backend crea automaticamente se non esiste. */
   mansione: string | null;
   businessUnitId: number | null;
-  centroDiCostoId: number | null;
+  /** Ignorato dal backend: il CDC viene derivato automaticamente dalla BU. */
+  centroDiCostoId?: number | null;
   costoAziendaleMensile: number | null;
   isActive: boolean;
 }

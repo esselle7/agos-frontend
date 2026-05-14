@@ -86,3 +86,58 @@ export interface RiepilogoCategoriaDTO {
   importo: number;
   pct: number;
 }
+
+// ── Forecasting ──────────────────────────────────────────────────────────────
+
+export type ForecastingHorizon = '30' | '60' | '90' | '180' | 'FINE_ANNO';
+export type ForecastingCategoria = 'MOVIMENTO' | 'EVENTO' | 'RATA_RICORRENTE' | 'STIPENDIO';
+export type ForecastingVista = 'ECONOMICA' | 'FINANZIARIA' | 'ENTRAMBE';
+
+export interface ForecastingAsIsDTO {
+  saldoLiquidita: number;
+  ricaviYtd: number;
+  costiYtd: number;
+  ebitdaYtd: number;
+  creditiAperti: number;
+  debitiAperti: number;
+}
+
+export interface ForecastingDettaglioDTO {
+  data: string;
+  categoria: ForecastingCategoria;
+  descrizione: string;
+  importoEntrata: number;
+  importoUscita: number;
+  vista: ForecastingVista;
+}
+
+export interface ForecastingTimelineDTO {
+  bucket: string;
+  bucketStart: string;
+  bucketEnd: string;
+  entratePreviste: number;
+  uscitePreviste: number;
+  ebitdaPeriodo: number;
+  saldoLiquiditaFine: number;
+}
+
+export interface ForecastingEconomicoDTO {
+  ricaviPrevisti: number;
+  costiPrevisti: number;
+  ebitdaPrevisto: number;
+  dettaglio: ForecastingDettaglioDTO[];
+}
+
+export interface ForecastingFinanziarioDTO {
+  saldoPartenza: number;
+  incassiPrevisti: number;
+  uscitePreviste: number;
+  saldoFinale: number;
+  timeline: ForecastingTimelineDTO[];
+}
+
+export interface ForecastingRispostaDTO {
+  asIs: ForecastingAsIsDTO;
+  economico: ForecastingEconomicoDTO;
+  finanziario: ForecastingFinanziarioDTO;
+}

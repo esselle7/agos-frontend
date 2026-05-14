@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  MansioneDTO,
   PersonaleDTO,
   PersonaleSummaryDTO,
   PersonaleCostoSummaryDTO,
@@ -38,6 +39,17 @@ export class PersonaleService {
     );
   }
 
+  /** Carica tutti i dipendenti attivi senza paginazione (per wizard eventi). */
+  getAllAttivi(): Observable<PagedResponse<PersonaleSummaryDTO>> {
+    const params = new HttpParams()
+      .set('activeOnly', 'true')
+      .set('size', '200');
+    return this.http.get<PagedResponse<PersonaleSummaryDTO>>(
+      environment.apiBaseUrl + API_PATHS.PERSONALE.BASE,
+      { params }
+    );
+  }
+
   getById(id: string): Observable<PersonaleDTO> {
     return this.http.get<PersonaleDTO>(environment.apiBaseUrl + API_PATHS.PERSONALE.BY_ID(id));
   }
@@ -48,7 +60,13 @@ export class PersonaleService {
     );
   }
 
-  getMansioni(): Observable<string[]> {
+  /** Lista mansioni distinte dalla tabella centralizzata (/api/mansioni). */
+  getMansioni(): Observable<MansioneDTO[]> {
+    return this.http.get<MansioneDTO[]>(environment.apiBaseUrl + API_PATHS.MANSIONI);
+  }
+
+  /** @deprecated Usa getMansioni() */
+  getMansioniLegacy(): Observable<string[]> {
     return this.http.get<string[]>(environment.apiBaseUrl + API_PATHS.PERSONALE.MANSIONI);
   }
 

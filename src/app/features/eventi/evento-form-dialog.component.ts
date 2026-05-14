@@ -23,14 +23,19 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 import { EventiService } from '../../core/services/eventi.service';
+import { PersonaleService } from '../../core/services/personale.service';
 import { BuService } from '../../core/services/bu.service';
 import { LookupService } from '../../core/services/lookup.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EventoCreateRequest, EventoDTO } from '../../core/models/eventi.models';
+import { PersonaleSummaryDTO } from '../../core/models/personale.models';
 import { BusinessUnitDTO, TipoEventoDTO } from '../../core/models/anagrafica.models';
 
 export interface EventoFormDialogData {
@@ -43,6 +48,12 @@ const ALLERGIE_COMUNI = [
   'Arachidi', 'Soia', 'Frutta a guscio', 'Sedano',
   'Senape', 'Sesamo', 'Solfiti', 'Lupini', 'Molluschi',
 ];
+
+/** Gruppo di personale per mansione, usato nel wizard step 2. */
+interface PersonaleGruppo {
+  mansione: string;
+  persone: PersonaleSummaryDTO[];
+}
 
 @Component({
   selector: 'app-evento-form-dialog',
@@ -60,6 +71,9 @@ const ALLERGIE_COMUNI = [
     MatProgressSpinnerModule,
     MatDividerModule,
     MatTooltipModule,
+    MatStepperModule,
+    MatCheckboxModule,
+    MatChipsModule,
     CurrencyInputComponent,
     SkeletonLoaderComponent,
   ],
@@ -98,12 +112,87 @@ const ALLERGIE_COMUNI = [
     }
     .bu-display mat-icon { font-size: 18px; width: 18px; height: 18px; color: #9ca3af; }
     .bu-name { font-weight: 600; }
+
+    /* ── Step 2: Personale ─────────────────────────────────── */
+    .personale-step { display: flex; flex-direction: column; gap: 12px; }
+    .personale-step-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .personale-count-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; border-radius: 12px;
+      background: #e8f5e9; color: #2e7d32; font-size: 12px; font-weight: 600;
+    }
+    .mansione-gruppo { margin-bottom: 4px; }
+    .mansione-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-radius: 8px 8px 0 0;
+      background: #f3f4f6; border: 1px solid #e5e7eb; border-bottom: none;
+      cursor: pointer; user-select: none;
+    }
+    .mansione-header:hover { background: #e9ecef; }
+    .mansione-label {
+      font-size: 13px; font-weight: 700; color: #374151;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mansione-badge {
+      font-size: 11px; background: #d1d5db; color: #374151;
+      padding: 1px 7px; border-radius: 10px;
+    }
+    .mansione-badge.selected { background: #bbf7d0; color: #166534; }
+    .mansione-toggle { color: #9ca3af; font-size: 18px; }
+    .persone-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
+      padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;
+      background: #fff;
+    }
+    .persona-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e5e7eb;
+      background: #f9fafb; cursor: pointer; transition: all .15s ease;
+    }
+    .persona-card:hover { border-color: #1976d2; background: #e3f2fd; }
+    .persona-card.selected { border-color: #1976d2; background: #e3f2fd; }
+    .persona-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #1976d2; color: #fff; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .persona-avatar.selected { background: #0d47a1; }
+    .persona-info { min-width: 0; }
+    .persona-nome {
+      font-size: 13px; font-weight: 600; color: #111827;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .persona-check {
+      margin-left: auto; flex-shrink: 0;
+    }
+    .empty-personale {
+      text-align: center; padding: 32px 16px; color: #9ca3af;
+      font-size: 14px;
+    }
+    .selezionati-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0;
+    }
+    .selezionato-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 14px;
+      background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20;
+      font-size: 12px; font-weight: 600;
+    }
+    .selezionato-chip button {
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: #2e7d32; font-size: 14px; display: flex; align-items: center;
+    }
   `],
 })
 export class EventoFormDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<EventoFormDialogComponent>);
   private readonly data: EventoFormDialogData = inject(MAT_DIALOG_DATA);
   private readonly eventiService = inject(EventiService);
+  private readonly personaleService = inject(PersonaleService);
   private readonly buService = inject(BuService);
   private readonly lookupService = inject(LookupService);
   private readonly snackBar = inject(MatSnackBar);
@@ -124,6 +213,7 @@ export class EventoFormDialogComponent implements OnInit {
 
   readonly allergiaInputControl = new FormControl<string>('', { nonNullable: true });
 
+  // ── Step 1: Dati evento ────────────────────────────────────────────────────
   readonly form = new FormGroup({
     nome:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     tipo:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
@@ -139,19 +229,51 @@ export class EventoFormDialogComponent implements OnInit {
     note:                         new FormControl<string | null>(null),
   });
 
+  // ── Step 2: Personale ──────────────────────────────────────────────────────
+  personaleAttivi = signal<PersonaleSummaryDTO[]>([]);
+  personaleSelezionati = signal<Set<string>>(new Set());
+  gruppiExpanded = signal<Set<string>>(new Set());
+
+  /** Personale attivo raggruppato per mansione, ordinato alfabeticamente. */
+  readonly personalePerMansione = computed<PersonaleGruppo[]>(() => {
+    const map = new Map<string, PersonaleSummaryDTO[]>();
+    for (const p of this.personaleAttivi()) {
+      const key = p.mansione ?? 'Senza mansione';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return [...map.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], 'it'))
+      .map(([mansione, persone]) => ({ mansione, persone }));
+  });
+
+  /** Persone selezionate con i loro dati per il riepilogo. */
+  readonly personaleSelezionatiList = computed(() =>
+    this.personaleAttivi().filter(p => this.personaleSelezionati().has(p.id))
+  );
+
+  readonly contaSelezionati = computed(() => this.personaleSelezionati().size);
+
   ngOnInit(): void {
     if (this.data.eventoId) {
       this.isEdit.set(true);
       this.loadingForm.set(true);
       forkJoin({
-        bu:     this.buService.getAll(),
-        tipi:   this.lookupService.getTipiEvento(),
-        evento: this.eventiService.getById(this.data.eventoId),
+        bu:           this.buService.getAll(),
+        tipi:         this.lookupService.getTipiEvento(),
+        evento:       this.eventiService.getById(this.data.eventoId),
+        personale:    this.personaleService.getAllAttivi(),
+        partecipanti: this.eventiService.getPartecipanti(this.data.eventoId),
       }).subscribe({
-        next: ({ bu, tipi, evento }) => {
+        next: ({ bu, tipi, evento, personale, partecipanti }) => {
           this.tipiEvento.set(tipi);
           this.applyBu(bu, evento.businessUnitId);
           this.patchForm(evento);
+          this.personaleAttivi.set(personale.content);
+          // Pre-seleziona i partecipanti già assegnati
+          const ids = new Set(partecipanti.map(p => p.personaleId));
+          this.personaleSelezionati.set(ids);
+          this.initGruppiExpanded();
           this.loadingForm.set(false);
           this.cdr.markForCheck();
         },
@@ -163,10 +285,11 @@ export class EventoFormDialogComponent implements OnInit {
       });
     } else {
       forkJoin({
-        bu:   this.buService.getAll(),
-        tipi: this.lookupService.getTipiEvento(),
+        bu:        this.buService.getAll(),
+        tipi:      this.lookupService.getTipiEvento(),
+        personale: this.personaleService.getAllAttivi(),
       }).subscribe({
-        next: ({ bu, tipi }) => {
+        next: ({ bu, tipi, personale }) => {
           this.tipiEvento.set(tipi);
           this.applyBu(bu, null);
           this.form.controls.dataPreventivo.setValue(new Date());
@@ -174,6 +297,8 @@ export class EventoFormDialogComponent implements OnInit {
             const [y, m, d] = this.data.dataPrecompilata.split('-').map(Number);
             this.form.controls.dataEvento.setValue(new Date(y, m - 1, d));
           }
+          this.personaleAttivi.set(personale.content);
+          this.initGruppiExpanded();
           this.cdr.markForCheck();
         },
         error: () => {
@@ -184,7 +309,8 @@ export class EventoFormDialogComponent implements OnInit {
     }
   }
 
-  // Cerca la BU "Cerimonie" e la imposta; in edit usa l'id già salvato sull'evento
+  // ── BU ─────────────────────────────────────────────────────────────────────
+
   private applyBu(buList: BusinessUnitDTO[], existingId: number | null): void {
     const target = existingId != null
       ? buList.find(b => b.id === existingId)
@@ -217,6 +343,13 @@ export class EventoFormDialogComponent implements OnInit {
     this.allergie.set([...(ev.allergie ?? [])]);
   }
 
+  private initGruppiExpanded(): void {
+    const tutti = new Set(this.personalePerMansione().map(g => g.mansione));
+    this.gruppiExpanded.set(tutti);
+  }
+
+  // ── Allergie ────────────────────────────────────────────────────────────────
+
   hasAllergia(a: string): boolean {
     return this.allergie().includes(a);
   }
@@ -247,6 +380,67 @@ export class EventoFormDialogComponent implements OnInit {
     }
   }
 
+  // ── Personale selezione ────────────────────────────────────────────────────
+
+  isSelected(id: string): boolean {
+    return this.personaleSelezionati().has(id);
+  }
+
+  togglePersona(id: string): void {
+    const set = new Set(this.personaleSelezionati());
+    if (set.has(id)) {
+      set.delete(id);
+    } else {
+      set.add(id);
+    }
+    this.personaleSelezionati.set(set);
+    this.cdr.markForCheck();
+  }
+
+  toggleGruppo(mansione: string, persone: PersonaleSummaryDTO[]): void {
+    const set = new Set(this.personaleSelezionati());
+    const allSelected = persone.every(p => set.has(p.id));
+    persone.forEach(p => allSelected ? set.delete(p.id) : set.add(p.id));
+    this.personaleSelezionati.set(set);
+    this.cdr.markForCheck();
+  }
+
+  isGruppoTuttoSelezionato(persone: PersonaleSummaryDTO[]): boolean {
+    return persone.length > 0 && persone.every(p => this.personaleSelezionati().has(p.id));
+  }
+
+  contaSelezionatiGruppo(persone: PersonaleSummaryDTO[]): number {
+    return persone.filter(p => this.personaleSelezionati().has(p.id)).length;
+  }
+
+  isGruppoExpanded(mansione: string): boolean {
+    return this.gruppiExpanded().has(mansione);
+  }
+
+  toggleGruppoExpanded(mansione: string): void {
+    const set = new Set(this.gruppiExpanded());
+    if (set.has(mansione)) {
+      set.delete(mansione);
+    } else {
+      set.add(mansione);
+    }
+    this.gruppiExpanded.set(set);
+    this.cdr.markForCheck();
+  }
+
+  rimuoviSelezionato(id: string): void {
+    const set = new Set(this.personaleSelezionati());
+    set.delete(id);
+    this.personaleSelezionati.set(set);
+    this.cdr.markForCheck();
+  }
+
+  iniziali(nome: string, cognome: string): string {
+    return `${nome.charAt(0)}${cognome.charAt(0)}`.toUpperCase();
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -268,10 +462,11 @@ export class EventoFormDialogComponent implements OnInit {
       allergie:                    this.allergie(),
       note:                        v.note ?? null,
       businessUnitId:              v.businessUnitId,
+      personaleIds:                [...this.personaleSelezionati()],
     };
 
     const req$ = this.isEdit()
-      ? this.eventiService.update(this.data.eventoId!, body)
+      ? this.eventiService.update(this.data.eventoId!, { ...body, personaleIds: [...this.personaleSelezionati()] })
       : this.eventiService.create(body);
 
     req$.subscribe({

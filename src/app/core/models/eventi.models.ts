@@ -29,7 +29,7 @@ export interface EventoDTO {
   numeroBambini: number | null;
   allergie: string[];
   note: string | null;
-  motivazioneAnnullamento: string | null;
+  noteAnnullamento: string | null;
   importoResiduo: number | null;
   percentualeIncassata: number | null;
   costiReali: number;
@@ -53,6 +53,8 @@ export interface EventoCreateRequest {
   allergie: string[];
   note: string | null;
   businessUnitId: number | null;
+  /** UUID dei dipendenti da associare all'evento. */
+  personaleIds: string[];
 }
 
 export interface EventoUpdateRequest {
@@ -69,8 +71,10 @@ export interface EventoUpdateRequest {
   allergie?: string[] | null;
   note?: string | null;
   stato?: StatoEvento | null;
-  motivazioneAnnullamento?: string | null;
+  noteAnnullamento?: string | null;
   businessUnitId?: number | null;
+  /** Se presente, sostituisce integralmente la lista dei partecipanti. */
+  personaleIds?: string[] | null;
 }
 
 export interface EventoCalendarioDTO {
@@ -106,6 +110,9 @@ export interface EventoPartecipanteDTO {
   id: number;
   eventoId: string;
   personaleId: string;
+  nome: string;
+  cognome: string;
+  mansione: string | null;
   ruolo: string | null;
   costo: number | null;
   note: string | null;

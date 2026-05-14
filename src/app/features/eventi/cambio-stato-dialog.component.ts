@@ -89,9 +89,9 @@ export class CambioStatoDialogComponent implements OnInit {
     }
 
     this.saving.set(true);
-    const body: { stato: StatoEvento; motivazioneAnnullamento?: string } = { stato: this.data.nuovoStato };
+    const body: { stato: StatoEvento; noteAnnullamento?: string } = { stato: this.data.nuovoStato };
     if (this.isAnnullamento) {
-      body.motivazioneAnnullamento = this.motivazioneAnnullamento.value;
+      body.noteAnnullamento = this.motivazioneAnnullamento.value;
     }
 
     this.eventiService.update(this.data.eventoId, body).subscribe({

@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Movimenti',        icon: 'swap_horiz',             route: '/movimenti',         adminOnly: true  },
   { label: 'Spese Ricorrenti', icon: 'repeat',                 route: '/spese-ricorrenti',  adminOnly: true  },
   { label: 'Cassa',            icon: 'account_balance_wallet', route: '/cassa',             adminOnly: true  },
-  { label: 'Cash Flow',        icon: 'waterfall_chart',        route: '/cash-flow',         adminOnly: true  },
+  { label: 'Forecasting',      icon: 'trending_up',            route: '/forecasting',       adminOnly: true  },
 ];
 
 const NAV_ITEMS_BOTTOM: NavItem[] = [

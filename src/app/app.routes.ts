@@ -57,10 +57,10 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
-        path: 'cash-flow',
+        path: 'forecasting',
         loadComponent: () =>
-          import('./features/reporting/cash-flow.component').then(
-            m => m.CashFlowComponent
+          import('./features/reporting/forecasting.component').then(
+            m => m.ForecastingComponent
           ),
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

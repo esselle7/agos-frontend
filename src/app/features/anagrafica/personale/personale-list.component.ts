@@ -87,7 +87,7 @@ export class PersonaleListComponent implements OnInit, OnDestroy {
     });
 
     this.service.getMansioni().subscribe(m => {
-      this.mansioni.set(m);
+      this.mansioni.set(m.map(x => x.nome));
       this.cdr.markForCheck();
     });
 

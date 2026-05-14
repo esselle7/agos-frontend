@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
   CashFlowPeriodoDTO,
+  ForecastingHorizon,
+  ForecastingRispostaDTO,
   ForecastPointDTO,
   JobStatusDTO,
   PlComparativoDTO,
@@ -57,6 +59,14 @@ export class ReportingService {
     const params = new HttpParams().set('giorni', giorni);
     return this.http.get<ForecastPointDTO[]>(
       environment.apiBaseUrl + API_PATHS.REPORTING.CASHFLOW_FORECAST,
+      { params }
+    );
+  }
+
+  getForecasting(horizon: ForecastingHorizon = '90'): Observable<ForecastingRispostaDTO> {
+    const params = new HttpParams().set('horizon', horizon);
+    return this.http.get<ForecastingRispostaDTO>(
+      environment.apiBaseUrl + API_PATHS.REPORTING.FORECASTING,
       { params }
     );
   }

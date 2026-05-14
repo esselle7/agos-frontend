@@ -1,188 +1,291 @@
 <h2 mat-dialog-title>{{ isEdit() ? 'Modifica Evento' : 'Nuovo Evento' }}</h2>
 
-<mat-dialog-content>
+<mat-dialog-content style="padding:0 0 8px">
   @if (loadingForm()) {
-    <div style="padding: 24px 0">
-      <agos-skeleton-loader [rows]="3" />
+    <div style="padding: 24px">
+      <agos-skeleton-loader [rows]="4" />
     </div>
   } @else {
-    <form [formGroup]="form" class="evento-form">
+    <mat-stepper linear="false" #stepper labelPosition="bottom" style="background:transparent">
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome evento *</mat-label>
-          <input matInput formControlName="nome" placeholder="es. Matrimonio Rossi" />
-          @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
-          }
-        </mat-form-field>
-      </div>
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 1: Dati evento                                  -->
+      <!-- ════════════════════════════════════════════════════ -->
+      <mat-step label="Dati evento" [stepControl]="form">
+        <form [formGroup]="form" class="evento-form" style="padding:16px 24px">
 
-      <div class="form-row two-col">
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo evento *</mat-label>
-          <mat-select formControlName="tipo">
-            @for (t of tipiEvento(); track t.codice) {
-              <mat-option [value]="t.codice">{{ t.descrizione }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls.tipo.hasError('required') && form.controls.tipo.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
-          }
-        </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nome evento *</mat-label>
+              <input matInput formControlName="nome" placeholder="es. Matrimonio Rossi" />
+              @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
+              }
+            </mat-form-field>
+          </div>
 
-        <!-- BU fissa: solo visualizzazione, impostata automaticamente -->
-        <div class="bu-display">
-          <mat-icon>business</mat-icon>
-          <span class="bu-name">{{ selectedBu()?.nome ?? 'Caricamento…' }}</span>
-        </div>
-      </div>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo evento *</mat-label>
+              <mat-select formControlName="tipo">
+                @for (t of tipiEvento(); track t.codice) {
+                  <mat-option [value]="t.codice">{{ t.descrizione }}</mat-option>
+                }
+              </mat-select>
+              @if (form.controls.tipo.hasError('required') && form.controls.tipo.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
+              }
+            </mat-form-field>
 
-      <div class="form-row two-col">
-        <mat-form-field appearance="outline">
-          <mat-label>Data evento *</mat-label>
-          <input matInput [matDatepicker]="pickerEvento" formControlName="dataEvento" />
-          <mat-datepicker-toggle matSuffix [for]="pickerEvento" />
-          <mat-datepicker #pickerEvento />
-          @if (form.controls.dataEvento.hasError('required') && form.controls.dataEvento.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
-          }
-        </mat-form-field>
+            <div class="bu-display">
+              <mat-icon>business</mat-icon>
+              <span class="bu-name">{{ selectedBu()?.nome ?? 'Caricamento…' }}</span>
+            </div>
+          </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Data preventivo</mat-label>
-          <input matInput [matDatepicker]="pickerPreventivo" formControlName="dataPreventivo" />
-          <mat-datepicker-toggle matSuffix [for]="pickerPreventivo" />
-          <mat-datepicker #pickerPreventivo />
-        </mat-form-field>
-      </div>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline">
+              <mat-label>Data evento *</mat-label>
+              <input matInput [matDatepicker]="pickerEvento" formControlName="dataEvento" />
+              <mat-datepicker-toggle matSuffix [for]="pickerEvento" />
+              <mat-datepicker #pickerEvento />
+              @if (form.controls.dataEvento.hasError('required') && form.controls.dataEvento.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
+              }
+            </mat-form-field>
 
-      <div class="form-row">
-        <agos-currency-input
-          formControlName="importoTotalePreviventivato"
-          label="Importo preventivato"
-          placeholder="0,00"
-        />
-      </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Data preventivo</mat-label>
+              <input matInput [matDatepicker]="pickerPreventivo" formControlName="dataPreventivo" />
+              <mat-datepicker-toggle matSuffix [for]="pickerPreventivo" />
+              <mat-datepicker #pickerPreventivo />
+            </mat-form-field>
+          </div>
 
-      <mat-divider style="margin: 12px 0" />
-      <p class="section-label">Dati contatto</p>
+          <div class="form-row">
+            <agos-currency-input
+              formControlName="importoTotalePreviventivato"
+              label="Importo preventivato"
+              placeholder="0,00"
+            />
+          </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome contatto *</mat-label>
-          <input matInput formControlName="contattoNome" />
-          @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
-          }
-        </mat-form-field>
-      </div>
+          <mat-divider style="margin: 12px 0" />
+          <p class="section-label">Dati contatto</p>
 
-      <div class="form-row two-col">
-        <mat-form-field appearance="outline">
-          <mat-label>Telefono</mat-label>
-          <input matInput formControlName="contattoTelefono" type="tel" />
-        </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nome contatto *</mat-label>
+              <input matInput formControlName="contattoNome" />
+              @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
+              }
+            </mat-form-field>
+          </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="contattoEmail" type="email" />
-          @if (form.controls.contattoEmail.hasError('email') && form.controls.contattoEmail.touched) {
-            <mat-error>Email non valida</mat-error>
-          }
-        </mat-form-field>
-      </div>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline">
+              <mat-label>Telefono</mat-label>
+              <input matInput formControlName="contattoTelefono" type="tel" />
+            </mat-form-field>
 
-      <mat-divider style="margin: 12px 0" />
-      <p class="section-label">Partecipanti</p>
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput formControlName="contattoEmail" type="email" />
+              @if (form.controls.contattoEmail.hasError('email') && form.controls.contattoEmail.touched) {
+                <mat-error>Email non valida</mat-error>
+              }
+            </mat-form-field>
+          </div>
 
-      <div class="form-row two-col">
-        <mat-form-field appearance="outline">
-          <mat-label>Totale partecipanti *</mat-label>
-          <input matInput formControlName="numeroTotalePartecipanti" type="number" min="1" />
-          @if (form.controls.numeroTotalePartecipanti.hasError('required') && form.controls.numeroTotalePartecipanti.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
-          }
-          @if (form.controls.numeroTotalePartecipanti.hasError('min') && form.controls.numeroTotalePartecipanti.touched) {
-            <mat-error>Minimo 1 partecipante</mat-error>
-          }
-        </mat-form-field>
+          <mat-divider style="margin: 12px 0" />
+          <p class="section-label">Partecipanti</p>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Di cui bambini</mat-label>
-          <input matInput formControlName="numeroBambini" type="number" min="0" />
-        </mat-form-field>
-      </div>
+          <div class="form-row two-col">
+            <mat-form-field appearance="outline">
+              <mat-label>Totale ospiti *</mat-label>
+              <input matInput formControlName="numeroTotalePartecipanti" type="number" min="1" />
+              @if (form.controls.numeroTotalePartecipanti.hasError('required') && form.controls.numeroTotalePartecipanti.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
+              }
+              @if (form.controls.numeroTotalePartecipanti.hasError('min') && form.controls.numeroTotalePartecipanti.touched) {
+                <mat-error>Minimo 1</mat-error>
+              }
+            </mat-form-field>
 
-      <!-- ── Allergie ─────────────────────────────────────────────────── -->
-      <div class="form-row">
-        <div class="allergie-section">
-          <p class="allergie-label">Allergie e intolleranze</p>
+            <mat-form-field appearance="outline">
+              <mat-label>Di cui bambini</mat-label>
+              <input matInput formControlName="numeroBambini" type="number" min="0" />
+            </mat-form-field>
+          </div>
 
-          <!-- Allergeni comuni EU: click per selezionare/deselezionare -->
-          <div class="allergie-comuni-grid">
-            @for (a of allergieComuni; track a) {
-              <button
-                type="button"
-                class="allergia-toggle"
-                [class.active]="hasAllergia(a)"
-                (click)="toggleAllergia(a)"
-              >{{ a }}</button>
+          <!-- Allergie -->
+          <div class="form-row">
+            <div class="allergie-section">
+              <p class="allergie-label">Allergie e intolleranze</p>
+              <div class="allergie-comuni-grid">
+                @for (a of allergieComuni; track a) {
+                  <button type="button" class="allergia-toggle" [class.active]="hasAllergia(a)" (click)="toggleAllergia(a)">{{ a }}</button>
+                }
+              </div>
+              @if (allergieCustom().length > 0) {
+                <div class="allergie-custom-list">
+                  @for (a of allergieCustom(); track a) {
+                    <span class="allergia-custom-chip">
+                      {{ a }}
+                      <button type="button" (click)="removeAllergia(a)" aria-label="Rimuovi">×</button>
+                    </span>
+                  }
+                </div>
+              }
+              <div class="allergie-input-row">
+                <mat-form-field appearance="outline" style="flex:1">
+                  <mat-label>Altra allergia</mat-label>
+                  <input matInput [formControl]="allergiaInputControl" (keydown)="onAllergiaKeydown($event)" placeholder="es. Kiwi, Nichel…" />
+                </mat-form-field>
+                <button mat-icon-button type="button" (click)="addAllergia()" color="primary" matTooltip="Aggiungi">
+                  <mat-icon>add_circle</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Note</mat-label>
+              <textarea matInput formControlName="note" rows="3"></textarea>
+            </mat-form-field>
+          </div>
+
+          <!-- Avanti -->
+          <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <button mat-flat-button color="primary" matStepperNext [disabled]="form.invalid">
+              Personale <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 2: Personale                                    -->
+      <!-- ════════════════════════════════════════════════════ -->
+      <mat-step label="Personale">
+        <div class="personale-step" style="padding:16px 24px">
+
+          <!-- Header con contatore -->
+          <div class="personale-step-header">
+            <span style="font-size:14px;color:#374151">Seleziona i dipendenti che lavoreranno all'evento</span>
+            @if (contaSelezionati() > 0) {
+              <span class="personale-count-chip">
+                <mat-icon style="font-size:14px;width:14px;height:14px">check_circle</mat-icon>
+                {{ contaSelezionati() }} selezionati
+              </span>
             }
           </div>
 
-          <!-- Allergie custom (non nella lista comune) -->
-          @if (allergieCustom().length > 0) {
-            <div class="allergie-custom-list">
-              @for (a of allergieCustom(); track a) {
-                <span class="allergia-custom-chip">
-                  {{ a }}
-                  <button type="button" (click)="removeAllergia(a)" aria-label="Rimuovi">×</button>
+          <!-- Riepilogo selezionati (chips) -->
+          @if (personaleSelezionatiList().length > 0) {
+            <div class="selezionati-chips">
+              @for (p of personaleSelezionatiList(); track p.id) {
+                <span class="selezionato-chip">
+                  {{ p.nome }} {{ p.cognome }}
+                  <button type="button" (click)="rimuoviSelezionato(p.id)" aria-label="Rimuovi">×</button>
                 </span>
               }
             </div>
           }
 
-          <!-- Input allergia custom -->
-          <div class="allergie-input-row">
-            <mat-form-field appearance="outline" style="flex:1">
-              <mat-label>Altra allergia</mat-label>
-              <input
-                matInput
-                [formControl]="allergiaInputControl"
-                (keydown)="onAllergiaKeydown($event)"
-                placeholder="es. Kiwi, Nichel…"
-              />
-            </mat-form-field>
-            <button mat-icon-button type="button" (click)="addAllergia()" color="primary" matTooltip="Aggiungi">
-              <mat-icon>add_circle</mat-icon>
+          <!-- Lista gruppi per mansione -->
+          @if (personaleAttivi().length === 0) {
+            <div class="empty-personale">
+              <mat-icon style="font-size:40px;width:40px;height:40px;color:#d1d5db">people_outline</mat-icon>
+              <p>Nessun dipendente attivo trovato</p>
+            </div>
+          } @else {
+            @for (gruppo of personalePerMansione(); track gruppo.mansione) {
+              <div class="mansione-gruppo">
+                <!-- Header gruppo (toggle expand) -->
+                <div class="mansione-header" (click)="toggleGruppoExpanded(gruppo.mansione)">
+                  <span class="mansione-label">
+                    <mat-icon style="font-size:16px;width:16px;height:16px;color:#6b7280">work_outline</mat-icon>
+                    {{ gruppo.mansione }}
+                    <span class="mansione-badge" [class.selected]="contaSelezionatiGruppo(gruppo.persone) > 0">
+                      @if (contaSelezionatiGruppo(gruppo.persone) > 0) {
+                        {{ contaSelezionatiGruppo(gruppo.persone) }}/{{ gruppo.persone.length }}
+                      } @else {
+                        {{ gruppo.persone.length }}
+                      }
+                    </span>
+                  </span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <button
+                      mat-button
+                      type="button"
+                      style="font-size:12px;min-width:auto;padding:0 8px;height:28px"
+                      (click)="$event.stopPropagation(); toggleGruppo(gruppo.mansione, gruppo.persone)"
+                    >
+                      {{ isGruppoTuttoSelezionato(gruppo.persone) ? 'Deseleziona tutti' : 'Seleziona tutti' }}
+                    </button>
+                    <mat-icon class="mansione-toggle">
+                      {{ isGruppoExpanded(gruppo.mansione) ? 'expand_less' : 'expand_more' }}
+                    </mat-icon>
+                  </div>
+                </div>
+
+                <!-- Griglia persone -->
+                @if (isGruppoExpanded(gruppo.mansione)) {
+                  <div class="persone-grid">
+                    @for (persona of gruppo.persone; track persona.id) {
+                      <div
+                        class="persona-card"
+                        [class.selected]="isSelected(persona.id)"
+                        (click)="togglePersona(persona.id)"
+                      >
+                        <div class="persona-avatar" [class.selected]="isSelected(persona.id)">
+                          {{ iniziali(persona.nome, persona.cognome) }}
+                        </div>
+                        <div class="persona-info">
+                          <div class="persona-nome">{{ persona.cognome }} {{ persona.nome }}</div>
+                        </div>
+                        <mat-checkbox
+                          class="persona-check"
+                          [checked]="isSelected(persona.id)"
+                          (click)="$event.stopPropagation()"
+                          (change)="togglePersona(persona.id)"
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Navigazione step 2 -->
+          <div style="display:flex;justify-content:space-between;margin-top:12px">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon> Indietro
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              (click)="submit()"
+              [disabled]="saving() || form.invalid"
+            >
+              @if (saving()) {
+                <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+              }
+              {{ isEdit() ? 'Salva modifiche' : 'Crea evento' }}
             </button>
           </div>
+
         </div>
-      </div>
+      </mat-step>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Note</mat-label>
-          <textarea matInput formControlName="note" rows="3"></textarea>
-        </mat-form-field>
-      </div>
-
-    </form>
+    </mat-stepper>
   }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions align="end" style="padding:8px 24px">
   <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
-  <button
-    mat-raised-button
-    color="primary"
-    (click)="submit()"
-    [disabled]="saving() || loadingForm()"
-  >
-    @if (saving()) {
-      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
-    }
-    {{ isEdit() ? 'Salva modifiche' : 'Crea evento' }}
-  </button>
 </mat-dialog-actions>

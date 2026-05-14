@@ -23,6 +23,7 @@ export const API_PATHS = {
     MANSIONI:      '/api/personale/mansioni',
     BY_ID:         (id: string) => `/api/personale/${id}`,
   },
+  MANSIONI: '/api/mansioni',
   CASSA: {
     SALDO:     '/api/cassa/saldo',
     MOVIMENTI: '/api/cassa/movimenti',
@@ -57,6 +58,7 @@ export const API_PATHS = {
     PL_TUTTE_BU:           '/api/reporting/pl/tutte-bu',
     CASHFLOW_STORICO:      '/api/reporting/cashflow/storico',
     CASHFLOW_FORECAST:     '/api/reporting/cashflow/forecast',
+    FORECASTING:           '/api/reporting/forecasting',
     EXPORT_MOVIMENTI:      '/api/reporting/export/movimenti',
     EXPORT_COMMERCIALISTA: '/api/reporting/export/commercialista',
     EXPORT_PL_BU:          '/api/reporting/export/pl-bu',
