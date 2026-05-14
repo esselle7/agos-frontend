@@ -1,0 +1,110 @@
+<h2 mat-dialog-title>Riconciliazione movimenti</h2>
+
+<mat-dialog-content class="riconc-dialog">
+
+  <!-- Match automatico -->
+  <div class="riconc-dialog__match-section">
+    <div class="riconc-dialog__match-header">
+      <div>
+        <strong>Match automatico</strong>
+        <p class="text-sub riconc-dialog__match-desc">
+          Il sistema tenta di riconciliare automaticamente i movimenti corrispondenti all'estratto conto.
+        </p>
+      </div>
+      <button mat-flat-button color="primary"
+              (click)="matchAutomatico()"
+              [disabled]="matchLoading()">
+        @if (matchLoading()) {
+          <mat-spinner diameter="18"></mat-spinner>
+        }
+        @if (!matchLoading()) {
+          <mat-icon>auto_fix_high</mat-icon>
+        }
+        {{ matchLoading() ? '' : 'Match automatico' }}
+      </button>
+    </div>
+
+    @if (matchResult() !== null) {
+      <div class="riconc-dialog__match-result">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{ matchResult() }} movimenti riconciliati automaticamente</span>
+      </div>
+    }
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <!-- Lista non riconciliati -->
+  <div class="riconc-dialog__list-section">
+    <div class="riconc-dialog__list-header">
+      <strong>Movimenti non riconciliati</strong>
+      <span class="text-sub">({{ totalElements }} totali)</span>
+    </div>
+
+    @if (loading()) {
+      <div class="riconc-dialog__loading">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+    } @else if (all().length === 0) {
+      <div class="riconc-dialog__empty">
+        <mat-icon>check_circle_outline</mat-icon>
+        <span>Tutti i movimenti sono riconciliati</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="pageData" class="riconc-dialog__table">
+
+        <ng-container matColumnDef="dataMovimento">
+          <th mat-header-cell *matHeaderCellDef>Data</th>
+          <td mat-cell *matCellDef="let row">{{ formatDate(row.dataMovimento) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="descrizione">
+          <th mat-header-cell *matHeaderCellDef>Descrizione</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="riconc-dialog__desc-cell">
+              <span>{{ row.descrizione }}</span>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="riconc-dialog__note-field">
+                <input matInput [formControl]="noteControls.get(row.id)!" placeholder="Note riconciliazione...">
+              </mat-form-field>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="importo">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Importo</th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            <span class="euro"
+                  [style.color]="row.tipo === 'ENTRATA' ? 'var(--success)' : 'var(--danger)'">
+              {{ row.importo | euro }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="azioni">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-stroked-button color="primary" (click)="riconcilia(row)">
+              <mat-icon>done</mat-icon> Riconcilia
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        [length]="totalElements"
+        [pageIndex]="page"
+        [pageSize]="size"
+        [pageSizeOptions]="[5, 10, 20]"
+        (page)="onPage($event)">
+      </mat-paginator>
+    }
+  </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="close()">Chiudi</button>
+</mat-dialog-actions>

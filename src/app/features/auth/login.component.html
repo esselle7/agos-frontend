@@ -1,0 +1,29 @@
+<div class="login-page">
+  <mat-card class="login-card">
+    <mat-card-content>
+      <div class="logo-area">
+        <div class="logo-icon">🌿</div>
+        <h1 class="brand-name">Agriturismo Agostinelli</h1>
+        <p class="brand-sub">Gestionale economico-finanziario</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="login-hint">Accedi con il tuo account Google aziendale per continuare.</p>
+
+      <button
+        mat-raised-button
+        color="primary"
+        class="google-btn"
+        (click)="loginWithGoogle()"
+      >
+        <mat-icon>login</mat-icon>
+        Accedi con Google
+      </button>
+    </mat-card-content>
+
+    <mat-card-footer>
+      <span class="version-label">v0.1.0 – {{ version }}</span>
+    </mat-card-footer>
+  </mat-card>
+</div>

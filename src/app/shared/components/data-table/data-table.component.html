@@ -1,0 +1,63 @@
+@if (loading) {
+  <div class="data-table__skeleton">
+    <agos-skeleton-loader type="table" [rows]="5"></agos-skeleton-loader>
+  </div>
+} @else if (data.length === 0) {
+  <agos-empty-state [icon]="emptyIcon" [title]="emptyTitle"></agos-empty-state>
+} @else {
+  <div class="data-table__wrapper">
+    <table mat-table [dataSource]="data" class="data-table__table">
+
+      @for (col of columns; track col.key) {
+        <ng-container [matColumnDef]="col.key">
+          <th mat-header-cell *matHeaderCellDef [style.width]="col.width ?? 'auto'">
+            {{ col.label }}
+          </th>
+
+          <td mat-cell *matCellDef="let row"
+              [class.data-table__cell--euro]="col.type === 'euro'">
+
+            @switch (col.type) {
+              @case ('euro') {
+                <span class="euro">{{ getCellNumber(row, col.key) | euro }}</span>
+              }
+              @case ('date') {
+                {{ formatDate(getCell(row, col.key)) }}
+              }
+              @case ('badge') {
+                <agos-badge
+                  [text]="getCellString(row, col.key)"
+                  [color]="getBadgeColor(col, row)">
+                </agos-badge>
+              }
+              @case ('template') {
+                @if (col.template) {
+                  <ng-container *ngTemplateOutlet="col.template; context: { $implicit: row }">
+                  </ng-container>
+                }
+              }
+              @default {
+                {{ getCellString(row, col.key) }}
+              }
+            }
+          </td>
+        </ng-container>
+      }
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"
+          class="data-table__row"
+          (click)="rowClick.emit(row)">
+      </tr>
+    </table>
+
+    <mat-paginator
+      [length]="totalElements"
+      [pageIndex]="page"
+      [pageSize]="size"
+      [pageSizeOptions]="[5, 10, 20, 50]"
+      (page)="onPage($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+}

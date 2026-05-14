@@ -1,0 +1,350 @@
+<div class="dashboard">
+
+  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <div class="dashboard__header">
+    <div class="dashboard__title">
+      <h2>Dashboard</h2>
+      @if (kpi()?.aggiornatoAl) {
+        <span class="text-sub update-label">
+          Aggiornato alle {{ formatTimestamp(kpi()!.aggiornatoAl) }}
+        </span>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+
+    <!-- ── Skeleton: finanziario ──────────────────────────────────── -->
+    <div class="section-header">
+      <span class="skeleton-line section-header__skeleton"></span>
+    </div>
+    <div class="kpi-grid kpi-grid--4">
+      @for (_ of skeletonRows; track $index) {
+        <agos-skeleton-loader type="stat" />
+      }
+    </div>
+
+    <!-- ── Skeleton: economico ───────────────────────────────────── -->
+    <div class="section-header">
+      <span class="skeleton-line section-header__skeleton"></span>
+    </div>
+    <div class="kpi-grid kpi-grid--3">
+      @for (_ of skeletonRows3; track $index) {
+        <agos-skeleton-loader type="stat" />
+      }
+    </div>
+
+    <!-- ── Skeleton: grafici ─────────────────────────────────────── -->
+    <div class="charts-row">
+      <div class="charts-row__left card">
+        <agos-skeleton-loader type="card" [rows]="8" />
+      </div>
+      <div class="charts-row__right card">
+        <agos-skeleton-loader type="card" [rows]="6" />
+      </div>
+    </div>
+
+    <!-- ── Skeleton: agenda imminente ───────────────────────────── -->
+    <div class="agenda-grid">
+      <div class="card agenda-col">
+        <agos-skeleton-loader type="card" [rows]="6" />
+      </div>
+      <div class="card agenda-col">
+        <agos-skeleton-loader type="card" [rows]="6" />
+      </div>
+    </div>
+
+  } @else {
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- SEZIONE: Situazione Finanziaria                             -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <div class="section-header section-header--financial">
+      <mat-icon>account_balance</mat-icon>
+      <h4>Situazione Finanziaria</h4>
+      <span class="section-note text-sub">saldi reali al momento</span>
+    </div>
+
+    <div class="kpi-grid kpi-grid--4">
+      <agos-stat-card
+        label="Saldo BPM"
+        [value]="kpi()?.saldi?.bpm?.saldo ?? null"
+        [delta]="kpi()?.saldi?.bpm?.variazioneMese ?? null"
+        deltaLabel="vs inizio mese"
+        icon="account_balance"
+        color="neutral"
+        [loading]="loadingPeriod()" />
+
+      <agos-stat-card
+        label="Saldo Crédit Agr."
+        [value]="kpi()?.saldi?.creditAgricole?.saldo ?? null"
+        [delta]="kpi()?.saldi?.creditAgricole?.variazioneMese ?? null"
+        deltaLabel="vs inizio mese"
+        icon="account_balance"
+        color="neutral"
+        [loading]="loadingPeriod()" />
+
+      <agos-stat-card
+        label="Saldo Cassa"
+        [value]="kpi()?.saldi?.cassa?.saldo ?? null"
+        [delta]="kpi()?.saldi?.cassa?.variazioneMese ?? null"
+        deltaLabel="vs inizio mese"
+        icon="payments"
+        color="neutral"
+        [loading]="loadingPeriod()" />
+
+      <agos-stat-card
+        label="Liquidità Totale"
+        [value]="kpi()?.saldi?.totale?.saldo ?? null"
+        [delta]="kpi()?.saldi?.totale?.variazioneMese ?? null"
+        deltaLabel="vs inizio mese"
+        icon="account_balance_wallet"
+        color="primary"
+        [loading]="loadingPeriod()" />
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- SEZIONE: Performance Economica                             -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <div class="section-header section-header--economic">
+      <mat-icon>trending_up</mat-icon>
+      <h4>Performance Economica</h4>
+      <span class="section-note text-sub">valori di competenza nel periodo</span>
+    </div>
+
+    <div class="kpi-grid kpi-grid--3">
+      <agos-stat-card
+        label="Ricavi"
+        [value]="kpi()?.periodo?.totalEntrate ?? null"
+        [delta]="kpi()?.vsMesePrecedente?.entrateDelta ?? null"
+        deltaLabel="vs mese prec."
+        icon="arrow_upward"
+        color="success"
+        [loading]="loadingPeriod()" />
+
+      <agos-stat-card
+        label="Costi"
+        [value]="kpi()?.periodo?.totalUscite ?? null"
+        [delta]="kpi()?.vsMesePrecedente?.usciteDelta ?? null"
+        deltaLabel="vs mese prec."
+        icon="arrow_downward"
+        color="warning"
+        [deltaPositiveIsGood]="false"
+        [loading]="loadingPeriod()" />
+
+      <agos-stat-card
+        label="Margine"
+        [value]="kpi()?.periodo?.margine ?? null"
+        [delta]="kpi()?.vsMesePrecedente?.margineDelta ?? null"
+        deltaLabel="vs mese prec."
+        icon="show_chart"
+        [color]="margineColor"
+        [loading]="loadingPeriod()" />
+    </div>
+
+    <mat-divider class="section-divider" />
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- RIGA GRAFICI                                                -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <div class="charts-row">
+
+      <!-- Linea: Andamento Mensile -->
+      <div class="charts-row__left card">
+        <div class="chart-header">
+          <h5>Andamento Mensile</h5>
+          <span class="text-sub chart-subtitle">ultimi 24 mesi</span>
+        </div>
+        @if (andamentoError) {
+          <agos-empty-state icon="error_outline" title="Dati non disponibili"
+            subtitle="Impossibile caricare l'andamento" />
+        } @else if (andamento().length === 0) {
+          <agos-empty-state icon="bar_chart" title="Nessun dato disponibile" />
+        } @else {
+          <div class="chart-container">
+            <canvas baseChart
+              [data]="lineChartData()"
+              [type]="'line'"
+              [options]="lineChartOptions">
+            </canvas>
+          </div>
+        }
+      </div>
+
+      <!-- Barre: Fatturato per BU -->
+      <div class="charts-row__right card">
+        <div class="chart-header">
+          <h5>Fatturato per Business Unit</h5>
+          @if (loadingPeriod()) {
+            <agos-skeleton-loader type="text" [rows]="1" />
+          }
+        </div>
+        @if (fatturatoError) {
+          <agos-empty-state icon="error_outline" title="Dati non disponibili" />
+        } @else if (fatturatoPerBu().length === 0) {
+          <agos-empty-state icon="pie_chart" title="Nessun dato disponibile" />
+        } @else {
+          <div class="chart-container">
+            <canvas baseChart
+              [data]="buChartData()"
+              [type]="'bar'"
+              [options]="buChartOptions">
+            </canvas>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- AGENDA IMMINENTE                                            -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <div class="section-header section-header--agenda">
+      <mat-icon>calendar_month</mat-icon>
+      <h4>Agenda Imminente</h4>
+      <span class="section-note text-sub">prossimi 30 giorni</span>
+    </div>
+
+    @if (scadenzeError) {
+      <agos-empty-state icon="error_outline" title="Dati non disponibili"
+        subtitle="Impossibile caricare le scadenze" />
+    } @else {
+      <div class="agenda-grid">
+
+        <!-- ── Colonna: eventi ──────────────────────────────────── -->
+        <div class="agenda-col card">
+          <div class="agenda-col__header">
+            <mat-icon class="col-icon col-icon--eventi">event</mat-icon>
+            <span class="col-title">Eventi Imminenti</span>
+            @if (scadenzeEventi().length > 0) {
+              <span class="col-count">{{ scadenzeEventi().length }}</span>
+            }
+            <div class="col-pills">
+              @if (eventiByUrgenza().alta > 0) {
+                <span class="urgenza-pill urgenza-pill--alta">
+                  <mat-icon>warning</mat-icon>{{ eventiByUrgenza().alta }} urgenti
+                </span>
+              }
+              @if (eventiByUrgenza().media > 0) {
+                <span class="urgenza-pill urgenza-pill--media">
+                  {{ eventiByUrgenza().media }} in scadenza
+                </span>
+              }
+            </div>
+            <a class="link-all" routerLink="/eventi">
+              Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
+            </a>
+          </div>
+
+          @if (scadenzeEventi().length === 0) {
+            <agos-empty-state icon="event_available" title="Nessun evento imminente"
+              subtitle="nel periodo selezionato" />
+          } @else {
+            <div class="agenda-list">
+              @for (s of scadenzeEventi(); track s.referenceId) {
+                <div class="agenda-item"
+                     [class.agenda-item--paid]="s.stato === 'PAID'"
+                     [class.agenda-item--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                     [class.agenda-item--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'">
+                  <div class="agenda-item__date"
+                       [class.date--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                       [class.date--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'"
+                       [class.date--paid]="s.stato === 'PAID'">
+                    <span class="date-day">{{ getDayFromDate(s.dataScadenza) }}</span>
+                    <span class="date-month">{{ getMonthFromDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__info">
+                    <span class="agenda-item__desc">{{ s.descrizione }}</span>
+                    <span class="agenda-item__when text-sub">{{ formatScadenzaDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__right">
+                    @if (s.stato === 'PAID') {
+                      <span class="paid-label">
+                        <mat-icon>check_circle</mat-icon> Saldato
+                      </span>
+                    } @else {
+                      <span class="agenda-item__amount euro">{{ s.importoAtteso | euro }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            @if (totalePendingEventi() > 0) {
+              <div class="agenda-col__total">
+                Totale da saldare: <strong class="euro">{{ totalePendingEventi() | euro }}</strong>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- ── Colonna: pagamenti ricorrenti ────────────────────── -->
+        <div class="agenda-col card">
+          <div class="agenda-col__header">
+            <mat-icon class="col-icon col-icon--rate">repeat</mat-icon>
+            <span class="col-title">Pagamenti Ricorrenti</span>
+            @if (scadenzeRate().length > 0) {
+              <span class="col-count">{{ scadenzeRate().length }}</span>
+            }
+            <div class="col-pills">
+              @if (rateByUrgenza().alta > 0) {
+                <span class="urgenza-pill urgenza-pill--alta">
+                  <mat-icon>warning</mat-icon>{{ rateByUrgenza().alta }} urgenti
+                </span>
+              }
+              @if (rateByUrgenza().media > 0) {
+                <span class="urgenza-pill urgenza-pill--media">
+                  {{ rateByUrgenza().media }} in scadenza
+                </span>
+              }
+            </div>
+            <a class="link-all" routerLink="/spese-ricorrenti">
+              Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
+            </a>
+          </div>
+
+          @if (scadenzeRate().length === 0) {
+            <agos-empty-state icon="event_available" title="Nessun pagamento imminente"
+              subtitle="nel periodo selezionato" />
+          } @else {
+            <div class="agenda-list">
+              @for (s of scadenzeRate(); track s.referenceId) {
+                <div class="agenda-item"
+                     [class.agenda-item--paid]="s.stato === 'PAID'"
+                     [class.agenda-item--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                     [class.agenda-item--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'">
+                  <div class="agenda-item__date"
+                       [class.date--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
+                       [class.date--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'"
+                       [class.date--paid]="s.stato === 'PAID'">
+                    <span class="date-day">{{ getDayFromDate(s.dataScadenza) }}</span>
+                    <span class="date-month">{{ getMonthFromDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__info">
+                    <span class="agenda-item__desc">{{ s.descrizione }}</span>
+                    <span class="agenda-item__when text-sub">{{ formatScadenzaDate(s.dataScadenza) }}</span>
+                  </div>
+                  <div class="agenda-item__right">
+                    @if (s.stato === 'PAID') {
+                      <span class="paid-label">
+                        <mat-icon>check_circle</mat-icon> Pagato
+                      </span>
+                    } @else {
+                      <span class="agenda-item__amount euro">{{ s.importoAtteso | euro }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            @if (totalePendingRate() > 0) {
+              <div class="agenda-col__total">
+                Totale da pagare: <strong class="euro">{{ totalePendingRate() | euro }}</strong>
+              </div>
+            }
+          }
+        </div>
+
+      </div>
+    }
+
+  }
+</div>

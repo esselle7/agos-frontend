@@ -1,0 +1,69 @@
+.riconc-dialog {
+  min-width: 600px;
+}
+
+.riconc-dialog__match-section {
+  padding: 16px 0;
+}
+
+.riconc-dialog__match-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.riconc-dialog__match-desc {
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.riconc-dialog__match-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--success);
+  font-size: 0.9rem;
+}
+
+.riconc-dialog__list-section {
+  padding: 16px 0;
+}
+
+.riconc-dialog__list-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.riconc-dialog__loading,
+.riconc-dialog__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  color: var(--text-sub);
+}
+
+.riconc-dialog__table {
+  width: 100%;
+}
+
+.riconc-dialog__desc-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.riconc-dialog__note-field {
+  width: 100%;
+  max-width: 280px;
+}
+
+.text-right {
+  text-align: right;
+}

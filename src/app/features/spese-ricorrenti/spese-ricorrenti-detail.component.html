@@ -1,0 +1,260 @@
+<div class="srd-page">
+
+  <!-- Back -->
+  <button mat-button (click)="back()" class="srd-back">
+    <mat-icon>arrow_back</mat-icon> Spese Ricorrenti
+  </button>
+
+  @if (loading()) {
+    <div class="srd-spinner"><mat-spinner diameter="40" /></div>
+  } @else if (error()) {
+    <p class="srd-error">{{ error() }}</p>
+  } @else if (plan(); as p) {
+
+    <!-- ── Header ── -->
+    <div class="srd-header">
+      <div class="srd-header__left">
+        <h2>{{ p.descrizione }}</h2>
+        <div class="srd-header__meta">
+          <span class="badge" [class]="planStatoClass(p.stato)">{{ p.stato }}</span>
+          <span class="srd-meta-item"><mat-icon class="icon-xs">account_balance</mat-icon> {{ p.contoBancarioNome }}</span>
+          <span class="srd-meta-item"><mat-icon class="icon-xs">category</mat-icon> {{ p.contoCogeDescrizione }}</span>
+          <span class="srd-meta-item"><mat-icon class="icon-xs">event_repeat</mat-icon> {{ frequenzaLabel(p.frequenza) }} – giorno {{ p.giornoDelMese }}</span>
+          @if (p.variazionePct !== 0) {
+            <span class="srd-meta-item">Variazione {{ p.variazionePct > 0 ? '+' : '' }}{{ p.variazionePct }}% / rata</span>
+          }
+        </div>
+      </div>
+
+      <!-- Azioni piano (solo ATTIVO) -->
+      @if (isActive()) {
+        <div class="srd-header__actions">
+          <button mat-stroked-button color="accent" (click)="openLiquidate()" matTooltip="Liquida piano con un'unica rata">
+            <mat-icon>payments</mat-icon> Liquida
+          </button>
+          <button mat-stroked-button color="warn" (click)="showCancel.set(true)" matTooltip="Annulla piano">
+            <mat-icon>cancel</mat-icon> Annulla
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- ── KPI Cards ── -->
+    <div class="srd-kpi-row">
+      <div class="srd-kpi">
+        <span class="srd-kpi__label">Totale piano</span>
+        <span class="srd-kpi__value">{{ p.totalePiano | euro }}</span>
+      </div>
+      <div class="srd-kpi">
+        <span class="srd-kpi__label">Pagato</span>
+        <span class="srd-kpi__value srd-kpi__value--paid">{{ p.totalePagato | euro }}</span>
+      </div>
+      <div class="srd-kpi">
+        <span class="srd-kpi__label">Residuo</span>
+        <span class="srd-kpi__value srd-kpi__value--residuo">{{ p.totaleResiduo | euro }}</span>
+      </div>
+      <div class="srd-kpi">
+        <span class="srd-kpi__label">Avanzamento</span>
+        <div class="srd-kpi__progress">
+          <div class="srd-kpi__bar"><div class="srd-kpi__fill" [style.width.%]="progressPct()"></div></div>
+          <span>{{ progressPct() }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Saldo conto bancario ── -->
+    <div class="srd-saldo"
+         [class.srd-saldo--ok]="p.saldoContoBancario >= p.totaleResiduo"
+         [class.srd-saldo--warn]="p.saldoContoBancario >= 0 && p.saldoContoBancario < p.totaleResiduo"
+         [class.srd-saldo--danger]="p.saldoContoBancario < 0">
+
+      <div class="srd-saldo__left">
+        <mat-icon class="srd-saldo__bank-icon">account_balance</mat-icon>
+        <div class="srd-saldo__bank-info">
+          <span class="srd-saldo__bank-name">{{ p.contoBancarioNome }}</span>
+          <span class="srd-saldo__bank-label">Saldo disponibile</span>
+        </div>
+      </div>
+
+      <div class="srd-saldo__center">
+        <span class="srd-saldo__amount">{{ p.saldoContoBancario | euro }}</span>
+        @if (p.totaleResiduo > 0) {
+          <div class="srd-saldo__bar-wrap">
+            <div class="srd-saldo__bar">
+              <div class="srd-saldo__bar-fill"
+                   [style.width.%]="saldoCoveragePct(p.saldoContoBancario, p.totaleResiduo)">
+              </div>
+            </div>
+            <span class="srd-saldo__bar-pct">{{ saldoCoveragePct(p.saldoContoBancario, p.totaleResiduo) }}%</span>
+          </div>
+        }
+      </div>
+
+      <div class="srd-saldo__right">
+        @if (p.saldoContoBancario >= p.totaleResiduo) {
+          <div class="srd-saldo__status srd-saldo__status--ok">
+            <mat-icon>check_circle</mat-icon>
+            <span>Copre tutto il residuo</span>
+          </div>
+        } @else if (p.saldoContoBancario >= 0) {
+          <div class="srd-saldo__status srd-saldo__status--warn">
+            <mat-icon>warning</mat-icon>
+            <div>
+              <span>Residuo non coperto</span>
+              <span class="srd-saldo__status-sub">mancano {{ (p.totaleResiduo - p.saldoContoBancario) | euro }}</span>
+            </div>
+          </div>
+        } @else {
+          <div class="srd-saldo__status srd-saldo__status--danger">
+            <mat-icon>error</mat-icon>
+            <span>Saldo negativo</span>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Tabella rate ── -->
+    <div class="srd-table-wrap">
+      <table class="srd-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Data scadenza</th>
+            <th>Importo</th>
+            <th>Stato</th>
+            <th>Note</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rata of p.rate; track rata.id) {
+            <tr [class.srd-row--past]="isPast(rata)" [class.srd-row--skipped]="rata.stato === 'SKIPPED'">
+
+              <td class="srd-td--num">{{ rata.numeroRata }}</td>
+
+              <!-- Data scadenza -->
+              <td>
+                @if (editingRataId() === rata.id) {
+                  <input type="date" [(ngModel)]="editData" class="srd-input-inline" />
+                } @else {
+                  {{ rata.dataScadenza | date:'dd/MM/yyyy' }}
+                }
+              </td>
+
+              <!-- Importo -->
+              <td class="srd-td--amount">
+                @if (editingRataId() === rata.id) {
+                  <input type="number" [(ngModel)]="editImporto" class="srd-input-inline srd-input-inline--sm"
+                         min="0.01" step="0.01" />
+                } @else {
+                  {{ rata.importo | euro }}
+                }
+              </td>
+
+              <!-- Stato badge -->
+              <td>
+                <span class="badge" [class]="statoClass(rata.stato)">{{ rata.stato }}</span>
+                @if (rata.movimentoId) {
+                  <mat-icon class="icon-xs srd-icon--link" matTooltip="Movimento generato">link</mat-icon>
+                }
+              </td>
+
+              <!-- Note -->
+              <td class="srd-td--note">
+                @if (editingRataId() === rata.id) {
+                  <input type="text" [(ngModel)]="editNote" class="srd-input-inline" placeholder="Note" />
+                } @else {
+                  {{ rata.note ?? '—' }}
+                }
+              </td>
+
+              <!-- Azioni -->
+              <td class="srd-td--actions">
+                @if (editingRataId() === rata.id) {
+                  <button mat-icon-button color="primary" (click)="saveEdit(rata)" matTooltip="Salva"><mat-icon>check</mat-icon></button>
+                  <button mat-icon-button (click)="cancelEdit()" matTooltip="Annulla"><mat-icon>close</mat-icon></button>
+                } @else if (canEdit(rata)) {
+                  <button mat-icon-button color="accent" (click)="payInstallment(rata)" matTooltip="Paga rata ora" [disabled]="working()">
+                    <mat-icon>payment</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="startEdit(rata)" matTooltip="Modifica rata"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button [matMenuTriggerFor]="skipMenu" matTooltip="Salta rata"><mat-icon>skip_next</mat-icon></button>
+                  <mat-menu #skipMenu="matMenu">
+                    <button mat-menu-item (click)="skip(rata, 'RIMANDA')">
+                      <mat-icon>queue</mat-icon> Rimanda (aggiunge rata in fondo)
+                    </button>
+                    <button mat-menu-item (click)="skip(rata, 'ACCORPA')">
+                      <mat-icon>merge</mat-icon> Accorpa alla prossima
+                    </button>
+                  </mat-menu>
+                }
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Liquidate dialog ── -->
+    @if (showLiquidate()) {
+      <div class="srd-overlay" (click)="showLiquidate.set(false)"></div>
+      <div class="srd-modal">
+        <h3>Liquida piano con maxi rata</h3>
+        <p class="text-sub">Verrà creato un unico movimento per chiudere tutte le rate residue. Totale residuo: <strong>{{ totaleResiduo() | euro }}</strong></p>
+        <div class="srd-saldo-info" [class.srd-saldo-info--warn]="(plan()?.saldoContoBancario ?? 0) < totaleResiduo()">
+          <mat-icon class="icon-xs">account_balance</mat-icon>
+          Saldo disponibile: <strong>{{ (plan()?.saldoContoBancario ?? 0) | euro }}</strong>
+          @if ((plan()?.saldoContoBancario ?? 0) < totaleResiduo()) {
+            <span class="srd-saldo-warn">&nbsp;— saldo insufficiente</span>
+          }
+        </div>
+        <mat-form-field appearance="outline" class="srd-field">
+          <mat-label>Importo maxi rata (lascia vuoto per usare residuo)</mat-label>
+          <input matInput type="number" [(ngModel)]="liquidateImporto" min="0.01" step="0.01" />
+          <span matTextPrefix>€&nbsp;</span>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="srd-field">
+          <mat-label>Note</mat-label>
+          <input matInput [(ngModel)]="liquidateNote" />
+        </mat-form-field>
+        @if (liquidateError()) {
+          <p class="srd-error-inline">{{ liquidateError() }}</p>
+        }
+        <div class="srd-modal__actions">
+          <button mat-button (click)="showLiquidate.set(false)">Annulla</button>
+          <button mat-flat-button color="accent" (click)="confirmLiquidate()"
+                  [disabled]="working() || (plan()?.saldoContoBancario ?? 0) < totaleResiduo()">
+            <mat-icon>payments</mat-icon> Conferma liquidazione
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ── Cancel dialog ── -->
+    @if (showCancel()) {
+      <div class="srd-overlay" (click)="showCancel.set(false)"></div>
+      <div class="srd-modal srd-modal--warn">
+        <h3>Annulla piano</h3>
+        <p class="text-sub">Tutte le rate PENDING verranno marcate come CANCELLED. Le rate già pagate rimangono nello storico movimenti.</p>
+        <mat-form-field appearance="outline" class="srd-field">
+          <mat-label>Penale (opzionale, default 0)</mat-label>
+          <input matInput type="number" [(ngModel)]="cancelPenale" min="0" step="0.01" />
+          <span matTextPrefix>€&nbsp;</span>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="srd-field">
+          <mat-label>Note</mat-label>
+          <input matInput [(ngModel)]="cancelNote" />
+        </mat-form-field>
+        <div class="srd-modal__actions">
+          <button mat-button (click)="showCancel.set(false)">Indietro</button>
+          <button mat-flat-button color="warn" (click)="confirmCancel()" [disabled]="working()">
+            <mat-icon>cancel</mat-icon> Annulla piano
+          </button>
+        </div>
+      </div>
+    }
+
+  }
+</div>

@@ -1,0 +1,345 @@
+<div class="fc">
+
+  <!-- ══════════════════════════════
+       HEADER
+       ══════════════════════════════ -->
+  <div class="fc-header">
+    <div>
+      <h2>Forecasting</h2>
+      <p class="fc-subtitle">Previsione economica e finanziaria su base dati reali</p>
+    </div>
+    <button mat-stroked-button (click)="load()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      Aggiorna
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════
+       SELETTORE ORIZZONTE
+       ══════════════════════════════ -->
+  <div class="fc-horizon-row">
+    <mat-button-toggle-group
+      [value]="horizon()"
+      (change)="onHorizonChange($event.value)"
+      [disabled]="loading()"
+      hideSingleSelectionIndicator>
+      @for (h of horizons; track h.value) {
+        <mat-button-toggle [value]="h.value">{{ h.label }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    <span class="fc-horizon-note">
+      <mat-icon>info_outline</mat-icon>
+      Previsione da domani · Dati stimati, non certificati
+    </span>
+  </div>
+
+  @if (loading()) {
+    <div class="card fc-card">
+      <agos-skeleton-loader [rows]="6" />
+    </div>
+  }
+
+  @if (error(); as err) {
+    <div class="card fc-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ err }}</span>
+    </div>
+  }
+
+  @if (hasData && !loading()) {
+
+    <!-- ══════════════════════════════
+         SITUAZIONE AS IS
+         ══════════════════════════════ -->
+    <section class="fc-section">
+      <h3 class="fc-section__title">
+        Situazione Attuale
+        <span class="fc-badge fc-badge--asis">AS IS</span>
+      </h3>
+
+      <div class="fc-kpi-grid">
+
+        <div class="card fc-kpi">
+          <div class="fc-kpi__label">Liquidità Attuale</div>
+          <div class="fc-kpi__value" [class.text-success]="asIs!.saldoLiquidita >= 0" [class.text-danger]="asIs!.saldoLiquidita < 0">
+            {{ asIs!.saldoLiquidita | euro }}
+          </div>
+          <div class="fc-kpi__sub">Conti bancari + Cassa</div>
+        </div>
+
+        <div class="card fc-kpi">
+          <div class="fc-kpi__label">Ricavi YTD</div>
+          <div class="fc-kpi__value text-success">{{ asIs!.ricaviYtd | euro }}</div>
+          <div class="fc-kpi__sub">Anno corrente</div>
+        </div>
+
+        <div class="card fc-kpi">
+          <div class="fc-kpi__label">Costi YTD</div>
+          <div class="fc-kpi__value text-danger">{{ asIs!.costiYtd | euro }}</div>
+          <div class="fc-kpi__sub">Anno corrente</div>
+        </div>
+
+        <div class="card fc-kpi">
+          <div class="fc-kpi__label">EBITDA YTD</div>
+          <div class="fc-kpi__value" [class.text-success]="asIs!.ebitdaYtd >= 0" [class.text-danger]="asIs!.ebitdaYtd < 0">
+            {{ asIs!.ebitdaYtd | euro }}
+          </div>
+          <div class="fc-kpi__sub">Anno corrente</div>
+        </div>
+
+        <div class="card fc-kpi fc-kpi--crediti"
+             matTooltip="Entrate registrate non ancora incassate (movimenti senza data finanziaria)">
+          <div class="fc-kpi__label">Crediti Aperti</div>
+          <div class="fc-kpi__value text-success">{{ asIs!.creditiAperti | euro }}</div>
+          <div class="fc-kpi__sub">Da incassare</div>
+        </div>
+
+        <div class="card fc-kpi fc-kpi--debiti"
+             matTooltip="Uscite registrate non ancora pagate (movimenti senza data finanziaria)">
+          <div class="fc-kpi__label">Debiti Aperti</div>
+          <div class="fc-kpi__value text-danger">{{ asIs!.debitiAperti | euro }}</div>
+          <div class="fc-kpi__sub">Da pagare</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         GRAFICO TIMELINE
+         ══════════════════════════════ -->
+    <section class="fc-section">
+      <h3 class="fc-section__title">
+        Proiezione nel Periodo
+        <span class="fc-badge fc-badge--forecast">Stima</span>
+      </h3>
+
+      <div class="card fc-chart-card">
+        <div class="fc-chart-wrap">
+          <canvas baseChart
+            [data]="timelineChartData()"
+            [options]="timelineChartOptions"
+            type="line">
+          </canvas>
+        </div>
+        <div class="fc-chart-note">
+          <mat-icon>info</mat-icon>
+          La linea tratteggiata (EBITDA Periodo, scala destra) mostra l'utile operativo previsto per ciascun bucket.
+          Il saldo liquidità (area blu, scala sinistra) include incassi e pagamenti stimati.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         RIEPILOGO ECONOMICO / FINANZIARIO
+         ══════════════════════════════ -->
+    <section class="fc-section">
+      <h3 class="fc-section__title">Riepilogo Previsionale</h3>
+
+      <div class="fc-riepilogo-grid">
+
+        <!-- Vista Economica -->
+        <div class="card fc-riepilogo fc-riepilogo--eco">
+          <div class="fc-riepilogo__header">
+            <span class="fc-badge fc-badge--eco">Economica</span>
+            <span class="fc-riepilogo__sub">Ricavi e costi di competenza</span>
+          </div>
+          <div class="fc-riepilogo__rows">
+            <div class="fc-riepilogo__row">
+              <span>Ricavi previsti</span>
+              <span class="text-success">{{ economico!.ricaviPrevisti | euro }}</span>
+            </div>
+            <div class="fc-riepilogo__row">
+              <span>Costi previsti</span>
+              <span class="text-danger">{{ economico!.costiPrevisti | euro }}</span>
+            </div>
+            <div class="fc-riepilogo__row fc-riepilogo__row--total">
+              <span>EBITDA previsto</span>
+              <span [class.text-success]="economico!.ebitdaPrevisto >= 0"
+                    [class.text-danger]="economico!.ebitdaPrevisto < 0">
+                {{ economico!.ebitdaPrevisto | euro }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vista Finanziaria -->
+        <div class="card fc-riepilogo fc-riepilogo--fin">
+          <div class="fc-riepilogo__header">
+            <span class="fc-badge fc-badge--fin">Finanziaria</span>
+            <span class="fc-riepilogo__sub">Flussi di cassa attesi</span>
+          </div>
+          <div class="fc-riepilogo__rows">
+            <div class="fc-riepilogo__row">
+              <span>Saldo oggi</span>
+              <span [class.text-success]="finanziario!.saldoPartenza >= 0"
+                    [class.text-danger]="finanziario!.saldoPartenza < 0">
+                {{ finanziario!.saldoPartenza | euro }}
+              </span>
+            </div>
+            <div class="fc-riepilogo__row">
+              <span>+ Incassi attesi</span>
+              <span class="text-success">{{ finanziario!.incassiPrevisti | euro }}</span>
+            </div>
+            <div class="fc-riepilogo__row">
+              <span>− Uscite attese</span>
+              <span class="text-danger">{{ finanziario!.uscitePreviste | euro }}</span>
+            </div>
+            <div class="fc-riepilogo__row fc-riepilogo__row--total">
+              <span>Saldo finale previsto</span>
+              <span [class.text-success]="finanziario!.saldoFinale >= 0"
+                    [class.text-danger]="finanziario!.saldoFinale < 0">
+                {{ finanziario!.saldoFinale | euro }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════
+         TABELLA TIMELINE
+         ══════════════════════════════ -->
+    @if (timeline.length > 0) {
+      <section class="fc-section">
+        <h3 class="fc-section__title">Timeline Finanziaria</h3>
+
+        <div class="card fc-card">
+          <table mat-table [dataSource]="timeline" class="fc-table">
+
+            <ng-container matColumnDef="bucket">
+              <th mat-header-cell *matHeaderCellDef>Periodo</th>
+              <td mat-cell *matCellDef="let t">{{ timelineBucketLabel(t) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="entratePreviste">
+              <th mat-header-cell *matHeaderCellDef class="cell-right">Incassi</th>
+              <td mat-cell *matCellDef="let t" class="cell-right text-success">{{ t.entratePreviste | euro }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="uscitePreviste">
+              <th mat-header-cell *matHeaderCellDef class="cell-right">Uscite</th>
+              <td mat-cell *matCellDef="let t" class="cell-right text-danger">{{ t.uscitePreviste | euro }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="ebitdaPeriodo">
+              <th mat-header-cell *matHeaderCellDef class="cell-right">EBITDA</th>
+              <td mat-cell *matCellDef="let t" class="cell-right"
+                  [class.text-success]="t.ebitdaPeriodo >= 0"
+                  [class.text-danger]="t.ebitdaPeriodo < 0">
+                {{ t.ebitdaPeriodo | euro }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="saldoLiquiditaFine">
+              <th mat-header-cell *matHeaderCellDef class="cell-right">Saldo Fine Periodo</th>
+              <td mat-cell *matCellDef="let t" class="cell-right fw-600"
+                  [class.text-success]="t.saldoLiquiditaFine >= 0"
+                  [class.text-danger]="t.saldoLiquiditaFine < 0">
+                {{ t.saldoLiquiditaFine | euro }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="timelineColumns"></tr>
+            <tr mat-row *matRowDef="let r; columns: timelineColumns"></tr>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- ══════════════════════════════
+         TABELLA DETTAGLIO
+         ══════════════════════════════ -->
+    <section class="fc-section">
+      <h3 class="fc-section__title">
+        Dettaglio Voci Previsionali
+        <span class="fc-count-badge">{{ dettaglioFiltrato().length }}</span>
+      </h3>
+
+      <!-- Filtri categoria -->
+      <div class="fc-filtri">
+        @for (cat of [
+          { v: 'TUTTE', l: 'Tutte' },
+          { v: 'MOVIMENTO', l: 'Movimenti' },
+          { v: 'EVENTO', l: 'Eventi' },
+          { v: 'RATA_RICORRENTE', l: 'Spese Ricorrenti' },
+          { v: 'STIPENDIO', l: 'Stipendi' }
+        ]; track cat.v) {
+          <button
+            mat-stroked-button
+            [class.fc-filtro--active]="categoriaFiltro() === cat.v"
+            (click)="categoriaFiltro.set(cat.v)">
+            {{ cat.l }}
+          </button>
+        }
+      </div>
+
+      @if (dettaglioFiltrato().length === 0) {
+        <div class="card fc-empty">
+          <mat-icon>search_off</mat-icon>
+          <p>Nessuna voce previsionale nel periodo selezionato</p>
+        </div>
+      } @else {
+        <div class="card fc-card">
+          <table mat-table [dataSource]="dettaglioFiltrato()" class="fc-table">
+
+            <ng-container matColumnDef="data">
+              <th mat-header-cell *matHeaderCellDef>Data</th>
+              <td mat-cell *matCellDef="let r">{{ formatDate(r.data) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="categoria">
+              <th mat-header-cell *matHeaderCellDef>Categoria</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="fc-cat-chip" [style.color]="categoriaColor(r.categoria)">
+                  {{ categoriaLabel(r.categoria) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="descrizione">
+              <th mat-header-cell *matHeaderCellDef>Descrizione</th>
+              <td mat-cell *matCellDef="let r" class="fc-desc-cell">{{ r.descrizione }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="importoEntrata">
+              <th mat-header-cell *matHeaderCellDef class="cell-right">Entrata</th>
+              <td mat-cell *matCellDef="let r" class="cell-right">
+                @if (r.importoEntrata > 0) {
+                  <span class="text-success">{{ r.importoEntrata | euro }}</span>
+                } @else {
+                  <span class="fc-empty-cell">—</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="importoUscita">
+              <th mat-header-cell *matHeaderCellDef class="cell-right">Uscita</th>
+              <td mat-cell *matCellDef="let r" class="cell-right">
+                @if (r.importoUscita > 0) {
+                  <span class="text-danger">{{ r.importoUscita | euro }}</span>
+                } @else {
+                  <span class="fc-empty-cell">—</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="vista">
+              <th mat-header-cell *matHeaderCellDef>Vista</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="fc-vista-chip" [style.color]="vistaColor(r.vista)">
+                  {{ vistaLabel(r.vista) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="dettaglioColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let r; columns: dettaglioColumns"></tr>
+          </table>
+        </div>
+      }
+    </section>
+
+  } <!-- fine hasData -->
+
+</div>

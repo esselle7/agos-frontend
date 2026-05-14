@@ -1,0 +1,494 @@
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import {
+  ReactiveFormsModule,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { forkJoin } from 'rxjs';
+import { EventiService } from '../../core/services/eventi.service';
+import { PersonaleService } from '../../core/services/personale.service';
+import { BuService } from '../../core/services/bu.service';
+import { LookupService } from '../../core/services/lookup.service';
+import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
+import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { EventoCreateRequest, EventoDTO } from '../../core/models/eventi.models';
+import { PersonaleSummaryDTO } from '../../core/models/personale.models';
+import { BusinessUnitDTO, TipoEventoDTO } from '../../core/models/anagrafica.models';
+
+export interface EventoFormDialogData {
+  eventoId?: string;
+  dataPrecompilata?: string;
+}
+
+const ALLERGIE_COMUNI = [
+  'Glutine', 'Lattosio', 'Uova', 'Pesce', 'Crostacei',
+  'Arachidi', 'Soia', 'Frutta a guscio', 'Sedano',
+  'Senape', 'Sesamo', 'Solfiti', 'Lupini', 'Molluschi',
+];
+
+/** Gruppo di personale per mansione, usato nel wizard step 2. */
+interface PersonaleGruppo {
+  mansione: string;
+  persone: PersonaleSummaryDTO[];
+}
+
+@Component({
+  selector: 'app-evento-form-dialog',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDatepickerModule,
+    MatProgressSpinnerModule,
+    MatDividerModule,
+    MatTooltipModule,
+    MatStepperModule,
+    MatCheckboxModule,
+    MatChipsModule,
+    CurrencyInputComponent,
+    SkeletonLoaderComponent,
+  ],
+  templateUrl: './evento-form-dialog.component.html',
+  styles: [`
+    .allergie-section { width: 100%; }
+    .allergie-label { font-size: 13px; color: #6b7280; margin: 0 0 8px; font-weight: 600; }
+    .allergie-comuni-grid {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+    }
+    .allergia-toggle {
+      padding: 4px 12px; border-radius: 16px; border: 1.5px solid #e5e7eb;
+      background: #f9fafb; font-size: 13px; cursor: pointer; font-family: inherit;
+      color: #374151; transition: all .15s ease; line-height: 1.4;
+    }
+    .allergia-toggle:hover { border-color: #f57c00; color: #f57c00; }
+    .allergia-toggle.active {
+      background: #fff3e0; border-color: #f57c00; color: #e65100; font-weight: 600;
+    }
+    .allergie-custom-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .allergia-custom-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 14px;
+      background: #fce4ec; border: 1px solid #f48fb1; color: #c62828;
+      font-size: 12px; font-weight: 600;
+    }
+    .allergia-custom-chip button {
+      background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
+      color: #c62828; font-size: 16px; display: flex; align-items: center;
+    }
+    .allergie-input-row { display: flex; align-items: center; gap: 8px; }
+    .bu-display {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      border-radius: 8px; background: #f3f4f6; border: 1px solid #e5e7eb;
+      font-size: 14px; color: #374151;
+    }
+    .bu-display mat-icon { font-size: 18px; width: 18px; height: 18px; color: #9ca3af; }
+    .bu-name { font-weight: 600; }
+
+    /* ── Step 2: Personale ─────────────────────────────────── */
+    .personale-step { display: flex; flex-direction: column; gap: 12px; }
+    .personale-step-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .personale-count-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; border-radius: 12px;
+      background: #e8f5e9; color: #2e7d32; font-size: 12px; font-weight: 600;
+    }
+    .mansione-gruppo { margin-bottom: 4px; }
+    .mansione-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-radius: 8px 8px 0 0;
+      background: #f3f4f6; border: 1px solid #e5e7eb; border-bottom: none;
+      cursor: pointer; user-select: none;
+    }
+    .mansione-header:hover { background: #e9ecef; }
+    .mansione-label {
+      font-size: 13px; font-weight: 700; color: #374151;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mansione-badge {
+      font-size: 11px; background: #d1d5db; color: #374151;
+      padding: 1px 7px; border-radius: 10px;
+    }
+    .mansione-badge.selected { background: #bbf7d0; color: #166534; }
+    .mansione-toggle { color: #9ca3af; font-size: 18px; }
+    .persone-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
+      padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;
+      background: #fff;
+    }
+    .persona-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e5e7eb;
+      background: #f9fafb; cursor: pointer; transition: all .15s ease;
+    }
+    .persona-card:hover { border-color: #1976d2; background: #e3f2fd; }
+    .persona-card.selected { border-color: #1976d2; background: #e3f2fd; }
+    .persona-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #1976d2; color: #fff; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .persona-avatar.selected { background: #0d47a1; }
+    .persona-info { min-width: 0; }
+    .persona-nome {
+      font-size: 13px; font-weight: 600; color: #111827;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .persona-check {
+      margin-left: auto; flex-shrink: 0;
+    }
+    .empty-personale {
+      text-align: center; padding: 32px 16px; color: #9ca3af;
+      font-size: 14px;
+    }
+    .selezionati-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0;
+    }
+    .selezionato-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 14px;
+      background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20;
+      font-size: 12px; font-weight: 600;
+    }
+    .selezionato-chip button {
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: #2e7d32; font-size: 14px; display: flex; align-items: center;
+    }
+  `],
+})
+export class EventoFormDialogComponent implements OnInit {
+  private readonly dialogRef = inject(MatDialogRef<EventoFormDialogComponent>);
+  private readonly data: EventoFormDialogData = inject(MAT_DIALOG_DATA);
+  private readonly eventiService = inject(EventiService);
+  private readonly personaleService = inject(PersonaleService);
+  private readonly buService = inject(BuService);
+  private readonly lookupService = inject(LookupService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly allergieComuni = ALLERGIE_COMUNI;
+  tipiEvento = signal<TipoEventoDTO[]>([]);
+
+  readonly isEdit = signal(false);
+  readonly loadingForm = signal(false);
+  readonly saving = signal(false);
+  readonly selectedBu = signal<BusinessUnitDTO | null>(null);
+
+  allergie = signal<string[]>([]);
+  readonly allergieCustom = computed(() =>
+    this.allergie().filter(a => !ALLERGIE_COMUNI.includes(a))
+  );
+
+  readonly allergiaInputControl = new FormControl<string>('', { nonNullable: true });
+
+  // ── Step 1: Dati evento ────────────────────────────────────────────────────
+  readonly form = new FormGroup({
+    nome:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    tipo:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    dataEvento:                   new FormControl<Date | null>(null, [Validators.required]),
+    dataPreventivo:               new FormControl<Date | null>(null),
+    importoTotalePreviventivato:  new FormControl<number | null>(null),
+    businessUnitId:               new FormControl<number | null>(null, [Validators.required]),
+    contattoNome:                 new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    contattoTelefono:             new FormControl<string | null>(null),
+    contattoEmail:                new FormControl<string | null>(null, [Validators.email]),
+    numeroTotalePartecipanti:     new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
+    numeroBambini:                new FormControl<number | null>(null, [Validators.min(0)]),
+    note:                         new FormControl<string | null>(null),
+  });
+
+  // ── Step 2: Personale ──────────────────────────────────────────────────────
+  personaleAttivi = signal<PersonaleSummaryDTO[]>([]);
+  personaleSelezionati = signal<Set<string>>(new Set());
+  gruppiExpanded = signal<Set<string>>(new Set());
+
+  /** Personale attivo raggruppato per mansione, ordinato alfabeticamente. */
+  readonly personalePerMansione = computed<PersonaleGruppo[]>(() => {
+    const map = new Map<string, PersonaleSummaryDTO[]>();
+    for (const p of this.personaleAttivi()) {
+      const key = p.mansione ?? 'Senza mansione';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return [...map.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], 'it'))
+      .map(([mansione, persone]) => ({ mansione, persone }));
+  });
+
+  /** Persone selezionate con i loro dati per il riepilogo. */
+  readonly personaleSelezionatiList = computed(() =>
+    this.personaleAttivi().filter(p => this.personaleSelezionati().has(p.id))
+  );
+
+  readonly contaSelezionati = computed(() => this.personaleSelezionati().size);
+
+  ngOnInit(): void {
+    if (this.data.eventoId) {
+      this.isEdit.set(true);
+      this.loadingForm.set(true);
+      forkJoin({
+        bu:           this.buService.getAll(),
+        tipi:         this.lookupService.getTipiEvento(),
+        evento:       this.eventiService.getById(this.data.eventoId),
+        personale:    this.personaleService.getAllAttivi(),
+        partecipanti: this.eventiService.getPartecipanti(this.data.eventoId),
+      }).subscribe({
+        next: ({ bu, tipi, evento, personale, partecipanti }) => {
+          this.tipiEvento.set(tipi);
+          this.applyBu(bu, evento.businessUnitId);
+          this.patchForm(evento);
+          this.personaleAttivi.set(personale.content);
+          // Pre-seleziona i partecipanti già assegnati
+          const ids = new Set(partecipanti.map(p => p.personaleId));
+          this.personaleSelezionati.set(ids);
+          this.initGruppiExpanded();
+          this.loadingForm.set(false);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loadingForm.set(false);
+          this.snackBar.open('Errore nel caricamento dell\'evento', 'OK', { duration: 3000 });
+          this.cdr.markForCheck();
+        },
+      });
+    } else {
+      forkJoin({
+        bu:        this.buService.getAll(),
+        tipi:      this.lookupService.getTipiEvento(),
+        personale: this.personaleService.getAllAttivi(),
+      }).subscribe({
+        next: ({ bu, tipi, personale }) => {
+          this.tipiEvento.set(tipi);
+          this.applyBu(bu, null);
+          this.form.controls.dataPreventivo.setValue(new Date());
+          if (this.data.dataPrecompilata) {
+            const [y, m, d] = this.data.dataPrecompilata.split('-').map(Number);
+            this.form.controls.dataEvento.setValue(new Date(y, m - 1, d));
+          }
+          this.personaleAttivi.set(personale.content);
+          this.initGruppiExpanded();
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.snackBar.open('Errore nel caricamento dei dati', 'OK', { duration: 3000 });
+          this.cdr.markForCheck();
+        },
+      });
+    }
+  }
+
+  // ── BU ─────────────────────────────────────────────────────────────────────
+
+  private applyBu(buList: BusinessUnitDTO[], existingId: number | null): void {
+    const target = existingId != null
+      ? buList.find(b => b.id === existingId)
+      : buList.find(b => b.nome.toLowerCase().includes('cerimoni'));
+    if (target) {
+      this.selectedBu.set(target);
+      this.form.controls.businessUnitId.setValue(target.id);
+    }
+  }
+
+  private patchForm(ev: EventoDTO): void {
+    const parseDate = (s: string | null): Date | null => {
+      if (!s) return null;
+      const [y, m, d] = s.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    };
+    this.form.patchValue({
+      nome:                        ev.nome,
+      tipo:                        ev.tipo,
+      dataEvento:                  parseDate(ev.dataEvento),
+      dataPreventivo:              parseDate(ev.dataPreventivo),
+      importoTotalePreviventivato: ev.importoTotalePreviventivato,
+      contattoNome:                ev.contattoNome,
+      contattoTelefono:            ev.contattoTelefono,
+      contattoEmail:               ev.contattoEmail,
+      numeroTotalePartecipanti:    ev.numeroTotalePartecipanti,
+      numeroBambini:               ev.numeroBambini,
+      note:                        ev.note,
+    });
+    this.allergie.set([...(ev.allergie ?? [])]);
+  }
+
+  private initGruppiExpanded(): void {
+    const tutti = new Set(this.personalePerMansione().map(g => g.mansione));
+    this.gruppiExpanded.set(tutti);
+  }
+
+  // ── Allergie ────────────────────────────────────────────────────────────────
+
+  hasAllergia(a: string): boolean {
+    return this.allergie().includes(a);
+  }
+
+  toggleAllergia(a: string): void {
+    if (this.hasAllergia(a)) {
+      this.allergie.set(this.allergie().filter(x => x !== a));
+    } else {
+      this.allergie.set([...this.allergie(), a]);
+    }
+  }
+
+  addAllergia(): void {
+    const val = this.allergiaInputControl.value.trim();
+    if (!val || this.hasAllergia(val)) return;
+    this.allergie.set([...this.allergie(), val]);
+    this.allergiaInputControl.setValue('');
+  }
+
+  removeAllergia(allergia: string): void {
+    this.allergie.set(this.allergie().filter(a => a !== allergia));
+  }
+
+  onAllergiaKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.addAllergia();
+    }
+  }
+
+  // ── Personale selezione ────────────────────────────────────────────────────
+
+  isSelected(id: string): boolean {
+    return this.personaleSelezionati().has(id);
+  }
+
+  togglePersona(id: string): void {
+    const set = new Set(this.personaleSelezionati());
+    if (set.has(id)) {
+      set.delete(id);
+    } else {
+      set.add(id);
+    }
+    this.personaleSelezionati.set(set);
+    this.cdr.markForCheck();
+  }
+
+  toggleGruppo(mansione: string, persone: PersonaleSummaryDTO[]): void {
+    const set = new Set(this.personaleSelezionati());
+    const allSelected = persone.every(p => set.has(p.id));
+    persone.forEach(p => allSelected ? set.delete(p.id) : set.add(p.id));
+    this.personaleSelezionati.set(set);
+    this.cdr.markForCheck();
+  }
+
+  isGruppoTuttoSelezionato(persone: PersonaleSummaryDTO[]): boolean {
+    return persone.length > 0 && persone.every(p => this.personaleSelezionati().has(p.id));
+  }
+
+  contaSelezionatiGruppo(persone: PersonaleSummaryDTO[]): number {
+    return persone.filter(p => this.personaleSelezionati().has(p.id)).length;
+  }
+
+  isGruppoExpanded(mansione: string): boolean {
+    return this.gruppiExpanded().has(mansione);
+  }
+
+  toggleGruppoExpanded(mansione: string): void {
+    const set = new Set(this.gruppiExpanded());
+    if (set.has(mansione)) {
+      set.delete(mansione);
+    } else {
+      set.add(mansione);
+    }
+    this.gruppiExpanded.set(set);
+    this.cdr.markForCheck();
+  }
+
+  rimuoviSelezionato(id: string): void {
+    const set = new Set(this.personaleSelezionati());
+    set.delete(id);
+    this.personaleSelezionati.set(set);
+    this.cdr.markForCheck();
+  }
+
+  iniziali(nome: string, cognome: string): string {
+    return `${nome.charAt(0)}${cognome.charAt(0)}`.toUpperCase();
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+    const v = this.form.getRawValue();
+    const body: EventoCreateRequest = {
+      nome:                        v.nome,
+      tipo:                        v.tipo,
+      dataEvento:                  this.dateToIso(v.dataEvento!),
+      dataPreventivo:              v.dataPreventivo ? this.dateToIso(v.dataPreventivo) : null,
+      importoTotalePreviventivato: v.importoTotalePreviventivato,
+      contattoNome:                v.contattoNome,
+      contattoTelefono:            v.contattoTelefono ?? null,
+      contattoEmail:               v.contattoEmail ?? null,
+      numeroTotalePartecipanti:    v.numeroTotalePartecipanti!,
+      numeroBambini:               v.numeroBambini ?? null,
+      allergie:                    this.allergie(),
+      note:                        v.note ?? null,
+      businessUnitId:              v.businessUnitId,
+      personaleIds:                [...this.personaleSelezionati()],
+    };
+
+    const req$ = this.isEdit()
+      ? this.eventiService.update(this.data.eventoId!, { ...body, personaleIds: [...this.personaleSelezionati()] })
+      : this.eventiService.create(body);
+
+    req$.subscribe({
+      next: () => {
+        this.saving.set(false);
+        const msg = this.isEdit() ? 'Evento aggiornato' : 'Evento creato';
+        this.snackBar.open(msg, 'OK', { duration: 3000 });
+        this.dialogRef.close(true);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.snackBar.open('Errore durante il salvataggio', 'OK', { duration: 3000 });
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  cancel(): void {
+    this.dialogRef.close(false);
+  }
+
+  private dateToIso(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+}

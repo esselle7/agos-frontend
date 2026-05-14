@@ -1,0 +1,98 @@
+.personale {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+
+    h2 { margin: 0; }
+  }
+
+  &__summary {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+
+    .filter-search { flex: 1 1 260px; }
+    .filter-bu { flex: 0 0 180px; }
+    .filter-mansione { flex: 0 0 180px; }
+    .filter-active { margin-left: 4px; }
+  }
+
+  &__table-wrapper {
+    overflow: hidden;
+  }
+
+  &__table {
+    width: 100%;
+  }
+}
+
+.summary-card {
+  flex: 0 0 auto;
+  padding: 16px 20px;
+  min-width: 160px;
+
+  &__label {
+    font-size: 12px;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  &__sub {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 2px;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.cell-primary {
+  font-weight: 500;
+}
+
+.cell-right {
+  text-align: right;
+}
+
+.cell-actions {
+  width: 60px;
+  text-align: right;
+}
+
+.table-row {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--hover);
+  }
+}

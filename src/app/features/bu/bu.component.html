@@ -1,0 +1,208 @@
+<div class="bu-page">
+
+  <!-- HEADER -->
+  <div class="bu-header">
+    <div class="bu-header__left">
+      @if (bu(); as bu) {
+        <div class="bu-header__title-row">
+          <span class="badge-bu"
+            [style.background]="bu.colore + '22'"
+            [style.color]="bu.colore">
+            {{ bu.codice }}
+          </span>
+          <h2>{{ bu.nome }}</h2>
+        </div>
+      } @else {
+        <agos-skeleton-loader [rows]="1" type="stat" />
+      }
+      <span class="bu-header__subtitle">Conto Economico (Competenza) – non Cash Flow</span>
+    </div>
+    <div class="bu-header__right">
+      <agos-date-range-picker
+        [period]="selectedPeriod()"
+        (periodChange)="onPeriodChange($event)"
+      />
+    </div>
+  </div>
+
+  <!-- ASYNC JOB PROGRESS -->
+  @if (plLoading() && jobId()) {
+    <div class="bu-async-box card">
+      <mat-progress-bar mode="indeterminate" />
+      <p class="bu-async-box__msg">
+        <mat-icon>schedule</mat-icon>
+        Calcolo in corso su range esteso… potrebbe richiedere qualche secondo.
+      </p>
+    </div>
+  }
+
+  <!-- SYNC LOADING SKELETONS -->
+  @if (plLoading() && !jobId()) {
+    <div class="bu-kpi-row">
+      @for (_ of [1, 2, 3]; track _) {
+        <div class="card bu-skeleton-kpi">
+          <agos-skeleton-loader [rows]="3" type="stat" />
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ERROR -->
+  @if (plError(); as err) {
+    <div class="bu-error card">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ err }}</span>
+      <button mat-stroked-button (click)="loadPl()">Riprova</button>
+    </div>
+  }
+
+  <!-- CONTENT -->
+  @if (plData(); as pl) {
+
+    <!-- KPI ROW -->
+    <div class="bu-kpi-row">
+      <agos-stat-card
+        label="Ricavi Totali"
+        [value]="pl.ricavi.totale"
+        icon="trending_up"
+        color="success"
+      />
+      <agos-stat-card
+        label="Costi Totali"
+        [value]="pl.costi.totale"
+        icon="trending_down"
+        color="danger"
+      />
+      <agos-stat-card
+        label="EBITDA"
+        [value]="pl.ebitda"
+        [delta]="pl.marginePct"
+        deltaLabel="margine %"
+        icon="account_balance"
+        [color]="ebitdaColor"
+      />
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="bu-charts-grid">
+
+      <!-- DONUT RICAVI -->
+      <div class="card bu-donut-card">
+        <h3 class="section-title">Composizione Ricavi</h3>
+        @if (pl.ricavi.perCategoria.length > 0) {
+          <div class="donut-wrap">
+            <canvas baseChart
+              [data]="donutData()"
+              [options]="donutOptions"
+              type="doughnut">
+            </canvas>
+          </div>
+        } @else {
+          <p class="empty-hint">Nessun ricavo nel periodo selezionato</p>
+        }
+      </div>
+
+      <!-- ANDAMENTO PLACEHOLDER -->
+      <div class="card bu-andamento-card">
+        <h3 class="section-title">Andamento Mensile</h3>
+        <div class="andamento-placeholder">
+          <mat-icon>bar_chart</mat-icon>
+          <p>Grafico disponibile nel reporting globale</p>
+          <span class="text-sub">L'API /andamento-mensile non è filtrabile per singola BU</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DETAIL TABLES -->
+    <div class="bu-tables-grid">
+
+      <!-- RICAVI -->
+      <div class="card bu-table-card">
+        <div class="table-header table-header--ricavi">
+          <mat-icon>trending_up</mat-icon>
+          <h3>Dettaglio Ricavi</h3>
+        </div>
+        <table mat-table [dataSource]="sortedRicavi()" class="bu-table">
+          <ng-container matColumnDef="categoria">
+            <th mat-header-cell *matHeaderCellDef>Categoria</th>
+            <td mat-cell *matCellDef="let r">{{ r.categoria }}</td>
+          </ng-container>
+          <ng-container matColumnDef="codiceCoge">
+            <th mat-header-cell *matHeaderCellDef>Cod. CoGe</th>
+            <td mat-cell *matCellDef="let r">
+              <code class="coge-chip">{{ r.codiceCoge }}</code>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="importo">
+            <th mat-header-cell *matHeaderCellDef class="cell-right">Importo</th>
+            <td mat-cell *matCellDef="let r" class="cell-right euro">{{ r.importo | euro }}</td>
+          </ng-container>
+          <ng-container matColumnDef="pct">
+            <th mat-header-cell *matHeaderCellDef class="cell-right">%</th>
+            <td mat-cell *matCellDef="let r" class="cell-right">{{ r.pct.toFixed(1) }}%</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="ricaviColumns"></tr>
+          <tr mat-row *matRowDef="let r; columns: ricaviColumns"></tr>
+        </table>
+        <div class="table-footer table-footer--ricavi">
+          <span>Totale Ricavi</span>
+          <span class="euro">{{ pl.ricavi.totale | euro }}</span>
+        </div>
+      </div>
+
+      <!-- COSTI -->
+      <div class="card bu-table-card">
+        <div class="table-header table-header--costi">
+          <mat-icon>trending_down</mat-icon>
+          <h3>Dettaglio Costi</h3>
+        </div>
+        <table mat-table [dataSource]="sortedCosti()" class="bu-table">
+          <ng-container matColumnDef="categoria">
+            <th mat-header-cell *matHeaderCellDef>Categoria</th>
+            <td mat-cell *matCellDef="let c">{{ c.categoria }}</td>
+          </ng-container>
+          <ng-container matColumnDef="codiceCoge">
+            <th mat-header-cell *matHeaderCellDef>Cod. CoGe</th>
+            <td mat-cell *matCellDef="let c">
+              <code class="coge-chip">{{ c.codiceCoge }}</code>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="importo">
+            <th mat-header-cell *matHeaderCellDef class="cell-right">Importo</th>
+            <td mat-cell *matCellDef="let c" class="cell-right euro">{{ c.importo | euro }}</td>
+          </ng-container>
+          <ng-container matColumnDef="pct">
+            <th mat-header-cell *matHeaderCellDef class="cell-right">%</th>
+            <td mat-cell *matCellDef="let c" class="cell-right">{{ c.pct.toFixed(1) }}%</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="costiColumns"></tr>
+          <tr mat-row *matRowDef="let c; columns: costiColumns"></tr>
+        </table>
+        @if (pl.costi.capex > 0) {
+          <div class="capex-row">
+            <span>CAPEX (investimenti)</span>
+            <span class="euro">{{ pl.costi.capex | euro }}</span>
+          </div>
+        }
+        <div class="table-footer table-footer--costi">
+          <span>Totale Costi</span>
+          <span class="euro">{{ pl.costi.totale | euro }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- EXPORT -->
+    <div class="bu-export-row">
+      <button mat-raised-button color="primary"
+        [disabled]="downloading()"
+        (click)="exportPl()">
+        <mat-icon>download</mat-icon>
+        {{ downloading() ? 'Download in corso…' : 'Esporta P&L Excel' }}
+      </button>
+    </div>
+
+  }
+
+</div>

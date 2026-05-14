@@ -1,0 +1,341 @@
+<div class="detail-page">
+
+  @if (loading()) {
+    <div class="skeleton-wrap">
+      <agos-skeleton-loader [rows]="3" />
+      <agos-skeleton-loader [rows]="3" />
+    </div>
+  }
+
+  @if (!loading() && evento(); as ev) {
+
+    <button mat-button class="back-btn" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon> Tutti gli eventi
+    </button>
+
+    <!-- ====== HEADER ====== -->
+    <div class="detail-header">
+      <div class="header-left">
+        <h1 class="evento-title">{{ ev.nome }}</h1>
+        <div class="header-meta">
+          <span
+            class="stato-badge-lg"
+            [style.background-color]="statoColor(ev.stato) + '22'"
+            [style.color]="statoColor(ev.stato)"
+            [style.border-color]="statoColor(ev.stato) + '55'"
+          >{{ ev.stato }}</span>
+          <span class="data-evento">
+            <mat-icon class="meta-icon">event</mat-icon>
+            {{ formatDate(ev.dataEvento) }}
+          </span>
+          <span class="tipo-evento">{{ ev.tipo.replace('_', ' ') }}</span>
+        </div>
+      </div>
+
+      @if (authService.isAdmin()) {
+        <div class="header-actions">
+          @if (ev.stato === 'PREVENTIVATO') {
+            <button mat-raised-button color="primary" (click)="openCambioStato('CONFERMATO')">
+              <mat-icon>check_circle</mat-icon> Conferma
+            </button>
+            <button mat-stroked-button color="warn" (click)="openCambioStato('ANNULLATO')">
+              <mat-icon>cancel</mat-icon> Annulla
+            </button>
+          }
+          @if (ev.stato === 'CONFERMATO') {
+            <button mat-stroked-button color="warn" (click)="openCambioStato('ANNULLATO')">
+              <mat-icon>cancel</mat-icon> Annulla
+            </button>
+          }
+          @if (ev.stato !== 'SALDATO') {
+            <button mat-icon-button matTooltip="Modifica evento" (click)="openModifica()">
+              <mat-icon>edit</mat-icon>
+            </button>
+          }
+          @if (ev.stato === 'PREVENTIVATO') {
+            <button mat-icon-button matTooltip="Elimina evento" color="warn" (click)="deleteEvento()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ====== JOURNEY STEPPER ====== -->
+    <div class="journey-card">
+      @if (ev.stato === 'ANNULLATO') {
+        <div class="annullato-banner">
+          <mat-icon>cancel</mat-icon>
+          <div>
+            <strong>Evento annullato</strong>
+            @if (ev.noteAnnullamento) {
+              <span> — {{ ev.noteAnnullamento }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="journey-track">
+
+        <!-- Step 1: Preventivato -->
+        <div class="journey-step" [attr.data-state]="stepState('PREVENTIVATO')">
+          <div class="step-bubble">
+            <mat-icon>description</mat-icon>
+          </div>
+          <div class="step-body">
+            <span class="step-name">Preventivato</span>
+            <span class="step-sub">{{ formatDate(ev.createdAt.slice(0, 10)) }}</span>
+          </div>
+        </div>
+
+        <div class="journey-connector" [class.active]="stepLineActive('PREVENTIVATO')"></div>
+
+        <!-- Step 2: Confermato -->
+        <div class="journey-step" [attr.data-state]="stepState('CONFERMATO')">
+          <div class="step-bubble">
+            @if (stepState('CONFERMATO') === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else if (stepState('CONFERMATO') === 'active') {
+              <mat-icon>check_circle</mat-icon>
+            } @else {
+              <mat-icon>radio_button_unchecked</mat-icon>
+            }
+          </div>
+          <div class="step-body">
+            <span class="step-name">Confermato</span>
+            <span class="step-sub">{{ stepDateConferma() }}</span>
+          </div>
+        </div>
+
+        <div class="journey-connector" [class.active]="stepLineActive('CONFERMATO')"></div>
+
+        <!-- Step 3: Saldato -->
+        <div class="journey-step" [attr.data-state]="stepState('SALDATO')">
+          <div class="step-bubble">
+            @if (stepState('SALDATO') === 'done' || stepState('SALDATO') === 'active') {
+              <mat-icon>euro</mat-icon>
+            } @else {
+              <mat-icon>radio_button_unchecked</mat-icon>
+            }
+          </div>
+          <div class="step-body">
+            <span class="step-name">Saldato</span>
+            <span class="step-sub">{{ stepDateSaldo() }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====== RIEPILOGO FINANZIARIO ====== -->
+    <div class="section financial-card">
+      <h2 class="section-title">Riepilogo Finanziario</h2>
+
+      <div class="preventivo-row">
+        <span class="preventivo-label">Preventivo totale</span>
+        <span class="preventivo-amount">{{ (ev.importoTotalePreviventivato ?? 0) | euro }}</span>
+      </div>
+
+      @if (ev.importoTotalePreviventivato) {
+        <mat-progress-bar
+          mode="determinate"
+          [value]="ev.percentualeIncassata ?? 0"
+          [style.--mdc-linear-progress-active-indicator-color]="progressColor(ev.percentualeIncassata)"
+          style="margin:12px 0;height:8px;border-radius:4px"
+        />
+        <div class="pct-label">{{ (ev.percentualeIncassata ?? 0) | number:'1.0-1' }}% incassato</div>
+      }
+
+      <div class="financial-grid">
+        <div class="fin-item green">
+          <span class="fin-label">Incassato</span>
+          <span class="fin-value">{{ ev.importoIncassato | euro }}</span>
+        </div>
+        <div class="fin-item" [class.orange]="(ev.importoResiduo ?? 0) > 0" [class.green]="(ev.importoResiduo ?? 0) <= 0">
+          <span class="fin-label">Residuo</span>
+          <span class="fin-value">{{ ev.importoResiduo | euro }}</span>
+        </div>
+        <div class="fin-item red">
+          <span class="fin-label">Costi diretti</span>
+          <span class="fin-value">{{ ev.costiReali | euro }}</span>
+        </div>
+        <div class="fin-item" [class.green]="ev.profitto >= 0" [class.red]="ev.profitto < 0">
+          <span class="fin-label">Profitto</span>
+          <span class="fin-value">{{ ev.profitto | euro }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== PAGAMENTI ====== -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Storico pagamenti</h2>
+        @if (authService.isAdmin() && ev.stato !== 'SALDATO') {
+          <button mat-raised-button color="primary" (click)="openPagamento()">
+            <mat-icon>add</mat-icon> Aggiungi
+          </button>
+        }
+      </div>
+
+      @if (authService.isAdmin() && ev.stato === 'CONFERMATO' && (ev.importoResiduo ?? 0) > 0.01) {
+        <div class="saldo-hint">
+          <mat-icon>info</mat-icon>
+          <span>Residuo <strong>{{ ev.importoResiduo | euro }}</strong> — aggiungi un pagamento di tipo <strong>SALDO</strong> per chiudere l'evento automaticamente.</span>
+        </div>
+      }
+
+      @if (ev.pagamenti.length === 0) {
+        <p class="empty-hint">Nessun pagamento registrato.</p>
+      } @else {
+        <div class="pag-list">
+          @for (pag of ev.pagamenti; track pag.movimentoId) {
+            <div class="pag-row" [attr.data-stato]="pag.stato">
+              <div class="pag-dot" [style.background]="pagColors[pag.tipo]">
+                <mat-icon>{{ pagIcone[pag.tipo] }}</mat-icon>
+              </div>
+              <div class="pag-main">
+                <div class="pag-top">
+                  <span class="pag-tipo" [style.color]="pagColors[pag.tipo]">{{ pag.tipo }}</span>
+                  <span class="pag-data">{{ formatDate(pag.dataFinanziaria) }}</span>
+                  @if (pag.stato === 'ANNULLATO') {
+                    <span class="pag-annullato-badge">annullato</span>
+                  }
+                </div>
+                @if (pag.note) {
+                  <p class="pag-note">{{ pag.note }}</p>
+                }
+              </div>
+              <span class="pag-importo" [class.annullato]="pag.stato === 'ANNULLATO'">
+                {{ pag.tipo === 'PENALE' ? '-' : '' }}{{ pag.importo | euro }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ====== CONTATTO + PARTECIPANTI ====== -->
+    <div class="section">
+      <h2 class="section-title">Contatto e partecipanti</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <mat-icon class="info-icon">person</mat-icon>
+          <span class="info-main">{{ ev.contattoNome }}</span>
+        </div>
+        @if (ev.contattoTelefono) {
+          <div class="info-item">
+            <mat-icon class="info-icon">phone</mat-icon>
+            <a [href]="'tel:' + ev.contattoTelefono" class="info-link">{{ ev.contattoTelefono }}</a>
+          </div>
+        }
+        @if (ev.contattoEmail) {
+          <div class="info-item">
+            <mat-icon class="info-icon">email</mat-icon>
+            <a [href]="'mailto:' + ev.contattoEmail" class="info-link">{{ ev.contattoEmail }}</a>
+          </div>
+        }
+        <div class="info-item">
+          <mat-icon class="info-icon">group</mat-icon>
+          <span class="info-main">{{ ev.numeroTotalePartecipanti }} partecipanti</span>
+          @if (ev.numeroBambini) {
+            <span class="info-sub">di cui {{ ev.numeroBambini }} bambini</span>
+          }
+        </div>
+        @if (ev.allergie && ev.allergie.length > 0) {
+          <div class="info-item allergie-row">
+            <mat-icon class="info-icon">warning_amber</mat-icon>
+            <div class="allergie-chips">
+              @for (a of ev.allergie; track a) {
+                <span class="allergia-chip">{{ a }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ====== INFO EVENTO ====== -->
+    <div class="section">
+      <h2 class="section-title">Informazioni evento</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <mat-icon class="info-icon">category</mat-icon>
+          <span class="info-main">{{ ev.tipo.replace('_', ' ') }}</span>
+        </div>
+        <div class="info-item">
+          <mat-icon class="info-icon">business</mat-icon>
+          <span
+            class="bu-chip"
+            [style.background-color]="buColore(ev.businessUnitId) + '22'"
+            [style.color]="buColore(ev.businessUnitId)"
+          >{{ buNome(ev.businessUnitId) }}</span>
+        </div>
+        @if (ev.dataPreventivo) {
+          <div class="info-item">
+            <mat-icon class="info-icon">description</mat-icon>
+            <span class="info-main">Preventivo del {{ formatDate(ev.dataPreventivo) }}</span>
+          </div>
+        }
+        <div class="info-item">
+          <mat-icon class="info-icon">schedule</mat-icon>
+          <span class="info-sub">Creato il {{ formatDatetime(ev.createdAt) }}</span>
+        </div>
+      </div>
+      @if (ev.note) {
+        <div class="note-box">
+          <mat-icon class="info-icon">notes</mat-icon>
+          <p>{{ ev.note }}</p>
+        </div>
+      }
+    </div>
+
+    <!-- ====== PERSONALE IMPIEGATO ====== -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Personale impiegato</h2>
+        @if (partecipanti().length > 0) {
+          <span style="font-size:13px;color:#6b7280">{{ partecipanti().length }} dipendente{{ partecipanti().length === 1 ? '' : 'i' }}</span>
+        }
+      </div>
+
+      @if (loadingPartecipanti()) {
+        <agos-skeleton-loader [rows]="3" />
+      } @else if (partecipanti().length === 0) {
+        <p class="empty-hint">Nessun personale assegnato a questo evento.</p>
+      } @else {
+        <!-- Gruppi per mansione -->
+        @for (gruppo of partecipantiPerMansione(); track gruppo.mansione) {
+          <div class="personale-gruppo-card">
+            <div class="personale-gruppo-header">
+              <mat-icon style="font-size:16px;width:16px;height:16px;color:#6b7280">work_outline</mat-icon>
+              <span class="personale-gruppo-titolo">{{ gruppo.mansione }}</span>
+              <span class="personale-gruppo-count">{{ gruppo.persone.length }}</span>
+            </div>
+            <div class="personale-persone-list">
+              @for (p of gruppo.persone; track p.id) {
+                <div class="personale-persona-row">
+                  <div class="personale-avatar">{{ iniziali(p.nome, p.cognome) }}</div>
+                  <div class="personale-persona-info">
+                    <span class="personale-persona-nome">{{ p.cognome }} {{ p.nome }}</span>
+                    @if (p.ruolo && p.ruolo !== p.mansione) {
+                      <span class="personale-persona-ruolo">{{ p.ruolo }}</span>
+                    }
+                  </div>
+                  @if (p.costo != null) {
+                    <span class="personale-persona-costo">{{ p.costo | euro }}</span>
+                  }
+                  @if (authService.isAdmin()) {
+                    <button mat-icon-button color="warn" matTooltip="Rimuovi" (click)="removePartecipante(p.id)" style="width:32px;height:32px">
+                      <mat-icon style="font-size:18px">remove_circle_outline</mat-icon>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+  }
+</div>

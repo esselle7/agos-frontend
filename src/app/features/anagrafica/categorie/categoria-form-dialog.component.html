@@ -1,0 +1,69 @@
+<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Categoria' : 'Nuova Categoria' }}</h2>
+
+<mat-dialog-content>
+  @if (loadingForm()) {
+    <div style="padding: 24px 0">
+      <agos-skeleton-loader [rows]="2" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="categoria-form">
+
+      <!-- Contesto (read-only) -->
+      <div class="context-info">
+        <div class="context-item">
+          <span class="context-label">Business Unit</span>
+          <span class="context-value">{{ buNome() }}</span>
+        </div>
+        <div class="context-item">
+          <span class="context-label">Tipo</span>
+          <span class="context-value" [style.color]="data.tipo === 'ENTRATA' ? '#2E7D32' : '#C62828'">
+            {{ data.tipo }}
+          </span>
+        </div>
+        @if (data.parentNome) {
+          <div class="context-item">
+            <span class="context-label">Figlia di</span>
+            <span class="context-value">{{ data.parentNome }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome categoria *</mat-label>
+          <input matInput formControlName="nome" maxlength="100" placeholder="es. Ricavi Ristorazione" />
+          @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.controls.nome.hasError('maxlength') && form.controls.nome.touched) {
+            <mat-error>Massimo 100 caratteri</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Ordinamento</mat-label>
+          <input matInput formControlName="ordinamento" type="number" min="0" />
+          <mat-hint>Numero più basso = prima nella lista</mat-hint>
+        </mat-form-field>
+      </div>
+
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="saving() || loadingForm()"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    }
+    {{ isEdit() ? 'Salva modifiche' : 'Crea categoria' }}
+  </button>
+</mat-dialog-actions>

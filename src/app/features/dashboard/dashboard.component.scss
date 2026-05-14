@@ -1,0 +1,408 @@
+.dashboard {
+  padding: 24px;
+  max-width: 1600px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+
+.dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.dashboard__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+
+  h2 {
+    font-size: 26px;
+    color: var(--primary-d);
+  }
+}
+
+.update-label {
+  font-size: 12px;
+}
+
+// ── Section headers ─────────────────────────────────────────────────────────
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__skeleton {
+    width: 200px;
+  }
+
+  &--financial mat-icon,
+  &--financial h4 {
+    color: var(--primary);
+  }
+
+  &--economic mat-icon,
+  &--economic h4 {
+    color: #5C6BC0;
+  }
+
+  &--agenda mat-icon,
+  &--agenda h4 {
+    color: #1565C0;
+  }
+}
+
+.section-note {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.section-divider {
+  margin: 8px 0;
+  opacity: 0.5;
+}
+
+// ── KPI grids ───────────────────────────────────────────────────────────────
+
+.kpi-grid {
+  display: grid;
+  gap: 16px;
+
+  &--4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// ── Charts row ──────────────────────────────────────────────────────────────
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 60% 1fr;
+  gap: 16px;
+
+  &__left,
+  &__right {
+    padding: 20px;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.chart-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+}
+
+.chart-subtitle {
+  font-size: 12px;
+}
+
+.chart-container {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+}
+
+// ── Agenda Imminente ────────────────────────────────────────────────────────
+
+.agenda-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.agenda-col {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  min-height: 300px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  &__total {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-sub);
+    text-align: right;
+
+    strong {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+  }
+}
+
+.col-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+
+  &--eventi { color: #1565C0; }
+  &--rate   { color: var(--warning); }
+}
+
+.col-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-main);
+}
+
+.col-count {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.07);
+  border-radius: 999px;
+  padding: 1px 7px;
+  color: var(--text-main);
+}
+
+.col-pills {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.urgenza-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    line-height: 12px;
+  }
+
+  &--alta {
+    background: rgba(198, 40, 40, 0.10);
+    color: var(--danger);
+  }
+
+  &--media {
+    background: rgba(230, 81, 0, 0.10);
+    color: var(--warning);
+  }
+}
+
+.link-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: auto;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.link-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.agenda-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 4px;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(45, 106, 79, 0.03);
+  }
+
+  &--paid {
+    opacity: 0.6;
+  }
+
+  &--alta {
+    background: rgba(198, 40, 40, 0.03);
+    &:hover { background: rgba(198, 40, 40, 0.06); }
+  }
+
+  &--media {
+    background: rgba(230, 81, 0, 0.02);
+    &:hover { background: rgba(230, 81, 0, 0.05); }
+  }
+
+  &__date {
+    flex-shrink: 0;
+    width: 42px;
+    height: 46px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.05);
+    gap: 1px;
+
+    &.date--alta  { background: rgba(198, 40, 40, 0.12); color: var(--danger); }
+    &.date--media { background: rgba(230, 81, 0, 0.12);  color: var(--warning); }
+    &.date--paid  { background: rgba(46, 125, 50, 0.12); color: var(--success); }
+  }
+
+  &__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__desc {
+    font-size: 13px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__when {
+    font-size: 12px;
+  }
+
+  &__right {
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  &__amount {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+}
+
+.date-day {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.date-month {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.paid-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--success);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+  }
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: 1280px) {
+  .kpi-grid--4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-grid--3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .kpi-grid--4,
+  .kpi-grid--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-col__header {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+}

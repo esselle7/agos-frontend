@@ -1,0 +1,131 @@
+<div mat-dialog-title class="dialog-head">
+  <div>
+    <p class="dialog-title-text">Registra Pagamento</p>
+    <p class="dialog-subtitle">{{ data.nomeEvento }}</p>
+  </div>
+  @if (data.importoResiduo != null) {
+    <span class="residuo-pill" [class.zero]="data.importoResiduo <= 0.01">
+      <mat-icon style="font-size:14px;width:14px;height:14px">
+        {{ data.importoResiduo <= 0.01 ? 'check_circle' : 'pending' }}
+      </mat-icon>
+      Residuo {{ data.importoResiduo | euro }}
+    </span>
+  }
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+
+    <!-- ── Tipo di pagamento ──────────────────────────────────────────── -->
+    <p class="field-group-label">Tipo di pagamento</p>
+    <div class="tipo-grid">
+      @for (t of tipiConfig; track t.value) {
+        <button
+          type="button"
+          class="tipo-card"
+          [class.selected]="tipo() === t.value"
+          [class.disabled]="!tipoDisponibile(t.value)"
+          [disabled]="!tipoDisponibile(t.value)"
+          [style.color]="t.color"
+          (click)="selectTipo(t.value)"
+        >
+          <mat-icon>{{ t.icon }}</mat-icon>
+          <span class="tc-label">{{ t.label }}</span>
+          <span class="tc-desc">{{ t.desc }}</span>
+          @if (!tipoDisponibile(t.value) && data.stato !== 'ANNULLATO') {
+            <span class="tc-badge">già registrata</span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- ── Importo + Data ─────────────────────────────────────────────── -->
+    <div class="row-2">
+      <div>
+        <agos-currency-input
+          formControlName="importo"
+          label="Importo *"
+          [required]="true"
+        />
+        @if (form.controls.importo.hasError('required') && form.controls.importo.touched) {
+          <mat-error>Importo obbligatorio</mat-error>
+        }
+        @if (form.controls.importo.hasError('min') && form.controls.importo.touched) {
+          <mat-error>Deve essere maggiore di 0</mat-error>
+        }
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Data pagamento *</mat-label>
+          <input matInput [matDatepicker]="pickerData" formControlName="data" />
+          <mat-datepicker-toggle matSuffix [for]="pickerData" />
+          <mat-datepicker #pickerData />
+          @if (form.controls.data.hasError('required') && form.controls.data.touched) {
+            <mat-error>Data obbligatoria</mat-error>
+          }
+        </mat-form-field>
+        <button mat-button type="button" class="today-btn" (click)="setOggi()">
+          <mat-icon>today</mat-icon> Oggi
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Avviso auto-saldo ──────────────────────────────────────────── -->
+    @if (mostraAvvisoSaldo()) {
+      <div class="avviso-saldo">
+        <mat-icon>auto_awesome</mat-icon>
+        <span>Con questo importo l'evento verrà <strong>chiuso automaticamente</strong> come Saldato.</span>
+      </div>
+    }
+
+    <!-- ── Metodo + Conto ─────────────────────────────────────────────── -->
+    <div class="row-2">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Metodo di pagamento *</mat-label>
+        <mat-select formControlName="metodoPagamentoId" [disabled]="loadingLookup()">
+          @for (m of metodiPagamento(); track m.id) {
+            <mat-option [value]="m.id">{{ m.descrizione }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.metodoPagamentoId.hasError('required') && form.controls.metodoPagamentoId.touched) {
+          <mat-error>Obbligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Conto di accredito *</mat-label>
+        <mat-select formControlName="contoBancarioId" [disabled]="loadingLookup()">
+          @for (c of conti(); track c.id) {
+            <mat-option [value]="c.id">{{ c.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.contoBancarioId.hasError('required') && form.controls.contoBancarioId.touched) {
+          <mat-error>Obbligatorio</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- ── Note ──────────────────────────────────────────────────────── -->
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Note (opzionale)</mat-label>
+      <textarea matInput formControlName="note" rows="2" placeholder="Riferimento, banca mittente..."></textarea>
+    </mat-form-field>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="saving() || loadingLookup()"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    }
+    Registra
+  </button>
+</mat-dialog-actions>

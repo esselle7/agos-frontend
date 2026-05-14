@@ -1,0 +1,97 @@
+<h2 mat-dialog-title>Modifica movimento cassa</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="edit-form">
+
+    <mat-button-toggle-group formControlName="tipo" class="tipo-toggle">
+      <mat-button-toggle value="PRELIEVO_DA_BANCA">
+        <mat-icon>arrow_downward</mat-icon> Prelievo
+      </mat-button-toggle>
+      <mat-button-toggle value="VERSAMENTO_IN_BANCA">
+        <mat-icon>arrow_upward</mat-icon> Versamento
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <div class="form-row two-col">
+      <agos-currency-input
+        formControlName="importo"
+        label="Importo *"
+        placeholder="0,00"
+      />
+
+      <mat-form-field appearance="outline">
+        <mat-label>Data *</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="dataMovimento" />
+        <mat-datepicker-toggle matSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        @if (form.controls.dataMovimento.hasError('required') && form.controls.dataMovimento.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descrizione</mat-label>
+        <input matInput formControlName="descrizione" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Conto bancario *</mat-label>
+        <mat-select formControlName="contoBancaId">
+          @for (c of contiBancari; track c.id) {
+            <mat-option [value]="c.id">{{ c.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.contoBancaId.hasError('required') && form.controls.contoBancaId.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <agos-bu-selector
+        formControlName="businessUnitId"
+        label="Business Unit"
+        placeholder="— Nessuna —"
+        class="full-width"
+      />
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Conto CoGe</mat-label>
+        <input matInput
+               [formControl]="cogeSearch"
+               [matAutocomplete]="autoCoge"
+               placeholder="Cerca per nome o codice...">
+        <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
+          @for (c of filteredCoge(); track c.id) {
+            <mat-option [value]="c">
+              <span style="font-size:13px">{{ c.nome }}</span>
+              <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (form.controls.contoCoge.value) {
+          <button matSuffix mat-icon-button type="button" (click)="clearCoge()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button mat-raised-button color="primary" (click)="submit()" [disabled]="saving()">
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    }
+    Salva modifiche
+  </button>
+</mat-dialog-actions>

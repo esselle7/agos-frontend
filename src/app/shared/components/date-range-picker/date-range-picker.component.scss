@@ -1,0 +1,55 @@
+.drp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  &__chips {
+    display: flex;
+    gap: 4px;
+  }
+
+  &__chip {
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text-sub);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    &--active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+
+      &:hover {
+        background: var(--primary-d);
+        border-color: var(--primary-d);
+        color: #fff;
+      }
+    }
+  }
+
+  &__custom {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  &__date-field {
+    width: 160px;
+
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+}

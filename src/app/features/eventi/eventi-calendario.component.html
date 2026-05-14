@@ -1,0 +1,59 @@
+<div class="calendario-wrap">
+
+  <!-- Header navigazione -->
+  <div class="cal-header">
+    <button mat-icon-button (click)="prevMese()" aria-label="Mese precedente">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <span class="cal-title">{{ titleMese() }}</span>
+    <button mat-icon-button (click)="nextMese()" aria-label="Mese successivo">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+    <button mat-stroked-button class="oggi-btn" (click)="oggi()">Oggi</button>
+    @if (loading()) {
+      <span class="loading-hint">Caricamento…</span>
+    }
+  </div>
+
+  <!-- Griglia calendario -->
+  <div class="cal-grid">
+
+    <!-- Intestazioni giorni settimana -->
+    @for (dow of dowLabels; track dow) {
+      <div class="cal-dow">{{ dow }}</div>
+    }
+
+    <!-- Celle giorni -->
+    @for (row of grid(); track $index) {
+      @for (day of row; track day.dayNum) {
+        <div
+          class="cal-cell"
+          [class.out-month]="!day.inMonth"
+          [class.today]="day.isToday"
+          [class.past]="day.isPast && !day.isToday"
+          (click)="onClickGiornoVuoto(day)"
+        >
+          <span class="day-num">{{ day.dayNum }}</span>
+
+          @for (ev of day.events.slice(0, 3); track ev.id) {
+            <div
+              class="ev-chip"
+              [style.background-color]="ev.coloreStato + '33'"
+              [style.color]="ev.coloreStato"
+              [style.border-color]="ev.coloreStato + '66'"
+              [matTooltip]="tooltipText(ev)"
+              (click)="onClickEvento(ev, $event)"
+            >
+              {{ ev.nome | slice:0:20 }}{{ ev.nome.length > 20 ? '…' : '' }}
+            </div>
+          }
+
+          @if (day.events.length > 3) {
+            <div class="ev-more">+{{ day.events.length - 3 }} altri</div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+</div>

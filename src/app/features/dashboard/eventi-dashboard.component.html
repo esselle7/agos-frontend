@@ -1,0 +1,143 @@
+<div class="eventi-dashboard">
+
+  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <div class="eventi-dashboard__header">
+    <div class="eventi-dashboard__title">
+      <h2>Dashboard</h2>
+      <span class="text-sub">Gestione Cerimonie ed Eventi</span>
+    </div>
+    <div class="date-filter">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Dal</mat-label>
+        <input matInput type="date"
+          [value]="from()"
+          (change)="onFromChange($event)" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Al</mat-label>
+        <input matInput type="date"
+          [value]="to()"
+          (change)="onToChange($event)" />
+      </mat-form-field>
+    </div>
+  </div>
+
+  @if (loading()) {
+
+    <!-- ── Skeleton ──────────────────────────────────────────────── -->
+    <div class="kpi-grid kpi-grid--4">
+      @for (_ of skeletonRows; track $index) {
+        <agos-skeleton-loader type="stat" />
+      }
+    </div>
+    <div class="table-card card">
+      <agos-skeleton-loader type="table" [rows]="5" />
+    </div>
+
+  } @else {
+
+    <!-- ── KPI eventi ─────────────────────────────────────────────── -->
+    <div class="kpi-grid kpi-grid--4">
+      <agos-stat-card
+        label="Totale Eventi"
+        [value]="dashboardEventi()?.totaleEventi ?? null"
+        format="number"
+        icon="event"
+        color="primary" />
+
+      <agos-stat-card
+        label="Incassato"
+        [value]="dashboardEventi()?.totaleIncassato ?? null"
+        icon="payments"
+        color="success" />
+
+      <agos-stat-card
+        label="Costi Diretti"
+        [value]="dashboardEventi()?.totaleCosti ?? null"
+        icon="receipt"
+        color="warning" />
+
+      <agos-stat-card
+        label="Profitto"
+        [value]="dashboardEventi()?.profittoTotale ?? null"
+        icon="show_chart"
+        [color]="profittoColor" />
+    </div>
+
+    <!-- ── Tabella eventi recenti ─────────────────────────────────── -->
+    <div class="table-card card">
+      <div class="section-subheader">
+        <h5>Ultimi Eventi</h5>
+        <button mat-button color="primary" (click)="navigateToEventi()">
+          Vedi tutti <mat-icon class="btn-icon">arrow_forward</mat-icon>
+        </button>
+      </div>
+
+      @if (eventiError) {
+        <agos-empty-state icon="error_outline" title="Dati non disponibili"
+          subtitle="Impossibile caricare gli eventi" />
+      } @else if (eventi().length === 0) {
+        <agos-empty-state
+          icon="event_busy"
+          title="Nessun evento trovato"
+          subtitle="Non ci sono eventi nel periodo selezionato"
+          actionLabel="Crea nuovo evento"
+          (action)="navigateToNewEvento()" />
+      } @else {
+        <div class="table-scroll">
+          <table class="eventi-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Nome</th>
+                <th>Stato</th>
+                <th class="col-amount">Totale</th>
+                <th class="col-amount">Incassato</th>
+                <th class="col-amount">Residuo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ev of eventi(); track ev.id) {
+                <tr class="evento-row" (click)="navigateToEvento(ev.id)">
+                  <td class="col-date text-sub">{{ formatDate(ev.dataEvento) }}</td>
+                  <td class="col-nome">{{ ev.nome }}</td>
+                  <td>
+                    <agos-badge
+                      [text]="ev.stato"
+                      [color]="statoColor(ev.stato)"
+                      size="sm" />
+                  </td>
+                  <td class="col-amount euro">
+                    {{ ev.importoTotalePreviventivato | euro }}
+                  </td>
+                  <td class="col-amount euro text-success">
+                    {{ ev.importoIncassato | euro }}
+                  </td>
+                  <td class="col-amount euro"
+                      [class.text-warning]="(ev.importoResiduo ?? 0) > 0"
+                      [class.text-success]="(ev.importoResiduo ?? 0) === 0">
+                    {{ ev.importoResiduo | euro }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- ── Link rapidi ─────────────────────────────────────────────── -->
+    <div class="quick-links">
+      <button mat-raised-button color="primary" (click)="navigateToNewEvento()">
+        <mat-icon>add</mat-icon>
+        Nuovo Evento
+      </button>
+      <button mat-stroked-button color="primary" (click)="navigateToEventi()">
+        <mat-icon>list</mat-icon>
+        Vedi tutti gli eventi
+      </button>
+    </div>
+
+  }
+
+</div>

@@ -1,0 +1,86 @@
+.mov-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+
+    h2 { font-size: 1.6rem; }
+  }
+
+  &__count {
+    font-size: 0.875rem;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__filters {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+
+    mat-form-field {
+      min-width: 160px;
+      flex: 1;
+    }
+  }
+
+  &__filter-btns {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-top: 4px;
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: rgba(45, 106, 79, 0.04);
+    }
+  }
+
+  &__importo {
+    font-weight: 600;
+
+    &--entrata { color: var(--success); }
+    &--uscita  { color: var(--danger); }
+  }
+
+  &__actions-cell {
+    white-space: nowrap;
+    text-align: right;
+  }
+}
+
+.text-right {
+  text-align: right;
+}

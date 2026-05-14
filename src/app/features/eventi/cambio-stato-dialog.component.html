@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>{{ titolo }}</h2>
+
+<mat-dialog-content>
+  <p class="messaggio">{{ messaggio }}</p>
+
+  @if (isAnnullamento) {
+    <mat-form-field appearance="outline" style="width: 100%; margin-top: 8px">
+      <mat-label>Motivo annullamento *</mat-label>
+      <textarea
+        matInput
+        [formControl]="motivazioneAnnullamento"
+        rows="3"
+        placeholder="Specificare il motivo dell'annullamento…"
+      ></textarea>
+      @if (motivazioneAnnullamento.hasError('required') && motivazioneAnnullamento.touched) {
+        <mat-error>Il motivo è obbligatorio per l'annullamento</mat-error>
+      }
+      @if (motivazioneAnnullamento.hasError('minlength') && motivazioneAnnullamento.touched) {
+        <mat-error>Inserire almeno 5 caratteri</mat-error>
+      }
+    </mat-form-field>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button
+    mat-raised-button
+    [color]="isAnnullamento ? 'warn' : 'primary'"
+    (click)="confirm()"
+    [disabled]="saving()"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    }
+    {{ isAnnullamento ? 'Conferma annullamento' : 'Conferma' }}
+  </button>
+</mat-dialog-actions>

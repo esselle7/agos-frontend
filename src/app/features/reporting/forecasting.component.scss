@@ -1,0 +1,289 @@
+.fc {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.fc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+}
+
+.fc-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-sub);
+}
+
+.fc-horizon-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.fc-horizon-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.fc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+  }
+}
+
+.fc-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+
+  &--asis     { background: rgba(55,71,79,0.10);   color: #37474F; }
+  &--forecast { background: rgba(230,81,0,0.12);   color: #E65100; }
+  &--eco      { background: rgba(21,101,192,0.12); color: #1565C0; }
+  &--fin      { background: rgba(191,54,12,0.12);  color: #BF360C; }
+}
+
+.fc-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--primary);
+  color: #fff;
+}
+
+// ── KPI grid ────────────────────────────────────────────────────────────────
+
+.fc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.fc-kpi {
+  padding: 16px 18px;
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+
+  &__value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  &__sub {
+    font-size: 0.72rem;
+    color: var(--text-sub);
+  }
+
+  &--crediti { border-left: 3px solid #2E7D32; }
+  &--debiti  { border-left: 3px solid #C62828; }
+}
+
+// ── Grafico ─────────────────────────────────────────────────────────────────
+
+.fc-chart-card {
+  padding: 20px;
+}
+
+.fc-chart-wrap {
+  height: 320px;
+  position: relative;
+}
+
+.fc-chart-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.78rem;
+  color: var(--text-sub);
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--primary);
+  }
+}
+
+// ── Riepilogo ────────────────────────────────────────────────────────────────
+
+.fc-riepilogo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fc-riepilogo {
+  padding: 20px;
+
+  &--eco { border-top: 3px solid #1565C0; }
+  &--fin { border-top: 3px solid #BF360C; }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  &__sub {
+    font-size: 0.78rem;
+    color: var(--text-sub);
+  }
+
+  &__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+    &--total {
+      font-weight: 700;
+      font-size: 1rem;
+      border-bottom: none;
+      padding-top: 4px;
+    }
+  }
+}
+
+// ── Tabelle ──────────────────────────────────────────────────────────────────
+
+.fc-card {
+  padding: 0;
+  overflow: auto;
+}
+
+.fc-table {
+  width: 100%;
+}
+
+.cell-right {
+  text-align: right !important;
+}
+
+.fw-600 { font-weight: 600; }
+
+.fc-cat-chip,
+.fc-vista-chip {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.fc-desc-cell {
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+}
+
+.fc-empty-cell {
+  color: var(--text-sub);
+  opacity: 0.4;
+}
+
+// ── Filtri ───────────────────────────────────────────────────────────────────
+
+.fc-filtri {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fc-filtro--active {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-color: var(--primary) !important;
+}
+
+// ── Stato vuoto / errore ─────────────────────────────────────────────────────
+
+.fc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px;
+  color: var(--text-sub);
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: 0.3;
+  }
+}
+
+.fc-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  color: var(--danger);
+
+  mat-icon { color: var(--danger); }
+}

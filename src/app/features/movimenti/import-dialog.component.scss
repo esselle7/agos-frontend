@@ -1,0 +1,88 @@
+.import-dialog {
+  min-width: 520px;
+}
+
+.import-dialog__hint {
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+}
+
+.import-dialog__textarea-field {
+  width: 100%;
+}
+
+.import-dialog__textarea {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  resize: vertical;
+}
+
+.import-dialog__parse-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin-top: 8px;
+}
+
+.import-dialog__result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.import-dialog__result-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.import-dialog__result-row--ok {
+  background: rgba(46, 125, 50, 0.08);
+  color: var(--success);
+}
+
+.import-dialog__result-row--warn {
+  background: rgba(230, 81, 0, 0.08);
+  color: var(--warning);
+}
+
+.import-dialog__result-row--err {
+  background: rgba(198, 40, 40, 0.08);
+  color: var(--danger);
+}
+
+.import-dialog__errors {
+  margin-top: 8px;
+
+  h4 {
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+  }
+}
+
+.import-dialog__error-item {
+  display: grid;
+  grid-template-columns: 60px 120px 1fr;
+  gap: 8px;
+  font-size: 0.8rem;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.import-dialog__error-riga {
+  color: var(--text-sub);
+}
+
+.import-dialog__error-campo {
+  font-weight: 500;
+}
+
+.import-dialog__error-msg {
+  color: var(--danger);
+}

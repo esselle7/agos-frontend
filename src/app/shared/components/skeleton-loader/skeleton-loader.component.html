@@ -1,0 +1,38 @@
+@switch (type) {
+  @case ('stat') {
+    <span class="skeleton-line skeleton--stat"></span>
+  }
+
+  @case ('card') {
+    <div class="skeleton-card">
+      <span class="skeleton-line" style="width: 60%; height: 12px;"></span>
+      <span class="skeleton-line" style="width: 80%; height: 28px; margin-top: 10px;"></span>
+      <span class="skeleton-line" style="width: 40%; height: 12px; margin-top: 8px;"></span>
+    </div>
+  }
+
+  @case ('table') {
+    <div class="skeleton-table">
+      <div class="skeleton-table__header">
+        @for (w of cellWidths; track $index) {
+          <span class="skeleton-line" [style.width]="w" style="height: 14px;"></span>
+        }
+      </div>
+      @for (row of rowArray; track row) {
+        <div class="skeleton-table__row">
+          @for (w of cellWidths; track $index) {
+            <span class="skeleton-line" [style.width]="w" style="height: 14px;"></span>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @default {
+    <div class="skeleton-text">
+      @for (row of rowArray; track row) {
+        <span class="skeleton-line" [style.width]="widthForRow(row)" style="height: 14px;"></span>
+      }
+    </div>
+  }
+}
