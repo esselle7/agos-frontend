@@ -13,7 +13,7 @@ export const routes: Routes = [
     canActivate: [noAuthGuard],
   },
   {
-    path: 'auth/callback',
+    path: 'oauth/callback',
     component: AuthCallbackComponent,
   },
   {
