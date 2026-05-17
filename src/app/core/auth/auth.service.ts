@@ -49,15 +49,18 @@ export class AuthService {
     user: UserInfo,
     expiresIn = 3600
   ): void {
+    console.log('[AuthService] handleCallback — ruolo:', user.ruolo, '| expiresIn:', expiresIn);
     this._accessToken.set(accessToken);
     this._refreshToken.set(refreshToken);
     this._user.set(user);
     this.persistSession(accessToken, refreshToken, user, expiresIn);
     this.scheduleTokenRefresh(expiresIn);
+    console.log('[AuthService] handleCallback done — isAuthenticated:', this._accessToken() !== null);
   }
 
   refresh(): Observable<TokenResponse> {
     const refreshToken = this._refreshToken();
+    console.log('[AuthService] refresh() chiamato — hasRefreshToken:', !!refreshToken);
     if (!refreshToken) {
       return throwError(() => new Error('No refresh token available'));
     }
@@ -66,6 +69,7 @@ export class AuthService {
       .post<TokenResponse>(environment.apiBaseUrl + API_PATHS.AUTH.REFRESH, body)
       .pipe(
         tap(tokens => {
+          console.log('[AuthService] refresh OK — nuovi token ricevuti');
           const user = this._user()!;
           this._accessToken.set(tokens.accessToken);
           this._refreshToken.set(tokens.refreshToken);
@@ -73,7 +77,9 @@ export class AuthService {
           this.scheduleTokenRefresh(tokens.expiresIn);
         }),
         catchError(err => {
+          console.error('[AuthService] refresh FALLITO — status:', err.status, err.message);
           if (err.status === 401) {
+            console.warn('[AuthService] refresh 401 → clearSession + /login');
             this.clearSession();
             this.router.navigate(['/login']);
           }
