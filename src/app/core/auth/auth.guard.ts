@@ -6,9 +6,6 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const ok = authService.isAuthenticated();
-  console.log('[AuthGuard] isAuthenticated:', ok);
-  if (ok) return true;
-  console.warn('[AuthGuard] non autenticato → redirect /login');
+  if (authService.isAuthenticated()) return true;
   return router.createUrlTree(['/login']);
 };
