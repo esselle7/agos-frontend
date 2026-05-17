@@ -50,6 +50,7 @@ function handleUnauthorized(
   next: HttpHandlerFn,
   authService: AuthService
 ): Observable<HttpEvent<unknown>> {
+  console.warn('[JwtInterceptor] 401 su:', req.url, '| isRefreshing:', isRefreshing);
   if (!isRefreshing) {
     isRefreshing = true;
 
@@ -57,10 +58,12 @@ function handleUnauthorized(
       switchMap(tokens => {
         isRefreshing = false;
         refreshSubject.next(tokens.accessToken);
+        console.log('[JwtInterceptor] refresh OK, retry:', req.url);
         return next(withBearer(req, tokens.accessToken));
       }),
       catchError(err => {
         isRefreshing = false;
+        console.error('[JwtInterceptor] refresh fallito, unblock queue con null');
         // Emit null so all queued requests unblock and fail gracefully
         refreshSubject.next(null);
         return throwError(() => err);

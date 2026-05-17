@@ -35,11 +35,14 @@ export class AuthCallbackComponent implements OnInit {
   private readonly router = inject(Router);
 
   ngOnInit(): void {
+    console.log('[AuthCallback] ngOnInit — URL:', window.location.href);
     const params = this.route.snapshot.queryParamMap;
     const accessToken = params.get('accessToken');
     const refreshToken = params.get('refreshToken');
+    console.log('[AuthCallback] keys:', params.keys, '| hasAccess:', !!accessToken, '| hasRefresh:', !!refreshToken);
 
     if (!accessToken || !refreshToken) {
+      console.warn('[AuthCallback] token mancante → redirect /login');
       this.router.navigate(['/login']);
       return;
     }
@@ -52,7 +55,10 @@ export class AuthCallbackComponent implements OnInit {
     };
 
     const expiresIn = Number(params.get('expiresIn') ?? 3600);
+    console.log('[AuthCallback] user:', user.ruolo, user.email, '| expiresIn:', expiresIn);
     this.authService.handleCallback(accessToken, refreshToken, user, expiresIn);
+    console.log('[AuthCallback] isAuthenticated dopo handleCallback:', this.authService.isAuthenticated());
+    console.log('[AuthCallback] navigating to /dashboard...');
     this.router.navigate(['/dashboard']);
   }
 }
