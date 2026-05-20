@@ -26,7 +26,12 @@ import { ContiService } from '../../core/services/conti.service';
 import { LookupService } from '../../core/services/lookup.service';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
-import { PagamentoRequest, StatoEvento, TipoPagamentoEvento } from '../../core/models/eventi.models';
+import {
+  PagamentoRequest,
+  StatoEvento,
+  TipoPagamentoEvento,
+  TipoPagamentoForm,
+} from '../../core/models/eventi.models';
 import { ContoBancarioDTO, MetodoPagamentoDTO } from '../../core/models/anagrafica.models';
 
 export interface PagamentoFormDialogData {
@@ -39,13 +44,17 @@ export interface PagamentoFormDialogData {
 }
 
 interface TipoConfig {
-  value: TipoPagamentoEvento;
+  value: TipoPagamentoForm;
   label: string;
   desc: string;
   icon: string;
   color: string;
 }
 
+/**
+ * Tipi creabili dall'utente. RIMBORSO è ammesso lato backend ma generato
+ * in altri flussi (importo negativo); qui esponiamo solo i 4 tipi positivi.
+ */
 const TIPI: TipoConfig[] = [
   { value: 'CAPARRA',  label: 'Caparra',  desc: 'Prima conferma',       icon: 'lock',        color: '#f57c00' },
   { value: 'ACCONTO',  label: 'Acconto',  desc: 'Pagamento intermedio', icon: 'savings',     color: '#1976d2' },
@@ -131,7 +140,7 @@ export class PagamentoFormDialogComponent implements OnInit {
   loadingLookup = signal(true);
   saving = signal(false);
 
-  tipo = signal<TipoPagamentoEvento>(this.initialTipo());
+  tipo = signal<TipoPagamentoForm>(this.initialTipo());
 
   readonly form = new FormGroup({
     importo:           new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
@@ -188,12 +197,12 @@ export class PagamentoFormDialogComponent implements OnInit {
     });
   }
 
-  selectTipo(t: TipoPagamentoEvento): void {
+  selectTipo(t: TipoPagamentoForm): void {
     if (!this.tipoDisponibile(t)) return;
     this.tipo.set(t); // l'effect reagisce e aggiorna form.controls.importo
   }
 
-  tipoDisponibile(t: TipoPagamentoEvento): boolean {
+  tipoDisponibile(t: TipoPagamentoForm): boolean {
     if (this.data.stato === 'ANNULLATO') return t === 'PENALE';
     if (t === 'PENALE') return true;
     return !this.data.tipiGiaPresenti.includes(t);
@@ -239,9 +248,9 @@ export class PagamentoFormDialogComponent implements OnInit {
     this.dialogRef.close(false);
   }
 
-  private initialTipo(): TipoPagamentoEvento {
+  private initialTipo(): TipoPagamentoForm {
     if (this.data.stato === 'ANNULLATO') return 'PENALE';
-    const order: TipoPagamentoEvento[] = ['CAPARRA', 'ACCONTO', 'SALDO', 'PENALE'];
+    const order: TipoPagamentoForm[] = ['CAPARRA', 'ACCONTO', 'SALDO', 'PENALE'];
     return order.find(t => !this.data.tipiGiaPresenti.includes(t)) ?? 'PENALE';
   }
 

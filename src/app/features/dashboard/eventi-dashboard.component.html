@@ -37,7 +37,7 @@
   } @else {
 
     <!-- ── KPI eventi ─────────────────────────────────────────────── -->
-    <div class="kpi-grid kpi-grid--4">
+    <div [class]="auth.isAdmin() ? 'kpi-grid kpi-grid--4' : 'kpi-grid kpi-grid--1'">
       <agos-stat-card
         label="Totale Eventi"
         [value]="dashboardEventi()?.totaleEventi ?? null"
@@ -45,23 +45,25 @@
         icon="event"
         color="primary" />
 
-      <agos-stat-card
-        label="Incassato"
-        [value]="dashboardEventi()?.totaleIncassato ?? null"
-        icon="payments"
-        color="success" />
+      @if (auth.isAdmin()) {
+        <agos-stat-card
+          label="Incassato"
+          [value]="dashboardEventi()?.totaleIncassato ?? null"
+          icon="payments"
+          color="success" />
 
-      <agos-stat-card
-        label="Costi Diretti"
-        [value]="dashboardEventi()?.totaleCosti ?? null"
-        icon="receipt"
-        color="warning" />
+        <agos-stat-card
+          label="Costi Diretti"
+          [value]="dashboardEventi()?.totaleCosti ?? null"
+          icon="receipt"
+          color="warning" />
 
-      <agos-stat-card
-        label="Profitto"
-        [value]="dashboardEventi()?.profittoTotale ?? null"
-        icon="show_chart"
-        [color]="profittoColor" />
+        <agos-stat-card
+          label="Profitto"
+          [value]="dashboardEventi()?.profittoTotale ?? null"
+          icon="show_chart"
+          [color]="profittoColor" />
+      }
     </div>
 
     <!-- ── Tabella eventi recenti ─────────────────────────────────── -->
@@ -91,9 +93,11 @@
                 <th>Data</th>
                 <th>Nome</th>
                 <th>Stato</th>
-                <th class="col-amount">Totale</th>
-                <th class="col-amount">Incassato</th>
-                <th class="col-amount">Residuo</th>
+                @if (auth.isAdmin()) {
+                  <th class="col-amount">Totale</th>
+                  <th class="col-amount">Incassato</th>
+                  <th class="col-amount">Residuo</th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -107,17 +111,19 @@
                       [color]="statoColor(ev.stato)"
                       size="sm" />
                   </td>
-                  <td class="col-amount euro">
-                    {{ ev.importoTotalePreviventivato | euro }}
-                  </td>
-                  <td class="col-amount euro text-success">
-                    {{ ev.importoIncassato | euro }}
-                  </td>
-                  <td class="col-amount euro"
-                      [class.text-warning]="(ev.importoResiduo ?? 0) > 0"
-                      [class.text-success]="(ev.importoResiduo ?? 0) === 0">
-                    {{ ev.importoResiduo | euro }}
-                  </td>
+                  @if (auth.isAdmin()) {
+                    <td class="col-amount euro">
+                      {{ ev.importoTotalePreviventivato | euro }}
+                    </td>
+                    <td class="col-amount euro text-success">
+                      {{ ev.importoIncassato | euro }}
+                    </td>
+                    <td class="col-amount euro"
+                        [class.text-warning]="(ev.importoResiduo ?? 0) > 0"
+                        [class.text-success]="(ev.importoResiduo ?? 0) === 0">
+                      {{ ev.importoResiduo | euro }}
+                    </td>
+                  }
                 </tr>
               }
             </tbody>
@@ -128,10 +134,12 @@
 
     <!-- ── Link rapidi ─────────────────────────────────────────────── -->
     <div class="quick-links">
-      <button mat-raised-button color="primary" (click)="navigateToNewEvento()">
-        <mat-icon>add</mat-icon>
-        Nuovo Evento
-      </button>
+      @if (auth.isAdmin()) {
+        <button mat-raised-button color="primary" (click)="navigateToNewEvento()">
+          <mat-icon>add</mat-icon>
+          Nuovo Evento
+        </button>
+      }
       <button mat-stroked-button color="primary" (click)="navigateToEventi()">
         <mat-icon>list</mat-icon>
         Vedi tutti gli eventi

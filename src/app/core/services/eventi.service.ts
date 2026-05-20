@@ -18,6 +18,7 @@ import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
 import { environment } from '../../../environments/environment';
 
+const CAL_CACHE_PREFIX = 'eventi:cal:';
 const CAL_TTL_MS = 60_000;
 
 export interface EventiFilter {
@@ -51,13 +52,22 @@ export class EventiService {
   }
 
   getCalendario(from: string, to: string): Observable<EventoCalendarioDTO[]> {
-    const key = `eventi:cal:${from}:${to}`;
+    const key = `${CAL_CACHE_PREFIX}${from}:${to}`;
     const cached = this.cache.get<EventoCalendarioDTO[]>(key);
     if (cached) return of(cached);
     const params = new HttpParams().set('from', from).set('to', to);
     return this.http
       .get<EventoCalendarioDTO[]>(`${environment.apiBaseUrl}${API_PATHS.EVENTI}/calendario`, { params })
       .pipe(tap(data => this.cache.set(key, data, CAL_TTL_MS)));
+  }
+
+  /**
+   * Invalida tutte le pagine del calendario in cache. Da chiamare dopo
+   * ogni operazione che possa modificare la visualizzazione del calendario
+   * (create/update/delete evento, registrazione pagamento, cambio stato).
+   */
+  invalidateCalendarCache(): void {
+    this.cache.invalidatePattern(CAL_CACHE_PREFIX);
   }
 
   getDashboard(from: string, to: string): Observable<EventiDashboardDTO> {
@@ -73,22 +83,25 @@ export class EventiService {
   }
 
   create(body: EventoCreateRequest): Observable<EventoDTO> {
-    return this.http.post<EventoDTO>(environment.apiBaseUrl + API_PATHS.EVENTI, body);
+    return this.http.post<EventoDTO>(environment.apiBaseUrl + API_PATHS.EVENTI, body)
+      .pipe(tap(() => this.invalidateCalendarCache()));
   }
 
   update(id: string, body: EventoUpdateRequest): Observable<EventoDTO> {
-    return this.http.put<EventoDTO>(`${environment.apiBaseUrl}${API_PATHS.EVENTI}/${id}`, body);
+    return this.http.put<EventoDTO>(`${environment.apiBaseUrl}${API_PATHS.EVENTI}/${id}`, body)
+      .pipe(tap(() => this.invalidateCalendarCache()));
   }
 
   delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiBaseUrl}${API_PATHS.EVENTI}/${id}`);
+    return this.http.delete<void>(`${environment.apiBaseUrl}${API_PATHS.EVENTI}/${id}`)
+      .pipe(tap(() => this.invalidateCalendarCache()));
   }
 
   addPagamento(eventoId: string, body: PagamentoRequest): Observable<PagamentoEventoDTO> {
     return this.http.post<PagamentoEventoDTO>(
       `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/pagamenti`,
       body
-    );
+    ).pipe(tap(() => this.invalidateCalendarCache()));
   }
 
   getPartecipanti(eventoId: string): Observable<EventoPartecipanteDTO[]> {
@@ -107,6 +120,14 @@ export class EventiService {
   deletePartecipante(id: number): Observable<void> {
     return this.http.delete<void>(
       `${environment.apiBaseUrl}${API_PATHS.EVENTI}/partecipanti/${id}`
+    );
+  }
+
+  getMiei(page = 0, size = 20): Observable<PagedResponse<EventoDTO>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PagedResponse<EventoDTO>>(
+      environment.apiBaseUrl + API_PATHS.EVENTI_MIEI,
+      { params }
     );
   }
 }

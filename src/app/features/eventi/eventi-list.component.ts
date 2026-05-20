@@ -134,6 +134,7 @@ export class EventiListComponent implements OnInit, OnChanges, OnDestroy {
 
   loadData(): void {
     this.loading.set(true);
+    this.result.set(null); // reset per mostrare lo skeleton anche su filter/page change
     const filter: EventiFilter = {
       page: this.currentPage,
       size: this.pageSize,

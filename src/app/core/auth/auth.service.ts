@@ -1,32 +1,38 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, catchError, tap, throwError } from 'rxjs';
-import { UserInfo, TokenResponse, RefreshRequest } from '../models/auth.models';
+import { Observable, catchError, of, tap, throwError } from 'rxjs';
+import { LoginResponse, RefreshRequest, TokenResponse, UserInfo } from '../models/auth.models';
 import { API_PATHS } from '../constants/api-paths';
 import { environment } from '../../../environments/environment';
 
 const STORAGE = {
-  ACCESS_TOKEN: 'auth_access_token',
+  ACCESS_TOKEN:  'auth_access_token',
   REFRESH_TOKEN: 'auth_refresh_token',
-  USER: 'auth_user',
-  EXPIRES_AT: 'auth_expires_at',
+  USER:          'auth_user',
+  EXPIRES_AT:    'auth_expires_at',
 } as const;
+
+/** Margine prima della scadenza per pianificare il refresh proattivo. */
+const REFRESH_LEAD_MS = 60_000;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly _accessToken = signal<string | null>(null);
+  private readonly _accessToken  = signal<string | null>(null);
   private readonly _refreshToken = signal<string | null>(null);
-  private readonly _user = signal<UserInfo | null>(null);
+  private readonly _user         = signal<UserInfo | null>(null);
+
   private refreshTimerId: ReturnType<typeof setTimeout> | null = null;
   private readonly syncChannel = new BroadcastChannel('auth_sync');
 
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._accessToken() !== null);
   readonly isAdmin = computed(() => this._user()?.ruolo === 'ADMIN');
+  readonly personaleId = computed(() => this._user()?.personaleId ?? null);
 
   constructor() {
     this.restoreSession();
@@ -37,23 +43,45 @@ export class AuthService {
         this.router.navigate(['/login']);
       }
     };
+    // Cleanup esplicito quando il root injector viene distrutto (test, SSR).
+    this.destroyRef.onDestroy(() => {
+      if (this.refreshTimerId !== null) clearTimeout(this.refreshTimerId);
+      this.syncChannel.close();
+    });
   }
 
   loginWithGoogle(): void {
     window.location.href = environment.apiBaseUrl + API_PATHS.AUTH.GOOGLE_LOGIN;
   }
 
-  handleCallback(
-    accessToken: string,
-    refreshToken: string,
-    user: UserInfo,
-    expiresIn = 3600
-  ): void {
-    this._accessToken.set(accessToken);
-    this._refreshToken.set(refreshToken);
-    this._user.set(user);
-    this.persistSession(accessToken, refreshToken, user, expiresIn);
-    this.scheduleTokenRefresh(expiresIn);
+  /**
+   * Scambia il codice opaco ricevuto nel redirect OAuth con i veri JWT.
+   * Sostituisce il vecchio flusso che passava i token nei query parameter.
+   */
+  exchangeOauthCode(code: string): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(environment.apiBaseUrl + API_PATHS.AUTH.GOOGLE_EXCHANGE, { code })
+      .pipe(tap(res => this.acceptLogin(res)));
+  }
+
+  /**
+   * Rivalidazione della sessione persistita: ricarica i dati utente dal server
+   * in modo che cambiamenti applicati nel frattempo (es. {@code personaleId}
+   * collegato da un ADMIN) siano visibili senza richiedere logout/login.
+   * In caso di token scaduto o invalido viene scatenato il flusso di refresh
+   * dall'interceptor JWT alla prossima richiesta.
+   */
+  revalidateSession(): Observable<UserInfo | null> {
+    if (!this._accessToken()) return of(null);
+    return this.http
+      .get<UserInfo>(environment.apiBaseUrl + API_PATHS.AUTH.ME)
+      .pipe(
+        tap(user => {
+          this._user.set(user);
+          this.persistUser(user);
+        }),
+        catchError(() => of(null))
+      );
   }
 
   refresh(): Observable<TokenResponse> {
@@ -66,7 +94,8 @@ export class AuthService {
       .post<TokenResponse>(environment.apiBaseUrl + API_PATHS.AUTH.REFRESH, body)
       .pipe(
         tap(tokens => {
-          const user = this._user()!;
+          const user = this._user();
+          if (!user) return;
           this._accessToken.set(tokens.accessToken);
           this._refreshToken.set(tokens.refreshToken);
           this.persistSession(tokens.accessToken, tokens.refreshToken, user, tokens.expiresIn);
@@ -104,16 +133,24 @@ export class AuthService {
     if (this.refreshTimerId !== null) {
       clearTimeout(this.refreshTimerId);
     }
-    const delayMs = expiresIn * 1000 - 60_000;
+    const delayMs = expiresIn * 1000 - REFRESH_LEAD_MS;
     if (delayMs > 0) {
       this.refreshTimerId = setTimeout(() => {
-        this.refresh().subscribe();
+        this.refresh().subscribe({ error: () => {} });
       }, delayMs);
     }
   }
 
   getAccessToken(): string | null {
     return this._accessToken();
+  }
+
+  private acceptLogin(res: LoginResponse): void {
+    this._accessToken.set(res.accessToken);
+    this._refreshToken.set(res.refreshToken);
+    this._user.set(res.user);
+    this.persistSession(res.accessToken, res.refreshToken, res.user, res.expiresIn);
+    this.scheduleTokenRefresh(res.expiresIn);
   }
 
   private persistSession(
@@ -127,6 +164,10 @@ export class AuthService {
     sessionStorage.setItem(STORAGE.REFRESH_TOKEN, refreshToken);
     sessionStorage.setItem(STORAGE.USER, JSON.stringify(user));
     sessionStorage.setItem(STORAGE.EXPIRES_AT, String(expiresAt));
+  }
+
+  private persistUser(user: UserInfo): void {
+    sessionStorage.setItem(STORAGE.USER, JSON.stringify(user));
   }
 
   private restoreSession(): void {
@@ -149,6 +190,9 @@ export class AuthService {
       this._refreshToken.set(refreshToken);
       this._user.set(user);
       this.scheduleTokenRefresh(Math.floor(remainingMs / 1000));
+      // Background revalidation: aggiorna user (in particolare personaleId)
+      // se è cambiato sul server senza forzare logout/login.
+      this.revalidateSession().subscribe();
     } catch {
       this.clearStorage();
     }
