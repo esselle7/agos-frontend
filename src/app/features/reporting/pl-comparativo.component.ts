@@ -53,7 +53,7 @@ export class PlComparativoComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly businessUnits = signal<BusinessUnitDTO[]>([]);
-  readonly tableColumns = ['bu', 'ricavi', 'costi', 'ebitda', 'marginePct'];
+  readonly tableColumns = ['bu', 'ricavi', 'costi', 'ebitda', 'marginePct', 'ebit', 'utileNetto'];
 
   readonly sortedRows = computed(() => {
     const d = this.data();

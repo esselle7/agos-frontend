@@ -71,6 +71,14 @@ export class SpeseRicorrentiService {
     );
   }
 
+  getContiCogeInteressi(): Observable<CogeOption[]> {
+    return this.http.get<[number, string, string][]>(
+      this.base + API_PATHS.SPESE_RICORRENTI.CONTI_COGE_INTERESSI
+    ).pipe(
+      map(rows => rows.map(r => ({ id: r[0], codice: r[1], descrizione: r[2] })))
+    );
+  }
+
   getContiBancari(): Observable<ContoBancarioDTO[]> {
     return this.conti.getAll();
   }

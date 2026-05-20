@@ -81,6 +81,18 @@
         icon="account_balance"
         [color]="ebitdaColor"
       />
+      <agos-stat-card
+        label="EBIT"
+        [value]="pl.ebit"
+        icon="show_chart"
+        [color]="pl.ebit >= 0 ? 'success' : 'danger'"
+      />
+      <agos-stat-card
+        label="Utile Netto"
+        [value]="pl.utileNetto"
+        icon="savings"
+        [color]="pl.utileNetto >= 0 ? 'success' : 'danger'"
+      />
     </div>
 
     <!-- CHARTS ROW -->

@@ -1,6 +1,7 @@
 export type InstallmentStato = 'PENDING' | 'PAID' | 'CANCELLED' | 'SKIPPED';
 export type PlanStato = 'ATTIVO' | 'COMPLETATO' | 'ANNULLATO';
 export type Frequenza = 'MENSILE' | 'BIMESTRALE' | 'TRIMESTRALE';
+export type TipoPiano = 'FLAT' | 'FINANZIAMENTO';
 
 export interface InstallmentDTO {
   id: string;
@@ -10,6 +11,8 @@ export interface InstallmentDTO {
   stato: InstallmentStato;
   movimentoId: string | null;
   note: string | null;
+  quotaCapitale: number | null;
+  quotaInteressi: number | null;
 }
 
 export interface PlanSummaryDTO {
@@ -37,6 +40,13 @@ export interface PlanSummaryDTO {
 export interface PlanDetailDTO extends PlanSummaryDTO {
   note: string | null;
   totalePiano: number;
+  totaleInteressi: number;
+  totaleCapitale: number;
+  tipoPiano: TipoPiano;
+  tassoInteresseAnnuo: number | null;
+  importoDebitoIniziale: number | null;
+  contoCogeInteressiId: number | null;
+  contoCogeInteressiDescrizione: string | null;
   saldoContoBancario: number;
   rate: InstallmentDTO[];
 }
@@ -50,8 +60,12 @@ export interface PlanCreateRequest {
   giornoDelMese: number;
   frequenza: Frequenza;
   numeroRate: number;
-  dataInizio: string;   // ISO date (YYYY-MM-DD), giorno verrà sostituito da giornoDelMese
+  dataInizio: string;
   note?: string;
+  tipoPiano?: TipoPiano;
+  importoDebitoIniziale?: number;
+  tassoInteresseAnnuo?: number;
+  contoCogeInteressiId?: number;
 }
 
 export interface CogeOption {
