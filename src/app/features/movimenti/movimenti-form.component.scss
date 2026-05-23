@@ -103,6 +103,58 @@
     margin-bottom: 4px;
   }
 
+  // ── Tipo flusso bloccato (edit mode) ───────────────────────────────────────
+  &__flusso-locked {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-md, 8px);
+    background: rgba(var(--primary-rgb, 63, 81, 181), 0.07);
+
+    .mov-form__flusso-icon { margin-bottom: 0; }
+  }
+
+  &__flusso-locked-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+
+    strong { font-size: 0.875rem; color: var(--primary); }
+    span   { font-size: 0.8rem;   color: var(--text-sub, #666); }
+  }
+
+  &__flusso-locked-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--text-sub, #666);
+
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+
+  // ── Stato liquidazione bloccato (edit mode, già liquidato) ─────────────────
+  &__stato-locked {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm, 4px);
+    background: rgba(46, 125, 50, 0.08);
+    font-size: 0.825rem;
+    color: #2e7d32;
+
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
+
   // ── Badge EBITDA / Finanziario ─────────────────────────────────────────────
   &__badge {
     display: inline-flex;

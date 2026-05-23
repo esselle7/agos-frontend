@@ -157,8 +157,9 @@ export class MovimentoDetailComponent implements OnInit {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      ATTIVO: '#6B7280',
-      ANNULLATO: '#C62828',
+      REGISTRATO:   '#1565C0',
+      DA_LIQUIDARE: '#F57C00',
+      ANNULLATO:    '#C62828',
       RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';

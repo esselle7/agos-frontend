@@ -49,9 +49,10 @@
       <mat-label>Stato</mat-label>
       <mat-select [formControl]="statoControl">
         <mat-option value="">Tutti</mat-option>
-        <mat-option value="ATTIVO">Attivo</mat-option>
-        <mat-option value="ANNULLATO">Annullato</mat-option>
+        <mat-option value="REGISTRATO">Registrato</mat-option>
+        <mat-option value="DA_LIQUIDARE">Da liquidare</mat-option>
         <mat-option value="RICONCILIATO">Riconciliato</mat-option>
+        <mat-option value="ANNULLATO">Annullato</mat-option>
       </mat-select>
     </mat-form-field>
 
@@ -78,6 +79,61 @@
       </button>
     </div>
   </div>
+
+  <!-- Summary cards -->
+  @if (sommario(); as s) {
+    <div class="mov-summary">
+      <div class="mov-summary__header">
+        <mat-icon>analytics</mat-icon>
+        <span>Riepilogo nel periodo filtrato</span>
+        <span class="mov-summary__count text-sub">{{ s.totaleCount }} movimenti totali</span>
+      </div>
+
+      <div class="mov-summary__stato-row">
+        @for (item of s.perStato; track item.stato) {
+          <div class="mov-summary__stato-card" [style.border-left-color]="statoColor(item.stato)">
+            <div class="mov-summary__stato-label" [style.color]="statoColor(item.stato)">{{ statoLabel(item.stato) }}</div>
+            <div class="mov-summary__stato-amounts">
+              <span class="mov-summary__entrata">+{{ item.totaleEntrate | euro }}</span>
+              <span class="mov-summary__uscita">−{{ item.totaleUscite | euro }}</span>
+            </div>
+            <div class="mov-summary__stato-meta">
+              <span class="mov-summary__netto" [class.pos]="item.netto >= 0" [class.neg]="item.netto < 0">
+                {{ item.netto | euro }}
+              </span>
+              <span class="mov-summary__mov-count text-sub">{{ sommarioCount(item) }} mov.</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="mov-summary__totals">
+        <div class="mov-summary__total mov-summary__total--entrate">
+          <mat-icon>arrow_upward</mat-icon>
+          <div class="mov-summary__total-body">
+            <span>Entrate</span>
+            <strong>{{ s.totaleEntrate | euro }}</strong>
+          </div>
+        </div>
+        <div class="mov-summary__total mov-summary__total--uscite">
+          <mat-icon>arrow_downward</mat-icon>
+          <div class="mov-summary__total-body">
+            <span>Uscite</span>
+            <strong>{{ s.totaleUscite | euro }}</strong>
+          </div>
+        </div>
+        <div class="mov-summary__total mov-summary__total--netto"
+             [class.mov-summary__total--positive]="s.netto >= 0"
+             [class.mov-summary__total--negative]="s.netto < 0">
+          <mat-icon>show_chart</mat-icon>
+          <div class="mov-summary__total-body">
+            <span>Saldo netto</span>
+            <strong>{{ s.netto | euro }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Table card -->
   <div class="card">

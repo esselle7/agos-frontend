@@ -1,33 +1,60 @@
 <div class="drp">
-  <div class="drp__chips" role="group" aria-label="Seleziona periodo">
-    @for (p of periods; track p.value) {
-      <button class="drp__chip"
-              [class.drp__chip--active]="period === p.value"
-              [matTooltip]="p.tooltip"
-              (click)="onPeriodClick(p.value)"
-              type="button">
-        {{ p.label }}
+
+  <!-- ── Bottoni periodo standard + personalizzato ─────────────────── -->
+  <div class="drp__btns" role="group" aria-label="Seleziona periodo">
+
+    @for (p of stdPeriods; track p.value) {
+      <button
+        class="drp__btn"
+        [class.drp__btn--active]="period === p.value"
+        (click)="onStdPeriodClick(p.value)"
+        type="button">
+        <span class="drp__btn-abbr">{{ p.label }}</span>
+        <span class="drp__btn-desc">{{ p.description }}</span>
+        <span class="drp__btn-range">{{ getDateRange(p.value) }}</span>
       </button>
     }
+
+    <button
+      class="drp__btn drp__btn--custom"
+      [class.drp__btn--active]="period === 'CUSTOM'"
+      (click)="onCustomClick()"
+      type="button">
+      <span class="drp__btn-abbr">
+        <mat-icon class="drp__btn-icon">calendar_month</mat-icon>
+      </span>
+      <span class="drp__btn-desc">Personalizzato</span>
+      <span class="drp__btn-range">{{ customRangeLabel }}</span>
+    </button>
+
   </div>
 
+  <!-- ── Selezione intervallo personalizzato ───────────────────────── -->
   @if (period === 'CUSTOM') {
-    <div class="drp__custom" [formGroup]="customForm">
-      <mat-form-field appearance="outline" class="drp__date-field">
-        <mat-label>Da</mat-label>
-        <input matInput [matDatepicker]="pickerFrom" formControlName="from"
-               (dateChange)="onCustomChange()" placeholder="GG/MM/AAAA">
-        <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
-        <mat-datepicker #pickerFrom></mat-datepicker>
-      </mat-form-field>
+    <div class="drp__custom">
+      <mat-form-field appearance="outline" class="drp__range-field" subscriptSizing="dynamic">
+        <mat-label>Intervallo personalizzato</mat-label>
+        <mat-date-range-input [rangePicker]="rangePicker" [max]="today">
+          <input matStartDate
+                 [formControl]="fromCtrl"
+                 placeholder="Data inizio"
+                 (dateChange)="onFromChange()">
+          <input matEndDate
+                 [formControl]="toCtrl"
+                 placeholder="Data fine"
+                 [min]="endMinDate"
+                 (dateChange)="onToChange()">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="rangePicker"></mat-datepicker-toggle>
+        <mat-date-range-picker #rangePicker></mat-date-range-picker>
 
-      <mat-form-field appearance="outline" class="drp__date-field">
-        <mat-label>A</mat-label>
-        <input matInput [matDatepicker]="pickerTo" formControlName="to"
-               (dateChange)="onCustomChange()" placeholder="GG/MM/AAAA">
-        <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
-        <mat-datepicker #pickerTo></mat-datepicker>
+        @if (toCtrl.hasError('matEndDateInvalid')) {
+          <mat-error>La data fine non può precedere la data inizio</mat-error>
+        } @else if (!fromCtrl.value || !toCtrl.value) {
+          <mat-hint>Clicca sull'icona o digita per selezionare le date</mat-hint>
+        }
       </mat-form-field>
     </div>
   }
+
 </div>

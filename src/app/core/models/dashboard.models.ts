@@ -2,7 +2,7 @@ export type DashboardPeriod = 'MTD' | 'QTD' | 'YTD' | 'CUSTOM';
 
 export interface ContoSaldoDTO {
   saldo: number;
-  variazioneMese: number;
+  variazioneNelPeriodo: number;
 }
 
 export interface SaldiDTO {

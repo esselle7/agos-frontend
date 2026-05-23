@@ -129,6 +129,9 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   readonly tipoFlusso = signal<TipoFlusso>('immediato');
   readonly statoFinanziario = signal<StatoFinanziario>('incassato');
 
+  /** True se il movimento era già liquidato al caricamento (edit). Blocca la de-liquidazione. */
+  readonly wasLiquidato = signal<boolean>(false);
+
   // Mirror form values into signals so computed() can react to them
   private readonly _importo = signal<number | null>(null);
   private readonly _dataLiquidita = signal<Date | null>(null);
@@ -180,6 +183,26 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
       default:                return 'Data operazione *';
     }
   });
+
+  // Metadati per il badge read-only del tipo flusso in edit mode (icona/label/desc
+  // coerenti con le card di create).
+  readonly flussoMeta = computed(() => {
+    switch (this.tipoFlusso()) {
+      case 'differito':
+        return { icon: 'schedule',   label: 'Economico con incasso differito', desc: 'Il ricavo/costo è ora, la cassa arriva dopo' };
+      case 'soloFinanziario':
+        return { icon: 'swap_horiz', label: 'Solo finanziario',                desc: 'Nessun impatto EBITDA' };
+      default:
+        return { icon: 'flash_on',   label: 'Movimento immediato',             desc: 'Economico e finanziario coincidono' };
+    }
+  });
+
+  // Toggle incassato/nonIncassato: visibile solo per 'differito'.
+  // In edit mode, se il movimento era già liquidato, lo stato è bloccato
+  // (la de-liquidazione non è consentita).
+  readonly statoToggleVisible = computed(() =>
+    this.tipoFlusso() === 'differito' && !(this.isEditMode && this.wasLiquidato())
+  );
 
   // ── Lookup signals ──────────────────────────────────────────────────────────
   loading = signal(false);
@@ -422,6 +445,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
 
   private populateForm(mov: MovimentoDTO): void {
     this.pendingCategoriaId = mov.categoriaId ?? null;
+    this.wasLiquidato.set(mov.dataFinanziaria != null);
     this.inferUiState(mov);
 
     const flusso = this.tipoFlusso();
@@ -478,6 +502,15 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
   // Ricostruzione dello stato UI dal DTO salvato.
   // Usa dataFinanziaria come sorgente di verità per lo stato di liquidazione.
   private inferUiState(mov: MovimentoDTO): void {
+    // soloFinanziario è determinato dalla natura del conto CoGe (ATTIVITA/PASSIVITA):
+    // questi conti non impattano l'EBITDA. Va riconosciuto prima di tutto, altrimenti
+    // un giroconto verrebbe mostrato come 'immediato'.
+    const coge = this.pianoContiAll.find(c => c.id === Number(mov.contoCoge));
+    if (coge && (coge.tipo === 'ATTIVITA' || coge.tipo === 'PASSIVITA')) {
+      this.tipoFlusso.set('soloFinanziario');
+      this.statoFinanziario.set('incassato');
+      return;
+    }
     if (mov.dataFinanziaria == null) {
       // Nessuna data di liquidazione → DA_LIQUIDARE
       this.tipoFlusso.set('differito');

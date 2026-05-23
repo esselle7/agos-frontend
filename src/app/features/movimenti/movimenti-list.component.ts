@@ -27,7 +27,7 @@ import { MovimentiService, MovimentiFilter } from '../../core/services/movimenti
 import { ReportingService } from '../../core/services/reporting.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
-import { MovimentoDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
+import { MovimentoDTO, MovimentiSommarioDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
 import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { PagedResponse } from '../../core/models/shared.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
@@ -78,6 +78,7 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   readonly displayedColumns = ['dataMovimento', 'tipo', 'descrizione', 'bu', 'fonte', 'importo', 'stato', 'azioni'];
 
   result = signal<PagedResponse<MovimentoDTO> | null>(null);
+  sommario = signal<MovimentiSommarioDTO | null>(null);
   loading = signal(false);
   buMap = signal<Map<number, BusinessUnitDTO>>(new Map());
 
@@ -117,11 +118,30 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   loadData(): void {
     this.loading.set(true);
-    const filter: MovimentiFilter = {
-      page: this.currentPage,
-      size: this.currentSize,
-      sort: 'dataMovimento,desc',
-    };
+    const baseFilter = this.buildFilter();
+    const listFilter: MovimentiFilter = { ...baseFilter, page: this.currentPage, size: this.currentSize, sort: 'dataMovimento,desc' };
+
+    this.movimentiService.getList(listFilter).subscribe({
+      next: res => {
+        this.result.set(res);
+        this.loading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.loading.set(false);
+        this.snackBar.open('Errore nel caricamento dei movimenti', 'OK', { duration: 3000 });
+        this.cdr.markForCheck();
+      },
+    });
+
+    this.movimentiService.getSommario(baseFilter).subscribe({
+      next: s => { this.sommario.set(s); this.cdr.markForCheck(); },
+      error: () => {},
+    });
+  }
+
+  private buildFilter(): MovimentiFilter {
+    const filter: MovimentiFilter = {};
     const search = this.searchControl.value.trim();
     if (search) filter.search = search;
     const tipo = this.tipoControl.value;
@@ -134,19 +154,7 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
     if (from) filter.from = this.toIso(from);
     const to = this.toControl.value;
     if (to) filter.to = this.toIso(to);
-
-    this.movimentiService.getList(filter).subscribe({
-      next: res => {
-        this.result.set(res);
-        this.loading.set(false);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.snackBar.open('Errore nel caricamento dei movimenti', 'OK', { duration: 3000 });
-        this.cdr.markForCheck();
-      },
-    });
+    return filter;
   }
 
   resetFilters(): void {
@@ -228,11 +236,26 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      ATTIVO: '#6B7280',
-      ANNULLATO: '#C62828',
+      REGISTRATO:   '#1565C0',
+      DA_LIQUIDARE: '#F57C00',
+      ANNULLATO:    '#C62828',
       RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';
+  }
+
+  statoLabel(stato: string): string {
+    const map: Record<string, string> = {
+      REGISTRATO:   'Registrato',
+      DA_LIQUIDARE: 'Da liquidare',
+      ANNULLATO:    'Annullato',
+      RICONCILIATO: 'Riconciliato',
+    };
+    return map[stato] ?? stato;
+  }
+
+  sommarioCount(s: { countEntrate: number; countUscite: number }): number {
+    return s.countEntrate + s.countUscite;
   }
 
   fonteColor(fonte: string | null): string {
