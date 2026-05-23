@@ -19,6 +19,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import type { ChartData, ChartOptions } from 'chart.js';
 
 import { DashboardService } from '../../core/services/dashboard.service';
+import { DataRefreshService } from '../../core/services/data-refresh.service';
 import { GlobalPeriodService } from '../../core/services/global-period.service';
 import {
   DashboardKpiDTO,
@@ -55,6 +56,7 @@ export class DashboardComponent implements OnInit {
   private readonly dashboardSvc = inject(DashboardService);
   readonly globalPeriod = inject(GlobalPeriodService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dataRefresh = inject(DataRefreshService);
 
   readonly kpi = signal<DashboardKpiDTO | null>(null);
   readonly andamento = signal<AndamentoMensileDTO[]>([]);
@@ -246,12 +248,30 @@ export class DashboardComponent implements OnInit {
           });
       });
     });
+
+    // Dopo una mutation in qualunque pagina, l'interceptor `dataRefreshInterceptor`
+    // invalida la cache `dashboard:*` e notifica qui per ri-fetchare i dati
+    // senza F5. Il delay (DataRefreshService.refreshDelayMs) è già applicato
+    // upstream per dare tempo al backend di rinfrescare le MV.
+    this.dataRefresh.dashboardRefresh$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this._initialized) this.reloadAll();
+      });
   }
 
   ngOnInit(): void {
+    this.reloadAll();
+  }
+
+  private reloadAll(): void {
     const period = this.globalPeriod.period();
     const from = this.globalPeriod.from();
     const to = this.globalPeriod.to();
+    this.kpiError = false;
+    this.andamentoError = false;
+    this.fatturatoError = false;
+    this.scadenzeError = false;
 
     forkJoin({
       kpi: this.dashboardSvc

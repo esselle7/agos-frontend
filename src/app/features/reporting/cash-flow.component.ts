@@ -19,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 
 import { ReportingService } from '../../core/services/reporting.service';
+import { DataRefreshService } from '../../core/services/data-refresh.service';
 import { CashFlowPeriodoDTO, ForecastPointDTO } from '../../core/models/reporting.models';
 import { DashboardPeriod } from '../../core/models/dashboard.models';
 import {
@@ -49,6 +50,7 @@ import { EuroPipe } from '../../shared/pipes/euro.pipe';
 export class CashFlowComponent implements OnInit {
   private readonly reportingSvc = inject(ReportingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dataRefresh = inject(DataRefreshService);
 
   // — Storico —
   readonly period = signal<{ from: string; to: string }>(this.ytdRange());
@@ -191,6 +193,13 @@ export class CashFlowComponent implements OnInit {
   ngOnInit(): void {
     this.loadStorico();
     this.loadForecast();
+    // Auto-refresh dopo mutation in altre pagine (interceptor → DataRefreshService).
+    this.dataRefresh.dashboardRefresh$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadStorico();
+        this.loadForecast();
+      });
   }
 
   onPeriodChange(evt: PeriodChangeEvent): void {
