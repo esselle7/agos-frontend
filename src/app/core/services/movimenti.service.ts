@@ -6,6 +6,7 @@ import {
   MovimentoCreateRequest,
   MovimentoDTO,
   MovimentoUpdateRequest,
+  MovimentiSommarioDTO,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -48,6 +49,24 @@ export class MovimentiService {
     if (filter.sort != null) params = params.set('sort', filter.sort);
     return this.http.get<PagedResponse<MovimentoDTO>>(
       environment.apiBaseUrl + API_PATHS.MOVIMENTI.BASE,
+      { params }
+    );
+  }
+
+  getSommario(filter: Omit<MovimentiFilter, 'page' | 'size' | 'sort'> = {}): Observable<MovimentiSommarioDTO> {
+    let params = new HttpParams();
+    if (filter.from != null) params = params.set('from', filter.from);
+    if (filter.to != null) params = params.set('to', filter.to);
+    if (filter.tipo != null) params = params.set('tipo', filter.tipo);
+    if (filter.buId != null) params = params.set('buId', filter.buId);
+    if (filter.categoriaId != null) params = params.set('categoriaId', filter.categoriaId);
+    if (filter.metodoPagamentoId != null) params = params.set('metodoPagamentoId', filter.metodoPagamentoId);
+    if (filter.stato != null) params = params.set('stato', filter.stato);
+    if (filter.fornitoreId != null) params = params.set('fornitoreId', filter.fornitoreId);
+    if (filter.eventoId != null) params = params.set('eventoId', filter.eventoId);
+    if (filter.search != null) params = params.set('search', filter.search);
+    return this.http.get<MovimentiSommarioDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.SOMMARIO,
       { params }
     );
   }

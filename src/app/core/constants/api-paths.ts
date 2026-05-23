@@ -33,6 +33,7 @@ export const API_PATHS = {
   EVENTI_MIEI: '/api/eventi/miei',
   MOVIMENTI: {
     BASE:             '/api/movimenti',
+    SOMMARIO:         '/api/movimenti/sommario',
     BULK:             '/api/movimenti/bulk',
     NON_RICONCILIATI: '/api/movimenti/riconciliazione/non-riconciliati',
     MATCH_AUTO:       '/api/movimenti/riconciliazione/match-automatico',

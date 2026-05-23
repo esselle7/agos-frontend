@@ -18,41 +18,59 @@
       <!-- ══════════════════ BLOCCO 0 — TIPO FLUSSO ══════════════════════════ -->
       <div class="card mov-form__section">
         <h4 class="mov-form__section-title">Tipo di movimento</h4>
-        <p class="mov-form__section-desc">
-          Scegli come questo movimento impatta il risultato economico e la cassa
-        </p>
 
-        <div class="mov-form__flusso-grid">
-          <button type="button"
-                  class="mov-form__flusso-card"
-                  [class.mov-form__flusso-card--active]="tipoFlusso() === 'immediato'"
-                  (click)="onTipoFlussoChange('immediato')">
-            <mat-icon class="mov-form__flusso-icon">flash_on</mat-icon>
-            <strong>Movimento immediato</strong>
-            <span>Economico e finanziario coincidono</span>
-            <em>es. Pagamento ricevuto oggi</em>
-          </button>
+        @if (!isEditMode) {
+          <p class="mov-form__section-desc">
+            Scegli come questo movimento impatta il risultato economico e la cassa
+          </p>
 
-          <button type="button"
-                  class="mov-form__flusso-card"
-                  [class.mov-form__flusso-card--active]="tipoFlusso() === 'differito'"
-                  (click)="onTipoFlussoChange('differito')">
-            <mat-icon class="mov-form__flusso-icon">schedule</mat-icon>
-            <strong>Economico con incasso differito</strong>
-            <span>Il ricavo/costo è ora, la cassa arriva dopo</span>
-            <em>es. Fattura emessa, incasso tra 90gg</em>
-          </button>
+          <div class="mov-form__flusso-grid">
+            <button type="button"
+                    class="mov-form__flusso-card"
+                    [class.mov-form__flusso-card--active]="tipoFlusso() === 'immediato'"
+                    (click)="onTipoFlussoChange('immediato')">
+              <mat-icon class="mov-form__flusso-icon">flash_on</mat-icon>
+              <strong>Movimento immediato</strong>
+              <span>Economico e finanziario coincidono</span>
+              <em>es. Pagamento ricevuto oggi</em>
+            </button>
 
-          <button type="button"
-                  class="mov-form__flusso-card"
-                  [class.mov-form__flusso-card--active]="tipoFlusso() === 'soloFinanziario'"
-                  (click)="onTipoFlussoChange('soloFinanziario')">
-            <mat-icon class="mov-form__flusso-icon">swap_horiz</mat-icon>
-            <strong>Solo finanziario</strong>
-            <span>Nessun impatto EBITDA</span>
-            <em>es. Giroconto, rettifica cassa</em>
-          </button>
-        </div>
+            <button type="button"
+                    class="mov-form__flusso-card"
+                    [class.mov-form__flusso-card--active]="tipoFlusso() === 'differito'"
+                    (click)="onTipoFlussoChange('differito')">
+              <mat-icon class="mov-form__flusso-icon">schedule</mat-icon>
+              <strong>Economico con incasso differito</strong>
+              <span>Il ricavo/costo è ora, la cassa arriva dopo</span>
+              <em>es. Fattura emessa, incasso tra 90gg</em>
+            </button>
+
+            <button type="button"
+                    class="mov-form__flusso-card"
+                    [class.mov-form__flusso-card--active]="tipoFlusso() === 'soloFinanziario'"
+                    (click)="onTipoFlussoChange('soloFinanziario')">
+              <mat-icon class="mov-form__flusso-icon">swap_horiz</mat-icon>
+              <strong>Solo finanziario</strong>
+              <span>Nessun impatto EBITDA</span>
+              <em>es. Giroconto, rettifica cassa</em>
+            </button>
+          </div>
+        } @else {
+          <!-- Edit mode: il tipo flusso è bloccato, mostrato come badge read-only. -->
+          <div class="mov-form__flusso-locked">
+            <mat-icon class="mov-form__flusso-icon">{{ flussoMeta().icon }}</mat-icon>
+            <div class="mov-form__flusso-locked-text">
+              <strong>{{ flussoMeta().label }}</strong>
+              <span>{{ flussoMeta().desc }}</span>
+            </div>
+            <span class="mov-form__flusso-locked-tag" matTooltip="Il tipo di movimento non è modificabile dopo la creazione">
+              <mat-icon>lock</mat-icon> Tipo bloccato
+            </span>
+          </div>
+          <p class="mov-form__section-desc">
+            Puoi modificare tutti gli altri dati. Per cambiare il tipo, annulla e ricrea il movimento.
+          </p>
+        }
       </div>
 
       <!-- ══════════════════ SEZIONE A — DATI ECONOMICI ══════════════════════ -->
@@ -242,8 +260,9 @@
           </span>
         </div>
 
-        <!-- Stato finanziario: solo per immediato / differito -->
-        @if (tipoFlusso() !== 'soloFinanziario') {
+        <!-- Stato finanziario: solo per 'differito'. Per 'immediato' è sempre
+             "già incassato"; per 'soloFinanziario' è sempre liquidato. -->
+        @if (statoToggleVisible()) {
           <div class="mov-form__stato-row">
             <mat-button-toggle-group
               [value]="statoFinanziario()"
@@ -258,6 +277,15 @@
                 {{ tipoValue === 'ENTRATA' ? 'Non ancora incassato' : 'Non ancora pagato' }}
               </mat-button-toggle>
             </mat-button-toggle-group>
+          </div>
+        } @else if (tipoFlusso() === 'differito' && isEditMode && wasLiquidato()) {
+          <!-- Movimento differito già liquidato: stato non reversibile. -->
+          <div class="mov-form__stato-locked">
+            <mat-icon>check_circle</mat-icon>
+            <span>
+              {{ tipoValue === 'ENTRATA' ? 'Già incassato' : 'Già pagato' }} —
+              lo stato di liquidazione non è reversibile
+            </span>
           </div>
         }
 

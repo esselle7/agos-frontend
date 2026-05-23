@@ -103,15 +103,6 @@
       <!-- Spacer -->
       <span class="topbar-spacer"></span>
 
-      <!-- Center: period selector -->
-      @if (isAdmin()) {
-        <agos-date-range-picker
-          [period]="globalPeriod.period()"
-          (periodChange)="onPeriodChange($event)" />
-      }
-
-      <span class="topbar-spacer"></span>
-
       <!-- Right: badges + avatar -->
       <div class="topbar-actions">
 

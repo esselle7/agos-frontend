@@ -32,6 +32,7 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
+import { DateRangePickerComponent, PeriodChangeEvent } from '../../shared/components/date-range-picker/date-range-picker.component';
 
 const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
@@ -48,6 +49,7 @@ const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott
     SkeletonLoaderComponent,
     EmptyStateComponent,
     EuroPipe,
+    DateRangePickerComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
@@ -209,6 +211,38 @@ export class DashboardComponent implements OnInit {
     },
   };
 
+  readonly variazioneSaldiLabel = computed(() => {
+    switch (this.globalPeriod.period()) {
+      case 'MTD':    return 'vs mese prec.';
+      case 'QTD':    return 'vs trimestre prec.';
+      case 'YTD':    return 'vs anno prec.';
+      default:       return 'vs periodo prec.';
+    }
+  });
+
+  readonly deltaKpiLabel = computed(() => {
+    switch (this.globalPeriod.period()) {
+      case 'MTD':    return 'vs mese prec.';
+      case 'QTD':    return 'vs trimestre prec.';
+      case 'YTD':    return 'vs anno prec.';
+      default:       return 'vs periodo prec.';
+    }
+  });
+
+  readonly periodoLabel = computed(() => {
+    const p = this.globalPeriod.period();
+    const from = this.globalPeriod.from();
+    const to   = this.globalPeriod.to();
+    if (p === 'CUSTOM' && from && to) {
+      return `dal ${this.formatDate(from)} al ${this.formatDate(to)}`;
+    }
+    const kpi = this.kpi();
+    if (kpi?.periodo) {
+      return `dal ${this.formatDate(kpi.periodo.from)} al ${this.formatDate(kpi.periodo.to)}`;
+    }
+    return '';
+  });
+
   get margineColor(): 'success' | 'danger' | 'neutral' {
     const m = this.kpi()?.periodo?.margine ?? 0;
     if (m > 0) return 'success';
@@ -326,6 +360,10 @@ export class DashboardComponent implements OnInit {
   getMonthFromDate(dateStr: string): string {
     const m = parseInt(dateStr?.split('-')[1] ?? '0', 10);
     return MESI[m - 1] ?? '';
+  }
+
+  onPeriodChange(evt: PeriodChangeEvent): void {
+    this.globalPeriod.setPeriod(evt.period, evt.from, evt.to);
   }
 
   formatTimestamp(iso: string): string {

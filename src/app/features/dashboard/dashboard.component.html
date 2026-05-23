@@ -10,6 +10,9 @@
         </span>
       }
     </div>
+    <agos-date-range-picker
+      [period]="globalPeriod.period()"
+      (periodChange)="onPeriodChange($event)" />
   </div>
 
   @if (loading()) {
@@ -69,8 +72,8 @@
       <agos-stat-card
         label="Saldo BPM"
         [value]="kpi()?.saldi?.bpm?.saldo ?? null"
-        [delta]="kpi()?.saldi?.bpm?.variazioneMese ?? null"
-        deltaLabel="vs inizio mese"
+        [delta]="kpi()?.saldi?.bpm?.variazioneNelPeriodo ?? null"
+        [deltaLabel]="variazioneSaldiLabel()"
         icon="account_balance"
         color="neutral"
         [loading]="loadingPeriod()" />
@@ -78,8 +81,8 @@
       <agos-stat-card
         label="Saldo Crédit Agr."
         [value]="kpi()?.saldi?.creditAgricole?.saldo ?? null"
-        [delta]="kpi()?.saldi?.creditAgricole?.variazioneMese ?? null"
-        deltaLabel="vs inizio mese"
+        [delta]="kpi()?.saldi?.creditAgricole?.variazioneNelPeriodo ?? null"
+        [deltaLabel]="variazioneSaldiLabel()"
         icon="account_balance"
         color="neutral"
         [loading]="loadingPeriod()" />
@@ -87,8 +90,8 @@
       <agos-stat-card
         label="Saldo Cassa"
         [value]="kpi()?.saldi?.cassa?.saldo ?? null"
-        [delta]="kpi()?.saldi?.cassa?.variazioneMese ?? null"
-        deltaLabel="vs inizio mese"
+        [delta]="kpi()?.saldi?.cassa?.variazioneNelPeriodo ?? null"
+        [deltaLabel]="variazioneSaldiLabel()"
         icon="payments"
         color="neutral"
         [loading]="loadingPeriod()" />
@@ -96,8 +99,8 @@
       <agos-stat-card
         label="Liquidità Totale"
         [value]="kpi()?.saldi?.totale?.saldo ?? null"
-        [delta]="kpi()?.saldi?.totale?.variazioneMese ?? null"
-        deltaLabel="vs inizio mese"
+        [delta]="kpi()?.saldi?.totale?.variazioneNelPeriodo ?? null"
+        [deltaLabel]="variazioneSaldiLabel()"
         icon="account_balance_wallet"
         color="primary"
         [loading]="loadingPeriod()" />
@@ -109,7 +112,7 @@
     <div class="section-header section-header--economic">
       <mat-icon>trending_up</mat-icon>
       <h4>Performance Economica</h4>
-      <span class="section-note text-sub">valori di competenza nel periodo</span>
+      <span class="section-note text-sub">{{ periodoLabel() || 'valori di competenza nel periodo' }}</span>
     </div>
 
     <div class="kpi-grid kpi-grid--3">
@@ -117,7 +120,7 @@
         label="Ricavi"
         [value]="kpi()?.periodo?.totalEntrate ?? null"
         [delta]="kpi()?.vsMesePrecedente?.entrateDelta ?? null"
-        deltaLabel="vs mese prec."
+        [deltaLabel]="deltaKpiLabel()"
         icon="arrow_upward"
         color="success"
         [loading]="loadingPeriod()" />
@@ -126,7 +129,7 @@
         label="Costi"
         [value]="kpi()?.periodo?.totalUscite ?? null"
         [delta]="kpi()?.vsMesePrecedente?.usciteDelta ?? null"
-        deltaLabel="vs mese prec."
+        [deltaLabel]="deltaKpiLabel()"
         icon="arrow_downward"
         color="warning"
         [deltaPositiveIsGood]="false"
@@ -136,7 +139,7 @@
         label="Margine"
         [value]="kpi()?.periodo?.margine ?? null"
         [delta]="kpi()?.vsMesePrecedente?.margineDelta ?? null"
-        deltaLabel="vs mese prec."
+        [deltaLabel]="deltaKpiLabel()"
         icon="show_chart"
         [color]="margineColor"
         [loading]="loadingPeriod()" />

@@ -1,55 +1,136 @@
 .drp {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 
-  &__chips {
+  // ── Gruppo bottoni ────────────────────────────────────────────────
+
+  &__btns {
     display: flex;
-    gap: 4px;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
-  &__chip {
-    padding: 5px 14px;
-    border-radius: 999px;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    color: var(--text-sub);
-    font-size: 13px;
-    font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.15s ease;
+  // ── Singolo bottone ───────────────────────────────────────────────
 
-    &:hover {
+  &__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 18px 9px;
+    min-width: 88px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+
+    &:hover:not(&--active) {
       border-color: var(--primary);
-      color: var(--primary);
+      background: #f0f7f4;
+      box-shadow: var(--shadow-md);
     }
 
     &--active {
       background: var(--primary);
       border-color: var(--primary);
-      color: #fff;
+      box-shadow: 0 3px 10px rgba(45, 106, 79, 0.30);
+
+      .drp__btn-abbr,
+      .drp__btn-desc,
+      .drp__btn-range {
+        color: #fff;
+        opacity: 1;
+      }
+
+      .drp__btn-icon {
+        color: #fff;
+      }
 
       &:hover {
         background: var(--primary-d);
         border-color: var(--primary-d);
-        color: #fff;
       }
     }
+
+    &--custom {
+      min-width: 116px;
+    }
   }
+
+  &__btn-abbr {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  &__btn-icon {
+    font-size: 17px;
+    width: 17px;
+    height: 17px;
+    line-height: 17px;
+    color: var(--primary);
+  }
+
+  &__btn-desc {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--text-sub);
+    line-height: 1;
+    opacity: 0.9;
+  }
+
+  &__btn-range {
+    font-size: 9.5px;
+    font-weight: 400;
+    color: var(--text-sub);
+    line-height: 1;
+    opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
+  }
+
+  // ── Sezione date personalizzate ───────────────────────────────────
 
   &__custom {
+    width: 100%;
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    justify-content: flex-end;
+    animation: drp-slide-in 0.15s ease;
   }
 
-  &__date-field {
-    width: 160px;
+  &__range-field {
+    width: 340px;
 
-    .mat-mdc-form-field-subscript-wrapper {
-      display: none;
+    // Nascondi il wrapper subscript fisso in favore di dynamic
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-error-wrapper {
+      padding: 0;
     }
+  }
+}
+
+// ── Entrata animata del range picker ─────────────────────────────────
+
+@keyframes drp-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

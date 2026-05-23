@@ -1,5 +1,5 @@
 export type TipoMovimento = 'ENTRATA' | 'USCITA';
-export type StatoMovimento = 'ATTIVO' | 'ANNULLATO' | 'RICONCILIATO';
+export type StatoMovimento = 'REGISTRATO' | 'DA_LIQUIDARE' | 'ANNULLATO' | 'RICONCILIATO';
 export type FonteMovimento = 'MANUALE' | 'IMPORT_CSV' | 'STRIPE' | 'SATISPAY' | 'SHOPIFY' | 'BILLY';
 
 export interface MovimentoDTO {
@@ -85,6 +85,23 @@ export interface MovimentoUpdateRequest {
   riferimentoEsterno?: string | null;
   fonte?: string | null;
   allegatoPath?: string | null;
+}
+
+export interface MovimentiSommarioStatoSomma {
+  stato: StatoMovimento;
+  totaleEntrate: number;
+  totaleUscite: number;
+  netto: number;
+  countEntrate: number;
+  countUscite: number;
+}
+
+export interface MovimentiSommarioDTO {
+  perStato: MovimentiSommarioStatoSomma[];
+  totaleEntrate: number;
+  totaleUscite: number;
+  netto: number;
+  totaleCount: number;
 }
 
 export interface BulkImportRequest {
