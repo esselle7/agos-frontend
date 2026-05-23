@@ -3,6 +3,7 @@ export interface UserInfo {
   email: string;
   nome: string;
   ruolo: 'ADMIN' | 'DIPENDENTE';
+  personaleId: string | null;
 }
 
 export interface LoginResponse {

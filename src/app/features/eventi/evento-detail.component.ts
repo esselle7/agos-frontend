@@ -16,7 +16,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Subject, forkJoin, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { EventiService } from '../../core/services/eventi.service';
 import { BuService } from '../../core/services/bu.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -31,6 +31,7 @@ import { DecimalPipe } from '@angular/common';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { forkJoin } from 'rxjs';
 
 const STATO_COLORS: Record<StatoEvento, string> = {
   PREVENTIVATO: '#FFA500',
@@ -39,18 +40,25 @@ const STATO_COLORS: Record<StatoEvento, string> = {
   ANNULLATO:    '#9E9E9E',
 };
 
+/**
+ * Mappatura icona/colore per ogni tipo di pagamento. Include RIMBORSO,
+ * ripristinato dal backend in V21: i RIMBORSO non sono selezionabili
+ * dal form, ma compaiono nello storico pagamenti come importo negativo.
+ */
 const PAGAMENTO_ICONE: Record<TipoPagamentoEvento, string> = {
-  CAPARRA: 'lock',
-  ACCONTO: 'savings',
-  SALDO:   'done_all',
-  PENALE:  'gavel',
+  CAPARRA:  'lock',
+  ACCONTO:  'savings',
+  SALDO:    'done_all',
+  PENALE:   'gavel',
+  RIMBORSO: 'undo',
 };
 
 const PAGAMENTO_COLORS: Record<TipoPagamentoEvento, string> = {
-  CAPARRA: '#f57c00',
-  ACCONTO: '#1976d2',
-  SALDO:   '#388e3c',
-  PENALE:  '#c62828',
+  CAPARRA:  '#f57c00',
+  ACCONTO:  '#1976d2',
+  SALDO:    '#388e3c',
+  PENALE:   '#c62828',
+  RIMBORSO: '#6d4c41',
 };
 
 const STEP_ORDER: StatoEvento[] = ['PREVENTIVATO', 'CONFERMATO', 'SALDATO'];
@@ -229,15 +237,20 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   goBack(): void { this.router.navigate(['/eventi']); }
 
   // ── Step journey helpers ──────────────────────────────────────────────────
+  //
+  // Le date di journey (dataConferma/dataSaldo) sono fornite dal backend in
+  // EventoDTO e sono visibili anche ai DIPENDENTE: questo permette di
+  // renderizzare correttamente lo stepper anche quando la lista pagamenti
+  // ha gli importi nascosti per visibility policy.
 
   stepState(step: StatoEvento): 'done' | 'active' | 'next' {
     const ev = this.evento()!;
     let effectiveStato: StatoEvento = ev.stato;
     if (ev.stato === 'ANNULLATO') {
-      const wasConfirmed = ev.pagamenti.some(
-        p => p.stato !== 'ANNULLATO' && (p.tipo === 'CAPARRA' || p.tipo === 'ACCONTO')
-      );
-      effectiveStato = wasConfirmed ? 'CONFERMATO' : 'PREVENTIVATO';
+      // Se l'evento è stato annullato dopo essere stato confermato, mostrare
+      // come "done" anche il step CONFERMATO. La presenza di dataConferma è
+      // il segnale affidabile (deriva dai movimenti CAPARRA/ACCONTO).
+      effectiveStato = ev.dataConferma ? 'CONFERMATO' : 'PREVENTIVATO';
     }
     const curIdx = STEP_ORDER.indexOf(effectiveStato);
     const stepIdx = STEP_ORDER.indexOf(step);
@@ -254,22 +267,21 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   }
 
   stepDateConferma(): string {
-    const pag = this.evento()?.pagamenti.find(
-      p => (p.tipo === 'CAPARRA' || p.tipo === 'ACCONTO') && p.stato !== 'ANNULLATO'
-    );
-    if (pag) return this.formatDate(pag.dataFinanziaria);
+    const ev = this.evento();
+    if (ev?.dataConferma) return this.formatDate(ev.dataConferma);
     return this.stepState('CONFERMATO') === 'next' ? 'da confermare' : '—';
   }
 
   stepDateSaldo(): string {
-    const pag = this.evento()?.pagamenti.find(
-      p => p.tipo === 'SALDO' && p.stato !== 'ANNULLATO'
-    );
-    if (pag) return this.formatDate(pag.dataFinanziaria);
+    const ev = this.evento();
+    if (ev?.dataSaldo) return this.formatDate(ev.dataSaldo);
     return this.stepState('SALDATO') === 'next' ? 'da registrare' : '—';
   }
 
   // ── Template helpers ──────────────────────────────────────────────────────
+
+  pagColor(tipo: TipoPagamentoEvento): string { return PAGAMENTO_COLORS[tipo] ?? '#9E9E9E'; }
+  pagIcon(tipo: TipoPagamentoEvento):  string { return PAGAMENTO_ICONE[tipo]  ?? 'payments'; }
 
   statoColor(stato: StatoEvento): string { return STATO_COLORS[stato] ?? '#9E9E9E'; }
   buNome(buId: number): string { return this.buMap().get(buId)?.nome ?? `BU#${buId}`; }

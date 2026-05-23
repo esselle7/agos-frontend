@@ -20,6 +20,9 @@
           <span class="srd-meta-item"><mat-icon class="icon-xs">account_balance</mat-icon> {{ p.contoBancarioNome }}</span>
           <span class="srd-meta-item"><mat-icon class="icon-xs">category</mat-icon> {{ p.contoCogeDescrizione }}</span>
           <span class="srd-meta-item"><mat-icon class="icon-xs">event_repeat</mat-icon> {{ frequenzaLabel(p.frequenza) }} – giorno {{ p.giornoDelMese }}</span>
+          @if (p.tipoPiano === 'FINANZIAMENTO') {
+            <span class="srd-meta-item"><mat-icon class="icon-xs">savings</mat-icon> Finanziamento · {{ p.tassoInteresseAnnuo }}% annuo</span>
+          }
           @if (p.variazionePct !== 0) {
             <span class="srd-meta-item">Variazione {{ p.variazionePct > 0 ? '+' : '' }}{{ p.variazionePct }}% / rata</span>
           }
@@ -60,6 +63,16 @@
           <span>{{ progressPct() }}%</span>
         </div>
       </div>
+      @if (p.tipoPiano === 'FINANZIAMENTO') {
+        <div class="srd-kpi">
+          <span class="srd-kpi__label">Totale interessi</span>
+          <span class="srd-kpi__value srd-kpi__value--interessi">{{ p.totaleInteressi | euro }}</span>
+        </div>
+        <div class="srd-kpi">
+          <span class="srd-kpi__label">Capitale rimborsato</span>
+          <span class="srd-kpi__value">{{ p.totaleCapitale | euro }}</span>
+        </div>
+      }
     </div>
 
     <!-- ── Saldo conto bancario ── -->
@@ -122,6 +135,10 @@
             <th>#</th>
             <th>Data scadenza</th>
             <th>Importo</th>
+            @if (p.tipoPiano === 'FINANZIAMENTO') {
+              <th>Capitale</th>
+              <th>Interessi</th>
+            }
             <th>Stato</th>
             <th>Note</th>
             <th></th>
@@ -151,6 +168,11 @@
                   {{ rata.importo | euro }}
                 }
               </td>
+
+              @if (p.tipoPiano === 'FINANZIAMENTO') {
+                <td class="srd-td--amount">{{ rata.quotaCapitale != null ? (rata.quotaCapitale | euro) : '—' }}</td>
+                <td class="srd-td--amount srd-td--interessi">{{ rata.quotaInteressi != null ? (rata.quotaInteressi | euro) : '—' }}</td>
+              }
 
               <!-- Stato badge -->
               <td>

@@ -20,6 +20,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Subject, takeUntil } from 'rxjs';
 import { SlicePipe } from '@angular/common';
 import { EventiService } from '../../core/services/eventi.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { EventoCalendarioDTO, StatoEvento } from '../../core/models/eventi.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
@@ -56,6 +57,7 @@ export class EventiCalendarioComponent implements OnInit, OnChanges, OnDestroy {
   @Input() refresh = 0;
 
   private readonly eventiService = inject(EventiService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -156,7 +158,7 @@ export class EventiCalendarioComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   onClickGiornoVuoto(day: CalDay): void {
-    if (!day.inMonth) return;
+    if (!day.inMonth || !this.authService.isAdmin()) return;
     import('./evento-form-dialog.component').then(m => {
       this.dialog.open(m.EventoFormDialogComponent, {
         width: '700px',
@@ -169,7 +171,9 @@ export class EventiCalendarioComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   tooltipText(ev: EventoCalendarioDTO): string {
-    const residuo = ev.importoResiduo > 0 ? ` · Residuo: €${ev.importoResiduo.toFixed(2)}` : '';
+    const residuo = ev.importoResiduo != null && ev.importoResiduo > 0
+      ? ` · Residuo: €${ev.importoResiduo.toFixed(2)}`
+      : '';
     return `${ev.nome} · ${ev.stato}${residuo}`;
   }
 

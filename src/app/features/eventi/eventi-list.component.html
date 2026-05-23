@@ -116,25 +116,27 @@
               </div>
             </div>
 
-            <!-- Progress pagamento -->
-            <div class="card-progress">
-              <div class="progress-labels">
-                <span class="incassato-label">
-                  Incassato: <strong>{{ evento.importoIncassato | euro }}</strong>
-                </span>
-                <span
-                  class="residuo-label"
-                  [style.color]="(evento.importoResiduo ?? 0) > 0 ? '#FFA500' : '#4CAF50'"
-                >
-                  Residuo: <strong>{{ evento.importoResiduo | euro }}</strong>
-                </span>
+            <!-- Progress pagamento (solo ADMIN) -->
+            @if (authService.isAdmin()) {
+              <div class="card-progress">
+                <div class="progress-labels">
+                  <span class="incassato-label">
+                    Incassato: <strong>{{ evento.importoIncassato | euro }}</strong>
+                  </span>
+                  <span
+                    class="residuo-label"
+                    [style.color]="(evento.importoResiduo ?? 0) > 0 ? '#FFA500' : '#4CAF50'"
+                  >
+                    Residuo: <strong>{{ evento.importoResiduo | euro }}</strong>
+                  </span>
+                </div>
+                <mat-progress-bar
+                  mode="determinate"
+                  [value]="evento.percentualeIncassata"
+                  [style.--mdc-linear-progress-active-indicator-color]="progressColor(evento.percentualeIncassata ?? 0)"
+                />
               </div>
-              <mat-progress-bar
-                mode="determinate"
-                [value]="evento.percentualeIncassata"
-                [style.--mdc-linear-progress-active-indicator-color]="progressColor(evento.percentualeIncassata ?? 0)"
-              />
-            </div>
+            }
 
             <!-- Card actions -->
             <div class="card-actions" (click)="$event.stopPropagation()">
@@ -142,11 +144,11 @@
                 <mat-icon>visibility</mat-icon>
                 Dettaglio
               </button>
-              <button mat-button (click)="openModifica(evento, $event)">
-                <mat-icon>edit</mat-icon>
-                Modifica
-              </button>
               @if (authService.isAdmin()) {
+                <button mat-button (click)="openModifica(evento, $event)">
+                  <mat-icon>edit</mat-icon>
+                  Modifica
+                </button>
                 <button mat-button color="warn" (click)="deleteEvento(evento, $event)">
                   <mat-icon>delete</mat-icon>
                   Elimina

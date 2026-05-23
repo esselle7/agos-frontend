@@ -47,7 +47,7 @@ export class SpeseRicorrentiListComponent implements OnInit {
 
   openCreate(): void {
     const ref = this.dialog.open(SpeseRicorrentiCreateDialogComponent, {
-      width: '680px', disableClose: true,
+      width: '820px', maxWidth: '96vw', disableClose: true,
     });
     ref.afterClosed().subscribe(created => { if (created) this.load(); });
   }

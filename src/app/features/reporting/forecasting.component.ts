@@ -18,6 +18,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ReportingService } from '../../core/services/reporting.service';
+import { DataRefreshService } from '../../core/services/data-refresh.service';
 import {
   ForecastingDettaglioDTO,
   ForecastingHorizon,
@@ -68,6 +69,7 @@ const CATEGORIA_COLOR: Record<string, string> = {
 export class ForecastingComponent implements OnInit {
   private readonly reportingSvc = inject(ReportingService);
   private readonly destroyRef   = inject(DestroyRef);
+  private readonly dataRefresh  = inject(DataRefreshService);
 
   readonly horizons    = HORIZONS;
   readonly horizon     = signal<ForecastingHorizon>('90');
@@ -155,6 +157,13 @@ export class ForecastingComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    // Dopo una mutation (movimento creato/aggiornato, pagamento evento, rata
+    // ricorrente) ri-fetcha automaticamente la previsione: senza questo,
+    // un movimento con data_liquidita futura veniva nascosto fino al prossimo
+    // cambio di orizzonte o F5.
+    this.dataRefresh.dashboardRefresh$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.load());
   }
 
   onHorizonChange(h: ForecastingHorizon): void {

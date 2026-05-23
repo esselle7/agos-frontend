@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { EventiService } from '../../core/services/eventi.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { EventiDashboardDTO, EventoDTO, StatoEvento } from '../../core/models/eventi.models';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
@@ -42,6 +43,7 @@ const STATO_COLORS: Record<StatoEvento, string> = {
 })
 export class EventiDashboardComponent implements OnInit {
   private readonly eventiSvc = inject(EventiService);
+  readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 

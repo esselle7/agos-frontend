@@ -1,10 +1,11 @@
 export const API_PATHS = {
   AUTH: {
-    GOOGLE_LOGIN: '/auth/google/login',
-    CALLBACK:     '/auth/google/callback',
-    REFRESH:      '/auth/refresh',
-    LOGOUT:       '/auth/logout',
-    ME:           '/auth/me',
+    GOOGLE_LOGIN:    '/auth/google/login',
+    CALLBACK:        '/auth/google/callback',
+    GOOGLE_EXCHANGE: '/auth/google/exchange',
+    REFRESH:         '/auth/refresh',
+    LOGOUT:          '/auth/logout',
+    ME:              '/auth/me',
   },
   BU:              '/api/bu',
   CONTI:           '/api/conti',
@@ -28,7 +29,8 @@ export const API_PATHS = {
     SALDO:     '/api/cassa/saldo',
     MOVIMENTI: '/api/cassa/movimenti',
   },
-  EVENTI: '/api/eventi',
+  EVENTI:      '/api/eventi',
+  EVENTI_MIEI: '/api/eventi/miei',
   MOVIMENTI: {
     BASE:             '/api/movimenti',
     BULK:             '/api/movimenti/bulk',
@@ -50,7 +52,8 @@ export const API_PATHS = {
     UPDATE_RATA:    (pianoId: string, rataId: string) => `/api/spese-ricorrenti/piani/${pianoId}/rate/${rataId}`,
     SKIP_RATA:      (pianoId: string, rataId: string) => `/api/spese-ricorrenti/piani/${pianoId}/rate/${rataId}/skip`,
     PAGA_RATA:      (pianoId: string, rataId: string) => `/api/spese-ricorrenti/piani/${pianoId}/rate/${rataId}/paga`,
-    CONTI_COGE:     '/api/spese-ricorrenti/conti-coge',
+    CONTI_COGE:          '/api/spese-ricorrenti/conti-coge',
+    CONTI_COGE_INTERESSI:'/api/spese-ricorrenti/conti-coge-interessi',
   },
   REPORTING: {
     PL:                    '/api/reporting/pl',

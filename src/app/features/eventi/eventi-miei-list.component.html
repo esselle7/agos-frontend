@@ -1,0 +1,75 @@
+<div class="miei-eventi">
+
+  @if (!authService.personaleId()) {
+    <agos-empty-state
+      icon="link_off"
+      title="Account non collegato"
+      subtitle="Il tuo account non è ancora collegato a un profilo del personale. Contatta un amministratore per configurare il collegamento."
+    />
+  } @else if (loading()) {
+    <div class="cards-grid">
+      @for (i of [1,2,3]; track i) {
+        <agos-skeleton-loader [rows]="3" />
+      }
+    </div>
+  } @else if (result()?.content?.length === 0) {
+    <agos-empty-state
+      icon="event_available"
+      title="Nessun evento assegnato"
+      subtitle="Non risulti ancora assegnato a nessun evento."
+    />
+  } @else {
+    <p class="result-count">{{ result()?.totalElements }} eventi in cui sei coinvolto</p>
+
+    <div class="cards-grid">
+      @for (evento of result()?.content ?? []; track evento.id) {
+        <div class="evento-card" (click)="goToDetail(evento)">
+
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="evento-nome">{{ evento.nome }}</span>
+              <span
+                class="stato-badge"
+                [style.background-color]="statoColor(evento.stato) + '22'"
+                [style.color]="statoColor(evento.stato)"
+                [style.border-color]="statoColor(evento.stato) + '44'"
+              >{{ evento.stato }}</span>
+            </div>
+            <span class="evento-data">{{ formatDate(evento.dataEvento) }}</span>
+          </div>
+
+          <div class="card-body">
+            <div class="info-row">
+              <mat-icon class="info-icon">person</mat-icon>
+              <span>{{ evento.contattoNome }}</span>
+            </div>
+            @if (evento.numeroTotalePartecipanti) {
+              <div class="info-row">
+                <mat-icon class="info-icon">group</mat-icon>
+                <span>{{ evento.numeroTotalePartecipanti }} partecipanti</span>
+              </div>
+            }
+          </div>
+
+          <div class="card-actions" (click)="$event.stopPropagation()">
+            <button mat-button (click)="goToDetail(evento)">
+              <mat-icon>visibility</mat-icon>
+              Dettaglio
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+
+    @if ((result()?.totalElements ?? 0) > pageSize) {
+      <mat-paginator
+        [length]="result()?.totalElements ?? 0"
+        [pageSize]="pageSize"
+        [pageIndex]="currentPage"
+        (page)="onPage($event)"
+      />
+    }
+  }
+
+</div>

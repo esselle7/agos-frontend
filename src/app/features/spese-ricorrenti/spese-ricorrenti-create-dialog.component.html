@@ -3,195 +3,538 @@
   Nuovo piano di spesa ricorrente
 </h2>
 
+<!-- ── Step indicator ── -->
+<div class="src-steps">
+  <div class="src-step" [class.src-step--active]="step() === 1" [class.src-step--done]="step() === 2">
+    <div class="src-step__dot">
+      @if (step() === 2) { <mat-icon>check</mat-icon> } @else { 1 }
+    </div>
+    <span class="src-step__label">Configurazione</span>
+  </div>
+  <div class="src-step__line" [class.src-step__line--done]="step() === 2"></div>
+  <div class="src-step" [class.src-step--active]="step() === 2">
+    <div class="src-step__dot">2</div>
+    <span class="src-step__label">Anteprima piano</span>
+  </div>
+</div>
+
 <mat-dialog-content class="src-content">
 
   @if (loadingLookup()) {
     <div class="src-spinner"><mat-spinner diameter="36" /></div>
   } @else {
 
-    <form [formGroup]="form" class="src-form">
+    <!-- ════════════════════════════════════════════
+         STEP 1 — Configurazione
+         ════════════════════════════════════════════ -->
+    @if (step() === 1) {
+      <form [formGroup]="form" class="src-form">
 
-      <!-- ── Descrizione ── -->
-      <mat-form-field appearance="outline" class="src-field src-field--full">
-        <mat-label>Nome del piano</mat-label>
-        <input matInput formControlName="descrizione" placeholder="Es. Mutuo ipotecario BPM, Leasing auto, Abbonamento..." />
-        <mat-icon matPrefix class="src-field-icon">label</mat-icon>
-        @if (form.get('descrizione')?.hasError('required') && form.get('descrizione')?.touched) {
-          <mat-error>Campo obbligatorio</mat-error>
-        }
-      </mat-form-field>
-
-      <!-- ── Sezione: Conti ── -->
-      <div class="src-section src-field--full">
-        <mat-icon>account_balance</mat-icon>
-        <span>Conti</span>
-      </div>
-
-      <mat-form-field appearance="outline" class="src-field">
-        <mat-label>Conto bancario</mat-label>
-        <mat-select formControlName="contoBancarioId">
-          @for (c of contiBancari(); track c.id) {
-            <mat-option [value]="c.id">{{ c.nome }}</mat-option>
-          }
-        </mat-select>
-        @if (form.get('contoBancarioId')?.hasError('required') && form.get('contoBancarioId')?.touched) {
-          <mat-error>Campo obbligatorio</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="src-field">
-        <mat-label>Conto COGE (Passività)</mat-label>
-        <mat-select formControlName="contoCoge">
-          @for (c of contiCoge(); track c.id) {
-            <mat-option [value]="c.id">{{ c.codice }} – {{ c.descrizione }}</mat-option>
-          }
-        </mat-select>
-        <mat-hint>Solo conti del ramo 20 – Passività e debiti</mat-hint>
-        @if (form.get('contoCoge')?.hasError('required') && form.get('contoCoge')?.touched) {
-          <mat-error>Campo obbligatorio</mat-error>
-        }
-      </mat-form-field>
-
-      <!-- ── Sezione: Importo ── -->
-      <div class="src-section src-field--full">
-        <mat-icon>euro</mat-icon>
-        <span>Importo</span>
-      </div>
-
-      <mat-form-field appearance="outline" class="src-field">
-        <mat-label>Importo rata</mat-label>
-        <input matInput type="number" formControlName="importoRata" min="0.01" step="0.01" placeholder="0,00" />
-        <span matTextPrefix>€&nbsp;</span>
-        @if (form.get('importoRata')?.hasError('required') && form.get('importoRata')?.touched) {
-          <mat-error>Campo obbligatorio</mat-error>
-        }
-        @if (form.get('importoRata')?.hasError('min')) {
-          <mat-error>Importo minimo €0,01</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="src-field"
-                      matTooltip="0 = importo fisso. Positivo = aumenta ogni rata, negativo = diminuisce">
-        <mat-label>Variazione per rata</mat-label>
-        <input matInput type="number" formControlName="variazionePct" step="0.001" placeholder="0" />
-        <span matTextSuffix>&nbsp;%</span>
-        <mat-hint>0 = fisso &nbsp;·&nbsp; es. 1 = +1% per rata</mat-hint>
-      </mat-form-field>
-
-      <!-- ── Sezione: Scadenza ── -->
-      <div class="src-section src-field--full">
-        <mat-icon>event_repeat</mat-icon>
-        <span>Scadenza</span>
-      </div>
-
-      <mat-form-field appearance="outline" class="src-field">
-        <mat-label>Giorno del mese</mat-label>
-        <input matInput type="number" formControlName="giornoDelMese" min="1" max="28" placeholder="Es. 20" />
-        <mat-hint>Pagamento ogni giorno X del mese (1–28)</mat-hint>
-        @if (form.get('giornoDelMese')?.hasError('required') && form.get('giornoDelMese')?.touched) {
-          <mat-error>Campo obbligatorio</mat-error>
-        }
-        @if (form.get('giornoDelMese')?.hasError('min') || form.get('giornoDelMese')?.hasError('max')) {
-          <mat-error>Valore tra 1 e 28</mat-error>
-        }
-      </mat-form-field>
-
-      <div class="src-freq-group src-field">
-        <label class="src-freq-label">Frequenza</label>
-        <div class="src-freq-pills">
-          @for (f of frequenzaOptions; track f.value) {
-            <button type="button" class="src-freq-pill"
-                    [class.src-freq-pill--active]="form.get('frequenza')?.value === f.value"
-                    (click)="form.get('frequenza')?.setValue(f.value)">
-              <span class="src-freq-pill__label">{{ f.label }}</span>
-              <span class="src-freq-pill__sub">{{ f.sub }}</span>
-            </button>
-          }
+        <!-- ── Tipo di piano ── -->
+        <div class="src-section src-field--full">
+          <mat-icon>category</mat-icon>
+          <span>Tipo di piano</span>
         </div>
-      </div>
 
-      <!-- ── Sezione: Piano ── -->
-      <div class="src-section src-field--full">
-        <mat-icon>calendar_month</mat-icon>
-        <span>Durata e inizio</span>
-      </div>
+        <div class="src-tipo-cards src-field--full">
 
-      <mat-form-field appearance="outline" class="src-field">
-        <mat-label>Numero di rate</mat-label>
-        <input matInput type="number" formControlName="numeroRate" min="1" placeholder="Es. 12, 60, 240" />
-        <mat-hint>Es. 240 = mutuo 20 anni mensile</mat-hint>
-        @if (form.get('numeroRate')?.hasError('required') && form.get('numeroRate')?.touched) {
-          <mat-error>Campo obbligatorio</mat-error>
-        }
-      </mat-form-field>
+          <button type="button" class="src-tipo-card"
+                  [class.src-tipo-card--active]="form.get('tipoPiano')?.value === 'FLAT'"
+                  (click)="form.get('tipoPiano')?.setValue('FLAT')">
+            <div class="src-tipo-card__icon-wrap src-tipo-card__icon-wrap--flat">
+              <mat-icon>receipt_long</mat-icon>
+            </div>
+            <div class="src-tipo-card__body">
+              <strong>Spesa fissa</strong>
+              <span>L'importo è uguale per ogni rata: abbonamenti, affitti, canoni, noleggi.</span>
+              <ul class="src-tipo-card__list">
+                <li>Importo costante ogni periodo</li>
+                <li>Un solo movimento contabile per rata</li>
+                <li>Nessun calcolo di interessi</li>
+              </ul>
+            </div>
+            <div class="src-tipo-card__check"><mat-icon>check_circle</mat-icon></div>
+          </button>
 
-      <!-- Mese e anno di inizio -->
-      <div class="src-month-picker src-field">
-        <label class="src-freq-label">Mese di inizio</label>
-        <div class="src-month-picker__row">
-          <mat-form-field appearance="outline" class="src-month-picker__mese">
-            <mat-label>Mese</mat-label>
-            <mat-select formControlName="meseInizio">
-              @for (m of mesi; track m.v) {
-                <mat-option [value]="m.v">{{ m.l }}</mat-option>
+          <button type="button" class="src-tipo-card"
+                  [class.src-tipo-card--active]="form.get('tipoPiano')?.value === 'FINANZIAMENTO'"
+                  (click)="form.get('tipoPiano')?.setValue('FINANZIAMENTO')">
+            <div class="src-tipo-card__icon-wrap src-tipo-card__icon-wrap--fin">
+              <mat-icon>account_balance</mat-icon>
+            </div>
+            <div class="src-tipo-card__body">
+              <strong>Finanziamento</strong>
+              <span>Mutui, leasing, prestiti: la rata è costante ma la quota interessi decresce nel tempo.</span>
+              <ul class="src-tipo-card__list">
+                <li>Ammortamento alla francese</li>
+                <li>Due movimenti per rata: capitale + interessi</li>
+                <li>Interessi → P&amp;L (oneri finanziari); capitale → bilancio</li>
+              </ul>
+            </div>
+            <div class="src-tipo-card__check"><mat-icon>check_circle</mat-icon></div>
+          </button>
+
+        </div>
+
+        <!-- ── Sezione: Informazioni generali ── -->
+        <div class="src-section src-field--full">
+          <mat-icon>label</mat-icon>
+          <span>Informazioni generali</span>
+        </div>
+
+        <mat-form-field appearance="outline" class="src-field src-field--full">
+          <mat-label>Nome del piano</mat-label>
+          <input matInput formControlName="descrizione"
+                 placeholder="Es. Mutuo BPM 2026, Leasing auto Ford, Canone Adobe..." />
+          <mat-icon matPrefix class="src-field-icon">label</mat-icon>
+          @if (form.get('descrizione')?.hasError('required') && form.get('descrizione')?.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- ── Sezione: Conti ── -->
+        <div class="src-section src-field--full">
+          <mat-icon>account_balance</mat-icon>
+          <span>Conti contabili</span>
+        </div>
+
+        <mat-form-field appearance="outline" class="src-field">
+          <mat-label>Conto bancario</mat-label>
+          <mat-select formControlName="contoBancarioId">
+            @for (c of contiBancari(); track c.id) {
+              <mat-option [value]="c.id">{{ c.nome }}</mat-option>
+            }
+          </mat-select>
+          @if (form.get('contoBancarioId')?.hasError('required') && form.get('contoBancarioId')?.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="src-field">
+          <mat-label>{{ isFinanziamento() ? 'Conto COGE – quota capitale (Passività)' : 'Conto COGE' }}</mat-label>
+          <mat-select formControlName="contoCoge">
+            @for (c of contiCoge(); track c.id) {
+              <mat-option [value]="c.id">{{ c.codice }} – {{ c.descrizione }}</mat-option>
+            }
+          </mat-select>
+          @if (isFinanziamento()) {
+            <mat-hint>Ramo 20 – riduce il debito a bilancio</mat-hint>
+          }
+          @if (form.get('contoCoge')?.hasError('required') && form.get('contoCoge')?.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- ── Sezione: Dettagli finanziamento (solo FINANZIAMENTO) ── -->
+        @if (isFinanziamento()) {
+
+          <div class="src-section src-field--full src-section--fin">
+            <mat-icon>savings</mat-icon>
+            <span>Dettagli finanziamento</span>
+          </div>
+
+          <div class="src-fin-info src-field--full">
+            <mat-icon class="src-fin-info__icon">info</mat-icon>
+            <p>
+              Il sistema calcolerà automaticamente la quota interessi e quota capitale
+              per ogni rata usando l'<strong>ammortamento alla francese</strong>
+              (rata costante, interessi decrescenti).
+              Ogni pagamento genererà <strong>due movimenti separati</strong>:
+              uno sul conto passività (riduce il debito) e uno sugli oneri finanziari (P&amp;L).
+            </p>
+          </div>
+
+          <mat-form-field appearance="outline" class="src-field">
+            <mat-label>Debito residuo iniziale</mat-label>
+            <input matInput type="number" formControlName="importoDebitoIniziale"
+                   min="0.01" step="0.01" placeholder="100 000,00" />
+            <span matTextPrefix>€&nbsp;</span>
+            <mat-hint>Capitale ancora da restituire alla prima rata</mat-hint>
+            @if (form.get('importoDebitoIniziale')?.hasError('required') && form.get('importoDebitoIniziale')?.touched) {
+              <mat-error>Campo obbligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="src-field">
+            <mat-label>Tasso d'interesse annuo</mat-label>
+            <input matInput type="number" formControlName="tassoInteresseAnnuo"
+                   min="0.001" step="0.001" placeholder="3.50" />
+            <span matTextSuffix>&nbsp;%</span>
+            <mat-hint>Tasso annuo nominale (es. 3.5 per 3,5%)</mat-hint>
+            @if (form.get('tassoInteresseAnnuo')?.hasError('required') && form.get('tassoInteresseAnnuo')?.touched) {
+              <mat-error>Campo obbligatorio</mat-error>
+            }
+            @if (form.get('tassoInteresseAnnuo')?.hasError('min')) {
+              <mat-error>Tasso minimo 0,001%</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="src-field src-field--full">
+            <mat-label>Conto COGE – quota interessi (Onere finanziario)</mat-label>
+            <mat-select formControlName="contoCogeInteressiId">
+              @for (c of contiCogeInteressi(); track c.id) {
+                <mat-option [value]="c.id">{{ c.codice }} – {{ c.descrizione }}</mat-option>
               }
             </mat-select>
+            <mat-hint>Ramo 60 – oneri finanziari → entra nel P&amp;L</mat-hint>
+            @if (form.get('contoCogeInteressiId')?.hasError('required') && form.get('contoCogeInteressiId')?.touched) {
+              <mat-error>Campo obbligatorio</mat-error>
+            }
           </mat-form-field>
-          <mat-form-field appearance="outline" class="src-month-picker__anno">
-            <mat-label>Anno</mat-label>
-            <mat-select formControlName="annoInizio">
-              @for (a of anni; track a) {
-                <mat-option [value]="a">{{ a }}</mat-option>
+
+          <!-- ── Come configuri il piano? ── -->
+          <div class="src-calc-mode src-field--full">
+            <label class="src-freq-label">Come vuoi configurare il piano?</label>
+            <div class="src-calc-mode__pills">
+              <button type="button" class="src-calc-mode__pill"
+                      [class.src-calc-mode__pill--active]="finCalcolaMode() === 'RATA'"
+                      (click)="setCalcolaMode('RATA')">
+                <mat-icon>tag</mat-icon>
+                <div>
+                  <strong>Ho il numero di rate</strong>
+                  <span>Calcola la rata dalla durata</span>
+                </div>
+              </button>
+              <button type="button" class="src-calc-mode__pill"
+                      [class.src-calc-mode__pill--active]="finCalcolaMode() === 'DURATA'"
+                      (click)="setCalcolaMode('DURATA')">
+                <mat-icon>euro_symbol</mat-icon>
+                <div>
+                  <strong>Ho l'importo della rata</strong>
+                  <span>Calcola la durata dall'importo</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Input condizionale in base alla modalità -->
+          @if (finCalcolaMode() === 'RATA') {
+            <mat-form-field appearance="outline" class="src-field src-field--full">
+              <mat-label>Numero di rate</mat-label>
+              <input matInput type="number" formControlName="numeroRate" min="1"
+                     placeholder="Es. 12, 60, 240" />
+              <mat-hint>12 = 1 anno · 60 = 5 anni · 240 = 20 anni mensile</mat-hint>
+              @if (form.get('numeroRate')?.hasError('required') && form.get('numeroRate')?.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
               }
-            </mat-select>
+            </mat-form-field>
+          } @else {
+            <mat-form-field appearance="outline" class="src-field src-field--full">
+              <mat-label>Importo rata (costante)</mat-label>
+              <input matInput type="number" formControlName="importoRata"
+                     min="0.01" step="0.01" placeholder="0,00" />
+              <span matTextPrefix>€&nbsp;</span>
+              <mat-hint>Deve coprire almeno gli interessi del primo periodo</mat-hint>
+              @if (form.get('importoRata')?.hasError('required') && form.get('importoRata')?.touched) {
+                <mat-error>Campo obbligatorio</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          <!-- Risultato del calcolo -->
+          @if (computedFin(); as fin) {
+            <div class="src-computed-card src-field--full">
+              <div class="src-computed-card__main">
+                <mat-icon>{{ finCalcolaMode() === 'RATA' ? 'calculate' : 'schedule' }}</mat-icon>
+                <div>
+                  <span class="src-computed-card__label">
+                    {{ finCalcolaMode() === 'RATA' ? 'Rata calcolata' : 'Durata calcolata' }}
+                  </span>
+                  <span class="src-computed-card__value">
+                    @if (finCalcolaMode() === 'RATA') {
+                      {{ fmtEur(fin.valore) }} / rata
+                    } @else {
+                      {{ fin.valore }} rate &nbsp;·&nbsp; {{ fin.durataLabel }}
+                    }
+                  </span>
+                </div>
+              </div>
+              <div class="src-computed-card__split">
+                <span class="src-computed-card__split-item src-computed-card__split-item--int">
+                  <span class="src-comp-legend__dot src-comp-legend__dot--int"></span>
+                  1ª rata interessi: {{ fmtEur(fin.primaInteresse) }}
+                </span>
+                <span class="src-computed-card__split-item src-computed-card__split-item--cap">
+                  <span class="src-comp-legend__dot src-comp-legend__dot--cap"></span>
+                  1ª rata capitale: {{ fmtEur(fin.primaCapitale) }}
+                </span>
+                @if (fin.dataEstinzione) {
+                  <span class="src-computed-card__split-item src-computed-card__split-item--date">
+                    <mat-icon>event</mat-icon>
+                    Estinzione prevista: {{ fmtData(fin.dataEstinzione) }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+
+        }
+
+        <!-- ── Sezione: Rata e frequenza ── -->
+        <div class="src-section src-field--full">
+          <mat-icon>euro</mat-icon>
+          <span>Rata e frequenza</span>
+        </div>
+
+        <!-- importoRata: visibile solo per FLAT (per FINANZIAMENTO è nella sezione sopra) -->
+        @if (!isFinanziamento()) {
+          <mat-form-field appearance="outline" class="src-field">
+            <mat-label>Importo rata</mat-label>
+            <input matInput type="number" formControlName="importoRata" min="0.01" step="0.01" placeholder="0,00" />
+            <span matTextPrefix>€&nbsp;</span>
+            @if (form.get('importoRata')?.hasError('required') && form.get('importoRata')?.touched) {
+              <mat-error>Campo obbligatorio</mat-error>
+            }
           </mat-form-field>
+
+          <mat-form-field appearance="outline" class="src-field"
+                          matTooltip="0 = importo fisso. Positivo = aumenta ogni rata. Negativo = diminuisce.">
+            <mat-label>Variazione per rata</mat-label>
+            <input matInput type="number" formControlName="variazionePct" step="0.001" placeholder="0" />
+            <span matTextSuffix>&nbsp;%</span>
+            <mat-hint>0 = fisso &nbsp;·&nbsp; 1 = +1% ogni rata</mat-hint>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="src-field">
+          <mat-label>Giorno del mese</mat-label>
+          <input matInput type="number" formControlName="giornoDelMese" min="1" max="28" placeholder="Es. 20" />
+          <mat-hint>Scadenza ogni giorno X (1–28)</mat-hint>
+          @if (form.get('giornoDelMese')?.hasError('required') && form.get('giornoDelMese')?.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.get('giornoDelMese')?.hasError('min') || form.get('giornoDelMese')?.hasError('max')) {
+            <mat-error>Valore tra 1 e 28</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="src-freq-group src-field">
+          <label class="src-freq-label">Frequenza pagamenti</label>
+          <div class="src-freq-pills">
+            @for (f of frequenzaOptions; track f.value) {
+              <button type="button" class="src-freq-pill"
+                      [class.src-freq-pill--active]="form.get('frequenza')?.value === f.value"
+                      (click)="form.get('frequenza')?.setValue(f.value)">
+                <span class="src-freq-pill__label">{{ f.label }}</span>
+                <span class="src-freq-pill__sub">{{ f.sub }}</span>
+              </button>
+            }
+          </div>
         </div>
-        <span class="src-month-hint">Il piano partirà dal giorno {{ form.get('giornoDelMese')?.value || '?' }} del mese selezionato</span>
+
+        <!-- ── Sezione: Durata e inizio ── -->
+        <div class="src-section src-field--full">
+          <mat-icon>calendar_month</mat-icon>
+          <span>Durata e inizio</span>
+        </div>
+
+        <!-- numeroRate: visibile solo per FLAT (per FINANZIAMENTO è nella sezione sopra) -->
+        @if (!isFinanziamento()) {
+          <mat-form-field appearance="outline" class="src-field">
+            <mat-label>Numero di rate</mat-label>
+            <input matInput type="number" formControlName="numeroRate" min="1" placeholder="Es. 12, 60, 240" />
+            <mat-hint>Es. 240 = mutuo 20 anni mensile</mat-hint>
+            @if (form.get('numeroRate')?.hasError('required') && form.get('numeroRate')?.touched) {
+              <mat-error>Campo obbligatorio</mat-error>
+            }
+          </mat-form-field>
+        }
+
+        <div class="src-month-picker src-field">
+          <label class="src-freq-label">Mese di prima rata</label>
+          <div class="src-month-picker__row">
+            <mat-form-field appearance="outline" class="src-month-picker__mese">
+              <mat-label>Mese</mat-label>
+              <mat-select formControlName="meseInizio">
+                @for (m of mesi; track m.v) { <mat-option [value]="m.v">{{ m.l }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="src-month-picker__anno">
+              <mat-label>Anno</mat-label>
+              <mat-select formControlName="annoInizio">
+                @for (a of anni; track a) { <mat-option [value]="a">{{ a }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <span class="src-month-hint">
+            Prima scadenza: giorno {{ form.get('giornoDelMese')?.value || '?' }} del mese selezionato
+          </span>
+        </div>
+
+        <!-- ── Note ── -->
+        <mat-form-field appearance="outline" class="src-field src-field--full">
+          <mat-label>Note (opzionale)</mat-label>
+          <textarea matInput formControlName="note" rows="2"
+                    placeholder="Riferimento contratto, IBAN, contatto banca..."></textarea>
+          <mat-icon matPrefix class="src-field-icon">notes</mat-icon>
+        </mat-form-field>
+
+        <!-- ── Errore step 1 ── -->
+        @if (step1Error()) {
+          <div class="src-error-box src-field--full">
+            <mat-icon>error</mat-icon>
+            <span>{{ step1Error() }}</span>
+          </div>
+        }
+
+      </form>
+    }
+
+    <!-- ════════════════════════════════════════════
+         STEP 2 — Anteprima piano
+         ════════════════════════════════════════════ -->
+    @if (step() === 2) {
+      <div class="src-preview-wrap">
+
+        @if (pianoStats(); as stats) {
+
+          <!-- KPI riepilogo -->
+          <div class="src-kpi-row">
+            <div class="src-kpi">
+              <span class="src-kpi__label">Prima rata</span>
+              <span class="src-kpi__value">{{ fmtData(stats.primaRata) }}</span>
+            </div>
+            <div class="src-kpi">
+              <span class="src-kpi__label">Ultima rata</span>
+              <span class="src-kpi__value">{{ fmtData(stats.ultimaRata) }}</span>
+            </div>
+            <div class="src-kpi">
+              <span class="src-kpi__label">N° rate</span>
+              <span class="src-kpi__value">{{ ratePreview().length }}</span>
+            </div>
+            <div class="src-kpi src-kpi--total">
+              <span class="src-kpi__label">Totale esborso</span>
+              <span class="src-kpi__value">{{ fmtEur(stats.totaleImporti) }}</span>
+            </div>
+          </div>
+
+          <!-- Extra KPI finanziamento -->
+          @if (isFinanziamento() && stats.totaleInteressi !== null) {
+            <div class="src-fin-kpi-row">
+              <div class="src-fin-kpi src-fin-kpi--cap">
+                <mat-icon>home</mat-icon>
+                <div>
+                  <span class="src-fin-kpi__label">Capitale restituito</span>
+                  <span class="src-fin-kpi__value">{{ fmtEur(stats.totaleCapitale!) }}</span>
+                </div>
+              </div>
+              <div class="src-fin-kpi src-fin-kpi--int">
+                <mat-icon>percent</mat-icon>
+                <div>
+                  <span class="src-fin-kpi__label">Totale interessi pagati</span>
+                  <span class="src-fin-kpi__value src-fin-kpi__value--danger">{{ fmtEur(stats.totaleInteressi) }}</span>
+                </div>
+              </div>
+              @if (stats.costoPct !== null) {
+                <div class="src-fin-kpi src-fin-kpi--pct">
+                  <mat-icon>trending_up</mat-icon>
+                  <div>
+                    <span class="src-fin-kpi__label">Costo finanziamento</span>
+                    <span class="src-fin-kpi__value src-fin-kpi__value--danger">{{ stats.costoPct.toFixed(2) }}% del capitale</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Barra composizione -->
+            <div class="src-comp-bar-wrap">
+              <div class="src-comp-bar">
+                <div class="src-comp-bar__cap"
+                     [style.width.%]="stats.totaleCapitale! / stats.totaleImporti * 100"
+                     [title]="'Capitale: ' + fmtEur(stats.totaleCapitale!)">
+                </div>
+                <div class="src-comp-bar__int"
+                     [style.width.%]="stats.totaleInteressi / stats.totaleImporti * 100"
+                     [title]="'Interessi: ' + fmtEur(stats.totaleInteressi)">
+                </div>
+              </div>
+              <div class="src-comp-bar__legend">
+                <span class="src-comp-legend__cap">
+                  <span class="src-comp-legend__dot src-comp-legend__dot--cap"></span>
+                  Capitale {{ (stats.totaleCapitale! / stats.totaleImporti * 100).toFixed(1) }}%
+                </span>
+                <span class="src-comp-legend__int">
+                  <span class="src-comp-legend__dot src-comp-legend__dot--int"></span>
+                  Interessi {{ (stats.totaleInteressi / stats.totaleImporti * 100).toFixed(1) }}%
+                </span>
+              </div>
+            </div>
+          }
+
+          <!-- Tabella rate -->
+          <div class="src-table-wrap">
+            <table class="src-table">
+              <thead>
+                <tr>
+                  <th class="src-th--num">#</th>
+                  <th>Data</th>
+                  <th class="src-th--eur">Rata</th>
+                  @if (isFinanziamento()) {
+                    <th class="src-th--eur">Interessi</th>
+                    <th class="src-th--eur">Capitale</th>
+                    <th class="src-th--eur">Residuo</th>
+                    <th class="src-th--bar">Comp.</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of visibleRates(); track r.numero) {
+                  <tr>
+                    <td class="src-td--num">{{ r.numero }}</td>
+                    <td>{{ fmtData(r.data) }}</td>
+                    <td class="src-td--eur">{{ fmtEur(r.importo) }}</td>
+                    @if (isFinanziamento()) {
+                      <td class="src-td--eur src-td--int">{{ fmtEur(r.quotaInteressi!) }}</td>
+                      <td class="src-td--eur src-td--cap">{{ fmtEur(r.quotaCapitale!) }}</td>
+                      <td class="src-td--eur src-td--res">{{ fmtEur(r.debitoResiduo!) }}</td>
+                      <td class="src-td--bar">
+                        <div class="src-mini-bar">
+                          <div class="src-mini-bar__int"
+                               [style.width.%]="r.pctInteressi!"></div>
+                          <div class="src-mini-bar__cap"
+                               [style.width.%]="100 - r.pctInteressi!"></div>
+                        </div>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            @if (hasMoreRates()) {
+              <button class="src-show-more" (click)="showAllRates.set(true)">
+                <mat-icon>expand_more</mat-icon>
+                Mostra tutte le {{ ratePreview().length }} rate
+              </button>
+            }
+          </div>
+
+        }
       </div>
+    }
 
-      <!-- ── Preview ── -->
-      @if (preview(); as p) {
-        <div class="src-preview src-field--full">
-          <div class="src-preview__item">
-            <span class="src-preview__label">Prima rata</span>
-            <span class="src-preview__value">{{ p.primaRata }}</span>
-          </div>
-          <div class="src-preview__divider"></div>
-          <div class="src-preview__item">
-            <span class="src-preview__label">Ultima rata</span>
-            <span class="src-preview__value">{{ p.ultimaRata }}</span>
-          </div>
-          <div class="src-preview__divider"></div>
-          <div class="src-preview__item">
-            <span class="src-preview__label">Totale piano</span>
-            <span class="src-preview__value src-preview__value--total">
-              {{ p.variabile ? '~' : '' }}{{ p.totale }}
-            </span>
-          </div>
-        </div>
-      }
-
-      <!-- ── Note ── -->
-      <mat-form-field appearance="outline" class="src-field src-field--full">
-        <mat-label>Note (opzionale)</mat-label>
-        <textarea matInput formControlName="note" rows="2" placeholder="Riferimento contratto, informazioni aggiuntive..."></textarea>
-        <mat-icon matPrefix class="src-field-icon">notes</mat-icon>
-      </mat-form-field>
-
-    </form>
   }
 
 </mat-dialog-content>
 
 <mat-dialog-actions align="end" class="src-actions">
   <button mat-button (click)="close()" [disabled]="saving()">Annulla</button>
-  <button mat-flat-button color="primary" (click)="submit()"
-          [disabled]="saving() || loadingLookup()" class="src-submit-btn">
-    @if (saving()) {
-      <mat-spinner diameter="18" />
-    } @else {
-      <mat-icon>check</mat-icon>
-    }
-    Crea piano
-  </button>
+
+  @if (step() === 1) {
+    <button mat-flat-button color="primary" (click)="goToStep2()"
+            [disabled]="loadingLookup()" class="src-submit-btn">
+      <mat-icon>arrow_forward</mat-icon>
+      Anteprima piano
+    </button>
+  } @else {
+    <button mat-stroked-button (click)="goToStep1()" [disabled]="saving()">
+      <mat-icon>arrow_back</mat-icon>
+      Modifica
+    </button>
+    <button mat-flat-button color="primary" (click)="submit()"
+            [disabled]="saving()" class="src-submit-btn">
+      @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }
+      Crea piano
+    </button>
+  }
 </mat-dialog-actions>

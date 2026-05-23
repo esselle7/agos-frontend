@@ -86,3 +86,146 @@
   height: 280px;
   position: relative;
 }
+
+// ── Card subtitle / note ──────────────────────────────────────────────────────
+.plc-card__subtitle {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  margin: -4px 0 16px;
+}
+
+.plc-card__title-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  margin-right: 6px;
+  color: var(--primary, #1565c0);
+}
+
+.plc-table-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  background: rgba(21,101,192,.04);
+  border-radius: 6px;
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; flex-shrink: 0; }
+}
+
+// ── Waterfall conto economico ─────────────────────────────────────────────────
+.plc-waterfall {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plc-wf-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: background .15s;
+
+  &:hover { background: rgba(0,0,0,.02); }
+
+  &__label {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    span {
+      font-size: 0.76rem;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+  }
+
+  &__tag {
+    flex-shrink: 0;
+    min-width: 130px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(21,101,192,.08);
+    color: var(--primary, #1565c0);
+
+    &--minus {
+      background: rgba(198,40,40,.08);
+      color: #c62828;
+    }
+
+    &--result {
+      background: rgba(21,101,192,.12);
+      color: var(--primary, #1565c0);
+      font-weight: 800;
+    }
+
+    &--utile {
+      background: rgba(46,125,50,.12);
+      color: #2e7d32;
+      font-weight: 800;
+    }
+  }
+
+  &__value {
+    flex-shrink: 0;
+    min-width: 130px;
+    text-align: right;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__value--utile {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  // righe di sottrazione
+  &--deduction {
+    padding-left: 28px;
+    opacity: .9;
+  }
+
+  // righe risultato
+  &--result {
+    background: rgba(21,101,192,.03);
+    border-left: 3px solid rgba(21,101,192,.3);
+    border-radius: 0 8px 8px 0;
+
+    &--minor { background: rgba(21,101,192,.02); border-left-color: rgba(21,101,192,.15); }
+  }
+
+  // riga utile netto
+  &--utile {
+    background: rgba(46,125,50,.05);
+    border: 1px solid rgba(46,125,50,.2);
+    border-radius: 8px;
+    margin-top: 6px;
+  }
+
+  // riga ricavi
+  &--ricavi {
+    background: rgba(46,125,50,.04);
+    border-left: 3px solid rgba(46,125,50,.4);
+    border-radius: 0 8px 8px 0;
+  }
+}
+
+.plc-wf-pct {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: .7;
+  margin-left: 4px;
+}

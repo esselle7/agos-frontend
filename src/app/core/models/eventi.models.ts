@@ -1,25 +1,46 @@
 export type StatoEvento = 'PREVENTIVATO' | 'CONFERMATO' | 'SALDATO' | 'ANNULLATO';
-export type TipoPagamentoEvento = 'CAPARRA' | 'ACCONTO' | 'SALDO' | 'PENALE';
+
+/**
+ * Tipi di pagamento collegabili a un evento.
+ *
+ * RIMBORSO esiste nel backend (V21 lo ripristina nel lookup `lk_tipi_evento_mov`):
+ * viene registrato come ENTRATA con importo negativo per ridurre `importoIncassato`.
+ * Non è selezionabile manualmente dal form, ma può comparire nella lista pagamenti.
+ */
+export type TipoPagamentoEvento = 'CAPARRA' | 'ACCONTO' | 'SALDO' | 'PENALE' | 'RIMBORSO';
+
+/** Sottotipi creabili dal form (esclude RIMBORSO che è generato in altri flussi). */
+export type TipoPagamentoForm = Exclude<TipoPagamentoEvento, 'RIMBORSO'>;
 
 export interface PagamentoEventoDTO {
   movimentoId: string;
   tipo: TipoPagamentoEvento;
-  importo: number;
+  /** ADMIN-only: null per i DIPENDENTE. Negativo per RIMBORSO. */
+  importo: number | null;
   dataFinanziaria: string;
+  /** ADMIN-only: null per i DIPENDENTE. */
   note: string | null;
   stato: string;
 }
 
+/**
+ * Dettaglio evento. Tutti i campi finanziari sono nullable: il backend li
+ * restituisce {@code null} ai DIPENDENTE (visibility policy ADMIN-only).
+ */
 export interface EventoDTO {
   id: string;
   nome: string;
   tipo: string;
   dataEvento: string;
   dataPreventivo: string | null;
+  /** ADMIN-only. */
   importoTotalePreviventivato: number | null;
-  importoIncassato: number;
-  caparreIncassate: number;
-  costiDirettiImputati: number;
+  /** ADMIN-only. */
+  importoIncassato: number | null;
+  /** ADMIN-only. */
+  caparreIncassate: number | null;
+  /** ADMIN-only. */
+  costiDirettiImputati: number | null;
   stato: StatoEvento;
   businessUnitId: number;
   contattoNome: string;
@@ -29,11 +50,20 @@ export interface EventoDTO {
   numeroBambini: number | null;
   allergie: string[];
   note: string | null;
+  /** ADMIN-only. */
   noteAnnullamento: string | null;
+  /** ADMIN-only. */
   importoResiduo: number | null;
+  /** ADMIN-only. */
   percentualeIncassata: number | null;
-  costiReali: number;
-  profitto: number;
+  /** ADMIN-only. */
+  costiReali: number | null;
+  /** ADMIN-only. */
+  profitto: number | null;
+  /** Data del primo CAPARRA/ACCONTO non annullato. Visibile a tutti. */
+  dataConferma: string | null;
+  /** Data del SALDO non annullato. Visibile a tutti. */
+  dataSaldo: string | null;
   pagamenti: PagamentoEventoDTO[];
   createdAt: string;
   createdBy: string;
@@ -82,22 +112,27 @@ export interface EventoCalendarioDTO {
   nome: string;
   dataEvento: string;
   stato: StatoEvento;
-  importoTotale: number;
-  importoResiduo: number;
+  /** ADMIN-only. */
+  importoTotale: number | null;
+  /** ADMIN-only. */
+  importoResiduo: number | null;
   coloreStato: string;
 }
 
 export interface EventiDashboardDTO {
   totaleEventi: number;
-  totaleIncassato: number;
-  totaleCosti: number;
-  profittoTotale: number;
+  /** ADMIN-only. */
+  totaleIncassato: number | null;
+  /** ADMIN-only. */
+  totaleCosti: number | null;
+  /** ADMIN-only. */
+  profittoTotale: number | null;
   from: string;
   to: string;
 }
 
 export interface PagamentoRequest {
-  tipo: TipoPagamentoEvento;
+  tipo: TipoPagamentoForm;
   importo: number;
   data: string;
   note: string | null;
@@ -114,6 +149,7 @@ export interface EventoPartecipanteDTO {
   cognome: string;
   mansione: string | null;
   ruolo: string | null;
+  /** ADMIN-only: null per i DIPENDENTE. */
   costo: number | null;
   note: string | null;
 }

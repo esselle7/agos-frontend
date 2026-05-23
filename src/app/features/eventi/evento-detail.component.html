@@ -127,7 +127,8 @@
       </div>
     </div>
 
-    <!-- ====== RIEPILOGO FINANZIARIO ====== -->
+    <!-- ====== RIEPILOGO FINANZIARIO (solo ADMIN) ====== -->
+    @if (authService.isAdmin()) {
     <div class="section financial-card">
       <h2 class="section-title">Riepilogo Finanziario</h2>
 
@@ -159,25 +160,27 @@
           <span class="fin-label">Costi diretti</span>
           <span class="fin-value">{{ ev.costiReali | euro }}</span>
         </div>
-        <div class="fin-item" [class.green]="ev.profitto >= 0" [class.red]="ev.profitto < 0">
+        <div class="fin-item" [class.green]="(ev.profitto ?? 0) >= 0" [class.red]="(ev.profitto ?? 0) < 0">
           <span class="fin-label">Profitto</span>
           <span class="fin-value">{{ ev.profitto | euro }}</span>
         </div>
       </div>
     </div>
+    }
 
-    <!-- ====== PAGAMENTI ====== -->
+    <!-- ====== PAGAMENTI (solo ADMIN) ====== -->
+    @if (authService.isAdmin()) {
     <div class="section">
       <div class="section-header">
         <h2 class="section-title">Storico pagamenti</h2>
-        @if (authService.isAdmin() && ev.stato !== 'SALDATO') {
+        @if (ev.stato !== 'SALDATO') {
           <button mat-raised-button color="primary" (click)="openPagamento()">
             <mat-icon>add</mat-icon> Aggiungi
           </button>
         }
       </div>
 
-      @if (authService.isAdmin() && ev.stato === 'CONFERMATO' && (ev.importoResiduo ?? 0) > 0.01) {
+      @if (ev.stato === 'CONFERMATO' && (ev.importoResiduo ?? 0) > 0.01) {
         <div class="saldo-hint">
           <mat-icon>info</mat-icon>
           <span>Residuo <strong>{{ ev.importoResiduo | euro }}</strong> — aggiungi un pagamento di tipo <strong>SALDO</strong> per chiudere l'evento automaticamente.</span>
@@ -190,12 +193,12 @@
         <div class="pag-list">
           @for (pag of ev.pagamenti; track pag.movimentoId) {
             <div class="pag-row" [attr.data-stato]="pag.stato">
-              <div class="pag-dot" [style.background]="pagColors[pag.tipo]">
-                <mat-icon>{{ pagIcone[pag.tipo] }}</mat-icon>
+              <div class="pag-dot" [style.background]="pagColor(pag.tipo)">
+                <mat-icon>{{ pagIcon(pag.tipo) }}</mat-icon>
               </div>
               <div class="pag-main">
                 <div class="pag-top">
-                  <span class="pag-tipo" [style.color]="pagColors[pag.tipo]">{{ pag.tipo }}</span>
+                  <span class="pag-tipo" [style.color]="pagColor(pag.tipo)">{{ pag.tipo }}</span>
                   <span class="pag-data">{{ formatDate(pag.dataFinanziaria) }}</span>
                   @if (pag.stato === 'ANNULLATO') {
                     <span class="pag-annullato-badge">annullato</span>
@@ -213,6 +216,7 @@
         </div>
       }
     </div>
+    }
 
     <!-- ====== CONTATTO + PARTECIPANTI ====== -->
     <div class="section">
@@ -321,7 +325,7 @@
                       <span class="personale-persona-ruolo">{{ p.ruolo }}</span>
                     }
                   </div>
-                  @if (p.costo != null) {
+                  @if (authService.isAdmin() && p.costo != null) {
                     <span class="personale-persona-costo">{{ p.costo | euro }}</span>
                   }
                   @if (authService.isAdmin()) {

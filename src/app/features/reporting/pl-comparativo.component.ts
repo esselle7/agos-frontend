@@ -17,6 +17,7 @@ import { MatTableModule } from '@angular/material/table';
 
 import { ReportingService } from '../../core/services/reporting.service';
 import { BuService } from '../../core/services/bu.service';
+import { DataRefreshService } from '../../core/services/data-refresh.service';
 import { PlComparativoDTO } from '../../core/models/reporting.models';
 import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { DashboardPeriod } from '../../core/models/dashboard.models';
@@ -46,6 +47,7 @@ export class PlComparativoComponent implements OnInit {
   private readonly reportingSvc = inject(ReportingService);
   private readonly buSvc = inject(BuService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dataRefresh = inject(DataRefreshService);
 
   readonly period = signal<{ from: string; to: string }>(this.ytdRange());
   readonly selectedPeriod = signal<DashboardPeriod>('YTD');
@@ -53,7 +55,7 @@ export class PlComparativoComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly businessUnits = signal<BusinessUnitDTO[]>([]);
-  readonly tableColumns = ['bu', 'ricavi', 'costi', 'ebitda', 'marginePct'];
+  readonly tableColumns = ['bu', 'ricavi', 'costi', 'ebitda', 'marginePct', 'ebit', 'utileNetto'];
 
   readonly sortedRows = computed(() => {
     const d = this.data();
@@ -149,6 +151,11 @@ export class PlComparativoComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(units => this.businessUnits.set(units));
     this.load();
+    // Auto-refresh dopo mutation backend (movimento creato/aggiornato, pagamento
+    // evento, rata ricorrente): l'interceptor invalida la cache FE e notifica qui.
+    this.dataRefresh.dashboardRefresh$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.load());
   }
 
   onPeriodChange(evt: PeriodChangeEvent): void {

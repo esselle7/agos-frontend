@@ -31,6 +31,12 @@ export interface PlDTO {
   costi: CostiDTO;
   ebitda: number;
   marginePct: number;
+  ammortamenti: number;
+  ebit: number;
+  oneriFinanziari: number;
+  ebt: number;
+  imposte: number;
+  utileNetto: number;
 }
 
 export interface BuPlRiepilogoDTO {
@@ -39,12 +45,19 @@ export interface BuPlRiepilogoDTO {
   costi: number;
   ebitda: number;
   marginePct: number;
+  ebit: number;
+  utileNetto: number;
 }
 
 export interface TotaleConsolidatoDTO {
   ricavi: number;
   costi: number;
   ebitda: number;
+  ammortamenti: number;
+  ebit: number;
+  oneriFinanziari: number;
+  imposte: number;
+  utileNetto: number;
   marginePct: number;
 }
 
@@ -90,7 +103,7 @@ export interface RiepilogoCategoriaDTO {
 // ── Forecasting ──────────────────────────────────────────────────────────────
 
 export type ForecastingHorizon = '30' | '60' | '90' | '180' | 'FINE_ANNO';
-export type ForecastingCategoria = 'MOVIMENTO' | 'EVENTO' | 'RATA_RICORRENTE' | 'STIPENDIO';
+export type ForecastingCategoria = 'MOVIMENTO' | 'EVENTO' | 'RATA_RICORRENTE' | 'RATA_RICORRENTE_CAPITALE' | 'RATA_RICORRENTE_INTERESSI' | 'STIPENDIO';
 export type ForecastingVista = 'ECONOMICA' | 'FINANZIARIA' | 'ENTRAMBE';
 
 export interface ForecastingAsIsDTO {
@@ -125,6 +138,8 @@ export interface ForecastingEconomicoDTO {
   ricaviPrevisti: number;
   costiPrevisti: number;
   ebitdaPrevisto: number;
+  oneriFinanziariPrevisti: number;
+  ebitPrevisto: number;
   dettaglio: ForecastingDettaglioDTO[];
 }
 

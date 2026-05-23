@@ -8,8 +8,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../core/auth/auth.service';
 import { EventiListComponent } from './eventi-list.component';
 import { EventiCalendarioComponent } from './eventi-calendario.component';
+import { EventiMieiListComponent } from './eventi-miei-list.component';
 
 @Component({
   selector: 'app-eventi',
@@ -21,12 +23,14 @@ import { EventiCalendarioComponent } from './eventi-calendario.component';
     MatIconModule,
     EventiListComponent,
     EventiCalendarioComponent,
+    EventiMieiListComponent,
   ],
   templateUrl: './eventi.component.html',
   styleUrls: ['./eventi.component.scss'],
 })
 export class EventiComponent {
   private readonly dialog = inject(MatDialog);
+  readonly auth = inject(AuthService);
 
   readonly refreshTrigger = signal(0);
 

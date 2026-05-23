@@ -1,17 +1,29 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from './auth.service';
-import { UserInfo } from '../models/auth.models';
 
+/**
+ * Punto di atterraggio del redirect OAuth: il backend ha scambiato il codice
+ * Google con i propri JWT e ci ha redirezionato passando un codice opaco
+ * monouso. Qui lo scambiamo via POST per ricevere i token nel response body
+ * (mai più nei query parameter dell'URL).
+ */
 @Component({
   selector: 'app-auth-callback',
   standalone: true,
-  imports: [MatProgressSpinnerModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MatButtonModule, MatProgressSpinnerModule],
   template: `
     <div class="callback-wrap">
-      <mat-spinner diameter="48" />
-      <p class="callback-label">Accesso in corso…</p>
+      @if (!error()) {
+        <mat-spinner diameter="48" />
+        <p class="callback-label">Accesso in corso…</p>
+      } @else {
+        <p class="callback-label error">Autenticazione fallita: {{ error() }}</p>
+        <button mat-stroked-button (click)="goLogin()">Riprova</button>
+      }
     </div>
   `,
   styles: [`
@@ -27,6 +39,9 @@ import { UserInfo } from '../models/auth.models';
       color: var(--text-sub);
       font-size: 14px;
     }
+    .callback-label.error {
+      color: #c62828;
+    }
   `],
 })
 export class AuthCallbackComponent implements OnInit {
@@ -34,25 +49,25 @@ export class AuthCallbackComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  ngOnInit(): void {
-    const params = this.route.snapshot.queryParamMap;
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
+  readonly error = signal<string | null>(null);
 
-    if (!accessToken || !refreshToken) {
-      this.router.navigate(['/login']);
+  ngOnInit(): void {
+    const code = this.route.snapshot.queryParamMap.get('code');
+    if (!code) {
+      this.error.set('codice di autorizzazione mancante');
       return;
     }
 
-    const user: UserInfo = {
-      id:    params.get('userId') ?? params.get('id') ?? '',
-      email: params.get('email') ?? '',
-      nome:  params.get('nome') ?? '',
-      ruolo: (params.get('ruolo') ?? 'DIPENDENTE') as UserInfo['ruolo'],
-    };
+    this.authService.exchangeOauthCode(code).subscribe({
+      next: () => this.router.navigate(['/dashboard']),
+      error: err => {
+        const msg = err?.error?.message ?? 'codice non valido o scaduto';
+        this.error.set(msg);
+      },
+    });
+  }
 
-    const expiresIn = Number(params.get('expiresIn') ?? 3600);
-    this.authService.handleCallback(accessToken, refreshToken, user, expiresIn);
-    this.router.navigate(['/dashboard']);
+  goLogin(): void {
+    this.router.navigate(['/login']);
   }
 }

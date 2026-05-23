@@ -33,7 +33,9 @@
 
   @if (data(); as d) {
 
-    <!-- TABELLA COMPARATIVA -->
+    <!-- ══════════════════════════════════════════════════════
+         TABELLA COMPARATIVA BU
+         ══════════════════════════════════════════════════════ -->
     <div class="card plc-card">
       <h3 class="plc-card__title">P&L Comparativo — tutte le Business Unit</h3>
       <table mat-table [dataSource]="sortedRows()" class="plc-table">
@@ -57,7 +59,7 @@
         </ng-container>
 
         <ng-container matColumnDef="costi">
-          <th mat-header-cell *matHeaderCellDef class="cell-right">Costi</th>
+          <th mat-header-cell *matHeaderCellDef class="cell-right">Costi op.</th>
           <td mat-cell *matCellDef="let row" class="cell-right text-danger euro">
             {{ row.costi | euro }}
           </td>
@@ -73,11 +75,29 @@
         </ng-container>
 
         <ng-container matColumnDef="marginePct">
-          <th mat-header-cell *matHeaderCellDef class="cell-right">Margine %</th>
+          <th mat-header-cell *matHeaderCellDef class="cell-right">Margine</th>
           <td mat-cell *matCellDef="let row" class="cell-right"
             [class.text-success]="row.marginePct >= 0"
             [class.text-danger]="row.marginePct < 0">
             {{ row.marginePct.toFixed(1) }}%
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ebit">
+          <th mat-header-cell *matHeaderCellDef class="cell-right">EBIT</th>
+          <td mat-cell *matCellDef="let row" class="cell-right euro"
+            [class.text-success]="row.ebit >= 0"
+            [class.text-danger]="row.ebit < 0">
+            {{ row.ebit | euro }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="utileNetto">
+          <th mat-header-cell *matHeaderCellDef class="cell-right">Utile Netto</th>
+          <td mat-cell *matCellDef="let row" class="cell-right euro"
+            [class.text-success]="row.utileNetto >= 0"
+            [class.text-danger]="row.utileNetto < 0">
+            {{ row.utileNetto | euro }}
           </td>
         </ng-container>
 
@@ -100,10 +120,160 @@
           [class.text-danger]="d.totaleConsolidato.marginePct < 0">
           {{ d.totaleConsolidato.marginePct.toFixed(1) }}%
         </span>
+        <span class="plc-total-val euro"
+          [class.text-success]="d.totaleConsolidato.ebit >= 0"
+          [class.text-danger]="d.totaleConsolidato.ebit < 0">
+          {{ d.totaleConsolidato.ebit | euro }}
+        </span>
+        <span class="plc-total-val euro"
+          [class.text-success]="d.totaleConsolidato.utileNetto >= 0"
+          [class.text-danger]="d.totaleConsolidato.utileNetto < 0">
+          {{ d.totaleConsolidato.utileNetto | euro }}
+        </span>
+      </div>
+
+      <p class="plc-table-note">
+        <mat-icon>info_outline</mat-icon>
+        D&A (ammortamenti cespiti) e oneri finanziari sono allocati a livello consolidato; per BU la colonna EBIT include una quota pro-rata degli ammortamenti proporzionale all'EBITDA della singola unità.
+      </p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         CONTO ECONOMICO CONSOLIDATO — WATERFALL DESCRITTIVO
+         ══════════════════════════════════════════════════════ -->
+    <div class="card plc-card">
+      <h3 class="plc-card__title">
+        <mat-icon class="plc-card__title-icon">waterfall_chart</mat-icon>
+        Conto Economico Consolidato
+      </h3>
+      <p class="plc-card__subtitle">Come si forma il risultato d'esercizio — dal fatturato all'utile netto</p>
+
+      <div class="plc-waterfall">
+
+        <!-- Ricavi -->
+        <div class="plc-wf-row plc-wf-row--ricavi">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag">Ricavi</div>
+            <span>Fatturato e ricavi da contratti nel periodo</span>
+          </div>
+          <div class="plc-wf-row__value text-success">
+            {{ d.totaleConsolidato.ricavi | euro }}
+          </div>
+        </div>
+
+        <!-- Costi operativi -->
+        <div class="plc-wf-row plc-wf-row--deduction">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag plc-wf-row__tag--minus">− Costi operativi</div>
+            <span>Acquisti, servizi esterni, personale, spese di struttura</span>
+          </div>
+          <div class="plc-wf-row__value text-danger">
+            − {{ d.totaleConsolidato.costi | euro }}
+          </div>
+        </div>
+
+        <!-- EBITDA -->
+        <div class="plc-wf-row plc-wf-row--result">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag plc-wf-row__tag--result">= EBITDA</div>
+            <span>Margine operativo lordo prima di ammortamenti, oneri finanziari e imposte</span>
+          </div>
+          <div class="plc-wf-row__value"
+               [class.text-success]="d.totaleConsolidato.ebitda >= 0"
+               [class.text-danger]="d.totaleConsolidato.ebitda < 0">
+            {{ d.totaleConsolidato.ebitda | euro }}
+            <span class="plc-wf-pct">
+              ({{ d.totaleConsolidato.marginePct.toFixed(1) }}% dei ricavi)
+            </span>
+          </div>
+        </div>
+
+        <!-- Ammortamenti -->
+        <div class="plc-wf-row plc-wf-row--deduction">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag plc-wf-row__tag--minus">− D&A</div>
+            <span>Quote di ammortamento cespiti attivi (costo storico × aliquota / 12 per mese)</span>
+          </div>
+          <div class="plc-wf-row__value text-danger">
+            − {{ d.totaleConsolidato.ammortamenti | euro }}
+          </div>
+        </div>
+
+        <!-- EBIT -->
+        <div class="plc-wf-row plc-wf-row--result">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag plc-wf-row__tag--result">= EBIT</div>
+            <span>Risultato operativo netto (Earnings Before Interest &amp; Tax)</span>
+          </div>
+          <div class="plc-wf-row__value"
+               [class.text-success]="d.totaleConsolidato.ebit >= 0"
+               [class.text-danger]="d.totaleConsolidato.ebit < 0">
+            {{ d.totaleConsolidato.ebit | euro }}
+          </div>
+        </div>
+
+        <!-- Oneri finanziari -->
+        <div class="plc-wf-row plc-wf-row--deduction">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag plc-wf-row__tag--minus">− Oneri finanziari</div>
+            <span>Interessi passivi su mutui, leasing e finanziamenti (quota interessi delle rate)</span>
+          </div>
+          <div class="plc-wf-row__value"
+               [class.text-danger]="d.totaleConsolidato.oneriFinanziari > 0"
+               [class.text-sub]="d.totaleConsolidato.oneriFinanziari === 0">
+            @if (d.totaleConsolidato.oneriFinanziari > 0) {
+              − {{ d.totaleConsolidato.oneriFinanziari | euro }}
+            } @else {
+              —
+            }
+          </div>
+        </div>
+
+        <!-- EBT (inline, no dedicated row — derivabile) -->
+        @if (d.totaleConsolidato.imposte > 0) {
+          <div class="plc-wf-row plc-wf-row--result plc-wf-row--minor">
+            <div class="plc-wf-row__label">
+              <div class="plc-wf-row__tag plc-wf-row__tag--result">= EBT</div>
+              <span>Risultato prima delle imposte (Earnings Before Tax)</span>
+            </div>
+            <div class="plc-wf-row__value"
+                 [class.text-success]="(d.totaleConsolidato.ebit - d.totaleConsolidato.oneriFinanziari) >= 0"
+                 [class.text-danger]="(d.totaleConsolidato.ebit - d.totaleConsolidato.oneriFinanziari) < 0">
+              {{ (d.totaleConsolidato.ebit - d.totaleConsolidato.oneriFinanziari) | euro }}
+            </div>
+          </div>
+
+          <!-- Imposte -->
+          <div class="plc-wf-row plc-wf-row--deduction">
+            <div class="plc-wf-row__label">
+              <div class="plc-wf-row__tag plc-wf-row__tag--minus">− Imposte</div>
+              <span>IRAP e IRPEF/IRES registrate nel periodo</span>
+            </div>
+            <div class="plc-wf-row__value text-danger">
+              − {{ d.totaleConsolidato.imposte | euro }}
+            </div>
+          </div>
+        }
+
+        <!-- Utile Netto -->
+        <div class="plc-wf-row plc-wf-row--utile">
+          <div class="plc-wf-row__label">
+            <div class="plc-wf-row__tag plc-wf-row__tag--utile">= Utile Netto</div>
+            <span>Risultato finale d'esercizio</span>
+          </div>
+          <div class="plc-wf-row__value plc-wf-row__value--utile"
+               [class.text-success]="d.totaleConsolidato.utileNetto >= 0"
+               [class.text-danger]="d.totaleConsolidato.utileNetto < 0">
+            {{ d.totaleConsolidato.utileNetto | euro }}
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <!-- GRAFICI -->
+    <!-- ══════════════════════════════════════════════════════
+         GRAFICI
+         ══════════════════════════════════════════════════════ -->
     <div class="plc-charts-grid">
 
       <div class="card plc-card">
