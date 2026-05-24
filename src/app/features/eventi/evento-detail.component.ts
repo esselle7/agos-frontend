@@ -9,9 +9,11 @@ import {
   ChangeDetectorRef,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
@@ -71,6 +73,7 @@ const STEP_ORDER: StatoEvento[] = ['PREVENTIVATO', 'CONFERMATO', 'SALDATO'];
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     MatDividerModule,
     MatTooltipModule,
     DecimalPipe,
@@ -89,7 +92,27 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly destroy$ = new Subject<void>();
+
+  // ── Menu PDF ───────────────────────────────────────────────────────────────
+  static readonly MENU_MAX_BYTES = 10 * 1024 * 1024;
+  readonly menuPanelOpen = signal(false);
+  readonly menuDragOver = signal(false);
+  readonly menuUploading = signal(false);
+
+  /**
+   * blob: URL dell'ultimo PDF scaricato via HttpClient (autenticato).
+   * L'iframe/object usa questo URL invece di chiamare il backend direttamente,
+   * evitando il problema di iframe che non trasportano l'Authorization header.
+   */
+  private menuBlobUrl: string | null = null;
+  private readonly menuPdfBlobSignal = signal<string | null>(null);
+
+  readonly menuPdfSafeUrl = computed<SafeResourceUrl | null>(() => {
+    const url = this.menuPdfBlobSignal();
+    return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  });
 
   readonly statoColors = STATO_COLORS;
   readonly pagIcone = PAGAMENTO_ICONE;
@@ -127,6 +150,9 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.cdr.markForCheck();
         this.loadPartecipanti(id);
+        if (evento.menuPdfUrl) {
+          this.loadMenuPdfBlob(id);
+        }
       },
       error: () => {
         this.loading.set(false);
@@ -139,6 +165,7 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.revokeBlobUrl();
   }
 
   private loadPartecipanti(eventoId: string): void {
@@ -235,6 +262,123 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void { this.router.navigate(['/eventi']); }
+
+  // ── Menu PDF ───────────────────────────────────────────────────────────────
+
+  private loadMenuPdfBlob(eventoId: string): void {
+    this.eventiService.getMenuPdfBlob(eventoId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: blob => {
+        this.revokeBlobUrl();
+        const url = URL.createObjectURL(blob);
+        this.menuBlobUrl = url;
+        this.menuPdfBlobSignal.set(url);
+        this.cdr.markForCheck();
+      },
+      error: () => {},
+    });
+  }
+
+  private revokeBlobUrl(): void {
+    if (this.menuBlobUrl) {
+      URL.revokeObjectURL(this.menuBlobUrl);
+      this.menuBlobUrl = null;
+    }
+  }
+
+  downloadMenu(): void {
+    const url = this.menuBlobUrl;
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'menu.pdf';
+    a.click();
+  }
+
+  openMenuNewTab(): void {
+    const url = this.menuBlobUrl;
+    if (!url) return;
+    window.open(url, '_blank');
+  }
+
+  toggleMenuPanel(): void {
+    this.menuPanelOpen.update(v => !v);
+  }
+
+  onMenuFileInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (file) this.uploadMenu(file);
+  }
+
+  onMenuDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.menuDragOver.set(false);
+    const file = event.dataTransfer?.files?.[0] ?? null;
+    if (file) this.uploadMenu(file);
+  }
+
+  onMenuDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.menuDragOver.set(true);
+  }
+
+  onMenuDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.menuDragOver.set(false);
+  }
+
+  private uploadMenu(file: File): void {
+    if (file.type !== 'application/pdf') {
+      this.snackBar.open('Il file deve essere un PDF', 'OK', { duration: 3000 });
+      return;
+    }
+    if (file.size > EventoDetailComponent.MENU_MAX_BYTES) {
+      this.snackBar.open('Il file supera i 10 MB', 'OK', { duration: 3000 });
+      return;
+    }
+    const id = this.evento()!.id;
+    this.menuUploading.set(true);
+    this.eventiService.uploadMenuPdf(id, file).pipe(takeUntil(this.destroy$)).subscribe({
+      next: ({ menuPdfUrl }) => {
+        this.evento.update(ev => ev ? { ...ev, menuPdfUrl } : ev);
+        this.loadMenuPdfBlob(id);
+        this.menuUploading.set(false);
+        this.menuPanelOpen.set(false);
+        this.menuDragOver.set(false);
+        this.snackBar.open('Menu aggiornato', 'OK', { duration: 3000 });
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.menuUploading.set(false);
+        this.snackBar.open('Errore durante il caricamento del menu', 'OK', { duration: 3000 });
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  removeMenu(): void {
+    const ev = this.evento()!;
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Rimuovi menu',
+        message: 'Rimuovere il menu PDF da questo evento?',
+        confirmLabel: 'Rimuovi', danger: true,
+      },
+    }).afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.eventiService.deleteMenuPdf(ev.id).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => {
+          this.revokeBlobUrl();
+          this.menuPdfBlobSignal.set(null);
+          this.evento.update(e => e ? { ...e, menuPdfUrl: null } : e);
+          this.snackBar.open('Menu rimosso', 'OK', { duration: 3000 });
+          this.cdr.markForCheck();
+        },
+        error: () => this.snackBar.open('Errore durante la rimozione', 'OK', { duration: 3000 }),
+      });
+    });
+  }
 
   // ── Step journey helpers ──────────────────────────────────────────────────
   //

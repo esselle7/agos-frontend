@@ -44,7 +44,7 @@
 
       .stato-badge-lg {
         padding: 4px 14px;
-        border-radius: 16px;
+        border-radius: 999px;
         border: 1.5px solid;
         font-size: 13px;
         font-weight: 700;
@@ -82,12 +82,12 @@
 
   // ---- Sections ----
   .section {
-    background: #fff;
-    border-radius: 12px;
+    background: var(--card);
+    border-radius: var(--radius-md);
     padding: 20px 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
 
     .section-header {
       display: flex;
@@ -110,12 +110,12 @@
 
   // ---- Journey stepper ----
   .journey-card {
-    background: #fff;
-    border-radius: 12px;
+    background: var(--card);
+    border-radius: var(--radius-md);
     padding: 20px 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
   }
 
   .annullato-banner {
@@ -473,7 +473,7 @@
 
   .bu-chip {
     padding: 2px 10px;
-    border-radius: 10px;
+    border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
   }
@@ -508,7 +508,7 @@
 
   .allergia-chip {
     padding: 2px 10px;
-    border-radius: 10px;
+    border-radius: 999px;
     background: #fff3e0;
     color: #e65100;
     font-size: 12px;
@@ -610,5 +610,90 @@
     font-weight: 700;
     color: #2e7d32;
     white-space: nowrap;
+  }
+
+  // ── Menu PDF ───────────────────────────────────────────────
+  .menu-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .menu-viewer {
+    width: 100%;
+    height: 65vh;
+    border: none;
+    border-radius: 8px;
+    background: #f3f4f6;
+  }
+
+  .menu-fallback {
+    margin-top: 8px;
+    font-size: 13px;
+
+    .menu-link-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: #1976d2;
+      font-size: inherit;
+      text-decoration: underline;
+
+      &:hover { color: #1565c0; }
+    }
+  }
+
+  .menu-buttons {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
+  }
+
+  .menu-remove-link {
+    color: #9ca3af;
+
+    &:hover { color: #c62828; }
+  }
+
+  .menu-dropzone {
+    margin-top: 16px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    cursor: pointer;
+    background: #f9fafb;
+    color: #6b7280;
+    transition: all .15s ease;
+
+    &:hover,
+    &.dragover {
+      border-color: #f57c00;
+      background: #fff7ed;
+      color: #e65100;
+    }
+
+    mat-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      color: #f57c00;
+    }
+
+    mat-spinner { margin: 0 auto; }
+
+    .menu-dropzone-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      margin: 8px 0 4px;
+    }
+
+    .menu-dropzone-sub {
+      font-size: 12.5px;
+      color: #9ca3af;
+      margin: 0;
+    }
   }
 }

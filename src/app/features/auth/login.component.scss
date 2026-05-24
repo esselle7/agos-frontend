@@ -62,6 +62,12 @@
   font-size: 1rem !important;
   gap: 8px;
   border-radius: var(--radius-md) !important;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
 
   mat-icon {
     margin-right: 4px;

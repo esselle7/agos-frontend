@@ -1,3 +1,9 @@
+h2[mat-dialog-title] {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  padding-top: 24px;
+}
+
 mat-dialog-content p {
   color: var(--text-main);
   font-size: 14px;
@@ -7,5 +13,5 @@ mat-dialog-content p {
 
 mat-dialog-actions {
   gap: 8px;
-  padding-bottom: 16px;
+  padding: 8px 24px 20px;
 }
