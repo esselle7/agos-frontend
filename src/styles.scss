@@ -86,6 +86,7 @@ $agos-theme: mat.m2-define-light-theme((
 
 :root {
   --primary:    #2D6A4F;
+  --primary-rgb: 45, 106, 79;
   --primary-d:  #1B4332;
   --accent:     #C0540A;
   --surface:    #F8FAF9;
@@ -217,4 +218,260 @@ h4, h5, h6, p {
   font-weight: 500;
   line-height: 20px;
   white-space: nowrap;
+}
+
+// ─── Shared layout helpers ────────────────────────────────────────────────────
+// Opt-in, namespaced classes used across feature pages to keep spacing on an 8px
+// grid and give every page the same header / section / filter rhythm. Prefixed
+// with `agos-` so they never collide with a component's own BEM block classes.
+
+.agos-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+// Page title row: <h2> on the left, primary CTA(s) on the right.
+.agos-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  &__title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-width: 0;
+
+    h1, h2 {
+      font-size: 1.6rem;
+      line-height: 1.2;
+    }
+  }
+
+  &__sub {
+    font-size: 0.875rem;
+    color: var(--text-sub);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+// Section header row: icon (20px) + h4 (14–15px bold) + 12px subtitle.
+.agos-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+
+  > mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  h3, h4, &__title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text-main);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  &__subtitle {
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.3;
+  }
+
+  &__spacer {
+    flex: 1;
+  }
+}
+
+// Filter / toolbar row: left-side wrapping filters, right-aligned action group.
+.agos-filter-bar {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+
+  &__fields {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+
+    mat-form-field {
+      min-width: 160px;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+}
+
+// Small count badge to surface an active-filter count.
+.agos-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+// Two-column form grid; .agos-form-grid__full spans the full width.
+.agos-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  &__full {
+    grid-column: 1 / -1;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+// Horizontal-scroll wrapper for tables on narrow viewports.
+.agos-table-wrap {
+  overflow-x: auto;
+}
+
+// Action column that only reveals its icon buttons on row hover.
+.agos-actions-col {
+  white-space: nowrap;
+  text-align: right;
+}
+
+// ─── Global Material refinements ──────────────────────────────────────────────
+
+// Tables: consistent header / cell typography + subtle row hover everywhere.
+.mat-mdc-table {
+  background: transparent;
+
+  .mat-mdc-header-cell {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+
+  .mat-mdc-cell {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text-main);
+  }
+
+  .mat-mdc-row {
+    transition: background 0.12s ease;
+
+    &:hover {
+      background: rgba(45, 106, 79, 0.04);
+
+      .agos-actions-col,
+      .agos-actions-col-reveal {
+        opacity: 1;
+      }
+    }
+  }
+
+  // Reveal-on-hover action cells.
+  .agos-actions-col-reveal {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    white-space: nowrap;
+    text-align: right;
+  }
+}
+
+// Status chips: pill-shaped, compact, consistent on every page.
+.mat-mdc-standard-chip {
+  --mdc-chip-container-shape-radius: 999px;
+
+  .mdc-evolution-chip__text-label {
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+// Dialog rhythm: padded title row + right-aligned, gapped action row.
+.mat-mdc-dialog-actions {
+  padding: 8px 24px 20px;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+// Icon-only buttons sit on a consistent 36px square hit area.
+.icon-btn-sm.mat-mdc-icon-button {
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: 768px) {
+  .agos-page {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .agos-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    &__fields {
+      flex-direction: column;
+      align-items: stretch;
+
+      mat-form-field {
+        width: 100%;
+      }
+    }
+
+    &__actions {
+      margin-left: 0;
+    }
+  }
+
+  .agos-form-grid {
+    grid-template-columns: 1fr;
+  }
 }

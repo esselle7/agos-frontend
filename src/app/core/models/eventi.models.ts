@@ -50,6 +50,8 @@ export interface EventoDTO {
   numeroBambini: number | null;
   allergie: string[];
   note: string | null;
+  /** URL pubblica del menu PDF su R2, o null se non caricato. */
+  menuPdfUrl: string | null;
   /** ADMIN-only. */
   noteAnnullamento: string | null;
   /** ADMIN-only. */

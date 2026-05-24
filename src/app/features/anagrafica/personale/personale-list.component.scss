@@ -62,7 +62,7 @@
   &__value {
     font-size: 24px;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--text-main);
   }
 
   &__sub {
@@ -93,6 +93,6 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--hover);
+    background: rgba(45, 106, 79, 0.04);
   }
 }
