@@ -104,6 +104,31 @@ export class EventiService {
     ).pipe(tap(() => this.invalidateCalendarCache()));
   }
 
+  /** Carica il menu PDF dell'evento. Ritorna l'URL pubblica salvata. */
+  uploadMenuPdf(eventoId: string, file: File): Observable<{ menuPdfUrl: string }> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<{ menuPdfUrl: string }>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/menu-pdf`,
+      form
+    );
+  }
+
+  /** Scarica il menu PDF autenticato e lo ritorna come Blob. */
+  getMenuPdfBlob(eventoId: string): Observable<Blob> {
+    return this.http.get(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/menu-pdf`,
+      { responseType: 'blob' }
+    );
+  }
+
+  /** Rimuove il menu PDF dell'evento. */
+  deleteMenuPdf(eventoId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/menu-pdf`
+    );
+  }
+
   getPartecipanti(eventoId: string): Observable<EventoPartecipanteDTO[]> {
     return this.http.get<EventoPartecipanteDTO[]>(
       `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/partecipanti`

@@ -266,21 +266,80 @@
             <button mat-button matStepperPrevious>
               <mat-icon>arrow_back</mat-icon> Indietro
             </button>
-            <button
-              mat-flat-button
-              color="primary"
-              (click)="submit()"
-              [disabled]="saving() || form.invalid"
-            >
-              @if (saving()) {
-                <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
-              }
-              {{ isEdit() ? 'Salva modifiche' : 'Crea evento' }}
-            </button>
+            @if (isEdit()) {
+              <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving() || form.invalid">
+                @if (saving()) {
+                  <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+                }
+                Salva modifiche
+              </button>
+            } @else {
+              <button mat-flat-button color="primary" matStepperNext [disabled]="form.invalid">
+                Menu <mat-icon>arrow_forward</mat-icon>
+              </button>
+            }
           </div>
 
         </div>
       </mat-step>
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- STEP 3: Menu PDF (solo creazione)                    -->
+      <!-- ════════════════════════════════════════════════════ -->
+      @if (!isEdit()) {
+        <mat-step label="Menu">
+          <div class="menu-step" style="padding:16px 24px">
+
+            @if (!menuFile()) {
+              <div
+                class="menu-dropzone"
+                [class.dragover]="menuDragOver()"
+                (click)="menuInput.click()"
+                (drop)="onMenuDrop($event)"
+                (dragover)="onMenuDragOver($event)"
+                (dragleave)="onMenuDragLeave($event)"
+              >
+                <mat-icon>picture_as_pdf</mat-icon>
+                <p class="menu-dropzone-title">Carica il menu in PDF</p>
+                <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — max 10 MB</p>
+              </div>
+            } @else {
+              <div class="menu-file-card">
+                <mat-icon class="pdf-ico">picture_as_pdf</mat-icon>
+                <div class="menu-file-meta">
+                  <div class="menu-file-name">{{ menuFile()!.name }}</div>
+                  <div class="menu-file-size">{{ formatFileSize(menuFile()!.size) }}</div>
+                </div>
+                <button mat-button color="warn" type="button" (click)="removeMenuFile()">
+                  <mat-icon>close</mat-icon> Rimuovi
+                </button>
+              </div>
+              @if (menuPreviewUrl(); as preview) {
+                <iframe class="menu-preview" [src]="preview" title="Anteprima menu"></iframe>
+              }
+            }
+
+            <input #menuInput type="file" accept="application/pdf" hidden (change)="onMenuFileInput($event)" />
+
+            <!-- Navigazione step 3 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+              <button mat-button matStepperPrevious>
+                <mat-icon>arrow_back</mat-icon> Indietro
+              </button>
+              <div style="display:flex;align-items:center;gap:16px">
+                <button type="button" class="menu-skip-link" (click)="skipMenu()" [disabled]="saving()">Salta</button>
+                <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving()">
+                  @if (saving()) {
+                    <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+                  }
+                  Crea evento
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </mat-step>
+      }
 
     </mat-stepper>
   }

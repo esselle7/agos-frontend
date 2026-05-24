@@ -1,12 +1,14 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   inject,
   signal,
   computed,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   ReactiveFormsModule,
   FormControl,
@@ -186,9 +188,44 @@ interface PersonaleGruppo {
       background: none; border: none; cursor: pointer; padding: 0;
       color: #2e7d32; font-size: 14px; display: flex; align-items: center;
     }
+
+    /* ── Step 3: Menu PDF ──────────────────────────────────── */
+    .menu-step { display: flex; flex-direction: column; gap: 16px; }
+    .menu-dropzone {
+      border: 2px dashed #cbd5e1; border-radius: 12px;
+      padding: 32px 24px; text-align: center; cursor: pointer;
+      background: #f9fafb; transition: all .15s ease; color: #6b7280;
+    }
+    .menu-dropzone:hover { border-color: #f57c00; background: #fff7ed; color: #e65100; }
+    .menu-dropzone.dragover { border-color: #f57c00; background: #fff3e0; color: #e65100; }
+    .menu-dropzone mat-icon {
+      font-size: 44px; width: 44px; height: 44px; color: #f57c00; margin-bottom: 4px;
+    }
+    .menu-dropzone-title { font-size: 15px; font-weight: 600; color: #374151; margin: 8px 0 4px; }
+    .menu-dropzone-sub { font-size: 12.5px; color: #9ca3af; margin: 0; }
+    .menu-file-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 10px;
+      background: #fff3e0; border: 1px solid #ffcc80;
+    }
+    .menu-file-card mat-icon.pdf-ico { color: #d32f2f; font-size: 28px; width: 28px; height: 28px; }
+    .menu-file-meta { min-width: 0; flex: 1; }
+    .menu-file-name {
+      font-size: 14px; font-weight: 600; color: #111827;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .menu-file-size { font-size: 12px; color: #6b7280; }
+    .menu-preview {
+      width: 100%; height: 280px; border: 1px solid #e5e7eb; border-radius: 8px;
+    }
+    .menu-skip-link {
+      background: none; border: none; cursor: pointer; color: #9ca3af;
+      font-size: 13px; font-family: inherit; text-decoration: underline; padding: 0;
+    }
+    .menu-skip-link:hover { color: #6b7280; }
   `],
 })
-export class EventoFormDialogComponent implements OnInit {
+export class EventoFormDialogComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(MatDialogRef<EventoFormDialogComponent>);
   private readonly data: EventoFormDialogData = inject(MAT_DIALOG_DATA);
   private readonly eventiService = inject(EventiService);
@@ -197,6 +234,14 @@ export class EventoFormDialogComponent implements OnInit {
   private readonly lookupService = inject(LookupService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sanitizer = inject(DomSanitizer);
+
+  // ── Step 3: Menu PDF (solo creazione) ──────────────────────────────────────
+  static readonly MENU_MAX_BYTES = 10 * 1024 * 1024;
+  readonly menuFile = signal<File | null>(null);
+  readonly menuPreviewUrl = signal<SafeResourceUrl | null>(null);
+  readonly menuDragOver = signal(false);
+  private menuObjectUrl: string | null = null;
 
   readonly allergieComuni = ALLERGIE_COMUNI;
   tipiEvento = signal<TipoEventoDTO[]>([]);
@@ -439,6 +484,82 @@ export class EventoFormDialogComponent implements OnInit {
     return `${nome.charAt(0)}${cognome.charAt(0)}`.toUpperCase();
   }
 
+  // ── Menu PDF (step 3, solo creazione) ──────────────────────────────────────
+
+  onMenuFileInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.setMenuFile(file);
+    // consente di riselezionare lo stesso file dopo una rimozione
+    input.value = '';
+  }
+
+  onMenuDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.menuDragOver.set(false);
+    const file = event.dataTransfer?.files?.[0] ?? null;
+    this.setMenuFile(file);
+  }
+
+  onMenuDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.menuDragOver.set(true);
+  }
+
+  onMenuDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.menuDragOver.set(false);
+  }
+
+  removeMenuFile(): void {
+    this.setMenuFile(null);
+  }
+
+  private setMenuFile(file: File | null): void {
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        this.snackBar.open('Il file deve essere un PDF', 'OK', { duration: 3000 });
+        return;
+      }
+      if (file.size > EventoFormDialogComponent.MENU_MAX_BYTES) {
+        this.snackBar.open('Il file supera i 10 MB', 'OK', { duration: 3000 });
+        return;
+      }
+    }
+    this.revokeMenuUrl();
+    this.menuFile.set(file);
+    if (file) {
+      this.menuObjectUrl = URL.createObjectURL(file);
+      this.menuPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.menuObjectUrl));
+    } else {
+      this.menuPreviewUrl.set(null);
+    }
+    this.cdr.markForCheck();
+  }
+
+  private revokeMenuUrl(): void {
+    if (this.menuObjectUrl) {
+      URL.revokeObjectURL(this.menuObjectUrl);
+      this.menuObjectUrl = null;
+    }
+  }
+
+  /** "Salta": crea l'evento senza menu, scartando un eventuale file già scelto. */
+  skipMenu(): void {
+    this.setMenuFile(null);
+    this.submit();
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  ngOnDestroy(): void {
+    this.revokeMenuUrl();
+  }
+
   // ── Submit ─────────────────────────────────────────────────────────────────
 
   submit(): void {
@@ -465,16 +586,46 @@ export class EventoFormDialogComponent implements OnInit {
       personaleIds:                [...this.personaleSelezionati()],
     };
 
-    const req$ = this.isEdit()
-      ? this.eventiService.update(this.data.eventoId!, { ...body, personaleIds: [...this.personaleSelezionati()] })
-      : this.eventiService.create(body);
+    if (this.isEdit()) {
+      this.eventiService
+        .update(this.data.eventoId!, { ...body, personaleIds: [...this.personaleSelezionati()] })
+        .subscribe({
+          next: () => {
+            this.saving.set(false);
+            this.snackBar.open('Evento aggiornato', 'OK', { duration: 3000 });
+            this.dialogRef.close(true);
+          },
+          error: () => {
+            this.saving.set(false);
+            this.snackBar.open('Errore durante il salvataggio', 'OK', { duration: 3000 });
+            this.cdr.markForCheck();
+          },
+        });
+      return;
+    }
 
-    req$.subscribe({
-      next: () => {
-        this.saving.set(false);
-        const msg = this.isEdit() ? 'Evento aggiornato' : 'Evento creato';
-        this.snackBar.open(msg, 'OK', { duration: 3000 });
-        this.dialogRef.close(true);
+    this.eventiService.create(body).subscribe({
+      next: evento => {
+        const file = this.menuFile();
+        if (!file) {
+          this.saving.set(false);
+          this.snackBar.open('Evento creato', 'OK', { duration: 3000 });
+          this.dialogRef.close(true);
+          return;
+        }
+        // Upload non bloccante: l'evento è già stato creato con successo.
+        this.eventiService.uploadMenuPdf(evento.id, file).subscribe({
+          next: () => {
+            this.saving.set(false);
+            this.snackBar.open('Evento creato con menu', 'OK', { duration: 3000 });
+            this.dialogRef.close(true);
+          },
+          error: () => {
+            this.saving.set(false);
+            this.snackBar.open('Evento creato, ma il caricamento del menu è fallito', 'OK', { duration: 4000 });
+            this.dialogRef.close(true);
+          },
+        });
       },
       error: () => {
         this.saving.set(false);

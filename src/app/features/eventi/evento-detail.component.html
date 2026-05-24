@@ -127,6 +127,62 @@
       </div>
     </div>
 
+    <!-- ====== MENU PDF ====== -->
+    @if (ev.menuPdfUrl || authService.isAdmin()) {
+    <div class="section menu-section">
+      <div class="section-header">
+        <h2 class="section-title">Menu</h2>
+        @if (ev.menuPdfUrl && authService.isAdmin()) {
+          <div class="menu-actions">
+            <button mat-stroked-button (click)="toggleMenuPanel()">
+              <mat-icon>swap_horiz</mat-icon> Sostituisci
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (ev.menuPdfUrl) {
+        @if (menuPdfSafeUrl(); as safeUrl) {
+          <iframe class="menu-viewer" [src]="safeUrl" type="application/pdf" title="Menu evento"></iframe>
+        }
+        <div class="menu-fallback">
+          <button class="menu-link-btn" (click)="openMenuNewTab()">Apri PDF in una nuova scheda</button>
+        </div>
+
+        <div class="menu-buttons">
+          <button mat-flat-button color="primary" (click)="downloadMenu()">
+            <mat-icon>download</mat-icon> Scarica Menu
+          </button>
+          @if (authService.isAdmin()) {
+            <button mat-button class="menu-remove-link" (click)="removeMenu()">Rimuovi menu</button>
+          }
+        </div>
+      }
+
+      <!-- Panel sostituzione / caricamento (solo ADMIN) -->
+      @if (authService.isAdmin() && (menuPanelOpen() || !ev.menuPdfUrl)) {
+        <div
+          class="menu-dropzone"
+          [class.dragover]="menuDragOver()"
+          (click)="menuFileInput.click()"
+          (drop)="onMenuDrop($event)"
+          (dragover)="onMenuDragOver($event)"
+          (dragleave)="onMenuDragLeave($event)"
+        >
+          @if (menuUploading()) {
+            <mat-spinner diameter="32" />
+            <p class="menu-dropzone-sub">Caricamento in corso…</p>
+          } @else {
+            <mat-icon>picture_as_pdf</mat-icon>
+            <p class="menu-dropzone-title">{{ ev.menuPdfUrl ? 'Sostituisci il menu' : 'Carica il menu in PDF' }}</p>
+            <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — max 10 MB</p>
+          }
+        </div>
+        <input #menuFileInput type="file" accept="application/pdf" hidden (change)="onMenuFileInput($event)" />
+      }
+    </div>
+    }
+
     <!-- ====== RIEPILOGO FINANZIARIO (solo ADMIN) ====== -->
     @if (authService.isAdmin()) {
     <div class="section financial-card">

@@ -1,7 +1,7 @@
 .mov-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   padding: 24px;
 
   &__header {
@@ -9,7 +9,7 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px;
   }
 
   &__title {
@@ -48,6 +48,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    margin-left: auto;
     padding-top: 4px;
   }
 
@@ -65,6 +66,10 @@
 
     &:hover {
       background: rgba(45, 106, 79, 0.04);
+
+      .mov-list__actions-cell {
+        opacity: 1;
+      }
     }
   }
 
@@ -78,6 +83,8 @@
   &__actions-cell {
     white-space: nowrap;
     text-align: right;
+    opacity: 0;
+    transition: opacity 0.12s ease;
   }
 }
 
