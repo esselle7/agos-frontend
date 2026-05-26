@@ -61,13 +61,6 @@ export class CurrencyInputComponent implements ControlValueAccessor {
     this.cdr.markForCheck();
   }
 
-  onInput(event: Event): void {
-    const raw = (event.target as HTMLInputElement).value;
-    this.displayValue = raw;
-    const parsed = this.parseItalian(raw);
-    this.onChange(isNaN(parsed) ? null : parsed);
-  }
-
   onBlur(event: Event): void {
     const raw = (event.target as HTMLInputElement).value;
     const parsed = this.parseItalian(raw);
@@ -81,11 +74,40 @@ export class CurrencyInputComponent implements ControlValueAccessor {
     this.onTouched();
   }
 
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey) return;
+    const ALLOWED = new Set([
+      'Backspace','Delete','Tab','Escape','Enter',
+      'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End',
+    ]);
+    if (ALLOWED.has(event.key)) return;
+    if (/^\d$/.test(event.key)) return;
+    if (event.key === ',') {
+      // allow only if the field doesn't already contain a comma
+      if (!(event.target as HTMLInputElement).value.includes(',')) return;
+    }
+    // dot is never typed: it appears only in the formatted display value (thousands separator)
+    event.preventDefault();
+  }
+
+  onInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const sanitized = this.sanitizeRaw(input.value);
+    if (sanitized !== input.value) {
+      const pos = Math.min(input.selectionStart ?? sanitized.length, sanitized.length);
+      input.value = sanitized;
+      input.setSelectionRange(pos, pos);
+    }
+    this.displayValue = input.value;
+    const parsed = this.parseItalian(input.value);
+    this.onChange(isNaN(parsed) ? null : parsed);
+  }
+
   onPaste(event: ClipboardEvent): void {
     event.preventDefault();
     const text = event.clipboardData?.getData('text') ?? '';
-    const cleaned = text.replace(/[^\d,.]/g, '');
-    const parsed = this.parseItalian(cleaned);
+    const sanitized = this.sanitizeRaw(text);
+    const parsed = this.parseItalian(sanitized);
     if (!isNaN(parsed)) {
       this.displayValue = new Intl.NumberFormat('it-IT', {
         minimumFractionDigits: 2,
@@ -96,8 +118,25 @@ export class CurrencyInputComponent implements ControlValueAccessor {
     }
   }
 
+  // Strips invalid chars; enforces single decimal comma; collapses stray dots.
+  private sanitizeRaw(raw: string): string {
+    let s = raw.replace(/[^\d,.]/g, '');
+    s = s.replace(/^\.+/, '');         // no leading dots
+    s = s.replace(/\.{2,}/g, '.');     // collapse consecutive dots
+    const ci = s.indexOf(',');
+    if (ci !== -1) {
+      // after the decimal comma only digits are valid
+      s = s.substring(0, ci + 1) + s.substring(ci + 1).replace(/[,.]/g, '');
+    }
+    return s;
+  }
+
   private parseItalian(raw: string): number {
-    const normalized = raw.replace(/\./g, '').replace(/,/g, '.');
+    // dots are thousands separators → remove; comma is decimal → convert to dot
+    const stripped = raw.replace(/\./g, '');
+    const normalized = stripped.replace(/,/g, '.');
+    // more than one dot means malformed input (e.g. "1,2,3" → "1.2.3")
+    if ((normalized.match(/\./g)?.length ?? 0) > 1) return NaN;
     return parseFloat(normalized);
   }
 }

@@ -21,6 +21,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { MovimentiService, MovimentiFilter } from '../../core/services/movimenti.service';
@@ -37,6 +38,7 @@ import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { RiconciliazioneDialogComponent } from './riconciliazione-dialog.component';
 import { ImportDialogComponent } from './import-dialog.component';
+import { ImportHistoryDialogComponent } from './import-history-dialog.component';
 
 @Component({
   selector: 'app-movimenti-list',
@@ -55,6 +57,7 @@ import { ImportDialogComponent } from './import-dialog.component';
     MatTooltipModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    DateMaskDirective,
     MatProgressBarModule,
     EuroPipe,
     BadgeComponent,
@@ -176,6 +179,10 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   onRowClick(row: MovimentoDTO): void {
     this.router.navigate(['/movimenti', row.id]);
+  }
+
+  openImportHistory(): void {
+    this.dialog.open(ImportHistoryDialogComponent, { width: '960px', maxHeight: '90vh' });
   }
 
   openRiconciliazione(): void {

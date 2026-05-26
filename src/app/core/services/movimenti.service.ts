@@ -7,6 +7,10 @@ import {
   MovimentoDTO,
   MovimentoUpdateRequest,
   MovimentiSommarioDTO,
+  EtlImportResponse,
+  ImportLogDTO,
+  AmbiguitaDTO,
+  ClassificaAmbiguitaRequest,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -124,6 +128,52 @@ export class MovimentiService {
     return this.http.post<{ matched: number }>(
       environment.apiBaseUrl + API_PATHS.MOVIMENTI.MATCH_AUTO,
       null
+    );
+  }
+
+  // ── Import ETL (Billy / BPM / CA) ──────────────────────────────────────────
+
+  importBilly(file: File): Observable<EtlImportResponse> {
+    return this.uploadImport(API_PATHS.MOVIMENTI.IMPORT_BILLY, file);
+  }
+
+  importBpm(file: File): Observable<EtlImportResponse> {
+    return this.uploadImport(API_PATHS.MOVIMENTI.IMPORT_BPM, file);
+  }
+
+  importCa(file: File): Observable<EtlImportResponse> {
+    return this.uploadImport(API_PATHS.MOVIMENTI.IMPORT_CA, file);
+  }
+
+  private uploadImport(path: string, file: File): Observable<EtlImportResponse> {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    fd.append('filename', file.name);
+    return this.http.post<EtlImportResponse>(environment.apiBaseUrl + path, fd);
+  }
+
+  getImportHistory(fonte?: string, page = 0, size = 20): Observable<PagedResponse<ImportLogDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (fonte) params = params.set('fonte', fonte);
+    return this.http.get<PagedResponse<ImportLogDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_HISTORY,
+      { params }
+    );
+  }
+
+  getAmbiguita(importLogId: string, stato?: string, page = 0, size = 50): Observable<PagedResponse<AmbiguitaDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (stato) params = params.set('stato', stato);
+    return this.http.get<PagedResponse<AmbiguitaDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_AMBIGUITA(importLogId),
+      { params }
+    );
+  }
+
+  classificaAmbiguita(id: string, req: ClassificaAmbiguitaRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.CLASSIFICA_AMBIGUITA(id),
+      req
     );
   }
 }

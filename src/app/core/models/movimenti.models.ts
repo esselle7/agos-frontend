@@ -120,3 +120,62 @@ export interface BulkImportResponse {
   errori: number;
   dettaglioErrori: ImportError[];
 }
+
+// ── Import ETL (Billy / BPM / CA) ────────────────────────────────────────────
+
+export type FonteImport = 'billy' | 'bpm' | 'ca';
+
+export interface EtlRowError {
+  riga: number;
+  messaggio: string;
+  rawData: Record<string, string>;
+}
+
+export interface EtlImportResponse {
+  importLogId: string;
+  importati: number;
+  duplicati: number;
+  ambigui: number;
+  errori: EtlRowError[];
+}
+
+export interface ImportLogDTO {
+  id: string;
+  fonte: string;
+  filename: string;
+  dataImport: string;
+  righeTotali: number | null;
+  righeImportate: number | null;
+  righeErrore: number | null;
+  righeDuplicate: number | null;
+  righeAmbigue: number | null;
+  righeAmbigueClassificate: number | null;
+  stato: string;
+  importedBy: string | null;
+}
+
+export interface AmbiguitaDTO {
+  id: string;
+  importLogId: string;
+  rigaNumero: number;
+  fonte: string;
+  rawData: Record<string, string>;
+  motivo: string;
+  stato: string;
+  movimentoId: string | null;
+  classificatoAt: string | null;
+  noteOperatore: string | null;
+}
+
+export interface ClassificaAmbiguitaRequest {
+  cogeId: number | null;
+  businessUnitId: number | null;
+  metodoPagamentoId: number | null;
+  contoBancarioId: number | null;
+  fornitoreId: string | null;
+  eventoId: string | null;
+  tipoEventoMovimento: string | null;
+  nota: string | null;
+  aggiungiRegola: boolean;
+  scarta: boolean;
+}

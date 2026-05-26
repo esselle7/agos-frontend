@@ -37,6 +37,12 @@ export const API_PATHS = {
     BULK:             '/api/movimenti/bulk',
     NON_RICONCILIATI: '/api/movimenti/riconciliazione/non-riconciliati',
     MATCH_AUTO:       '/api/movimenti/riconciliazione/match-automatico',
+    IMPORT_BILLY:     '/api/movimenti/import/billy',
+    IMPORT_BPM:       '/api/movimenti/import/bpm',
+    IMPORT_CA:        '/api/movimenti/import/ca',
+    IMPORT_HISTORY:   '/api/movimenti/import/history',
+    IMPORT_AMBIGUITA:     (logId: string) => `/api/movimenti/import/${logId}/ambiguita`,
+    CLASSIFICA_AMBIGUITA: (id: string)    => `/api/movimenti/import/ambiguita/${id}/classifica`,
   },
   DASHBOARD: {
     KPI:                '/api/dashboard/kpi',

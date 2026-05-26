@@ -15,6 +15,9 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../shared/directives/input-filter.directive';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
+import { AppValidators } from '../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -78,6 +81,8 @@ interface PersonaleGruppo {
     MatChipsModule,
     CurrencyInputComponent,
     SkeletonLoaderComponent,
+    InputFilterDirective,
+    DateMaskDirective,
   ],
   templateUrl: './evento-form-dialog.component.html',
   styles: [`
@@ -236,12 +241,23 @@ export class EventoFormDialogComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly sanitizer = inject(DomSanitizer);
 
-  // ── Step 3: Menu PDF (solo creazione) ──────────────────────────────────────
+  // ── Step 3: Menu (PDF / Word) ───────────────────────────────────────────────
   static readonly MENU_MAX_BYTES = 10 * 1024 * 1024;
-  readonly menuFile = signal<File | null>(null);
+  static readonly MENU_ACCEPTED_MIMES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ] as const;
+
+  readonly menuFile    = signal<File | null>(null);
   readonly menuPreviewUrl = signal<SafeResourceUrl | null>(null);
-  readonly menuDragOver = signal(false);
+  readonly menuDragOver   = signal(false);
   private menuObjectUrl: string | null = null;
+
+  readonly menuFileIsWord = computed(() => {
+    const f = this.menuFile();
+    return f !== null && f.type !== 'application/pdf';
+  });
 
   readonly allergieComuni = ALLERGIE_COMUNI;
   tipiEvento = signal<TipoEventoDTO[]>([]);
@@ -260,18 +276,18 @@ export class EventoFormDialogComponent implements OnInit, OnDestroy {
 
   // ── Step 1: Dati evento ────────────────────────────────────────────────────
   readonly form = new FormGroup({
-    nome:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
+    nome:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required, AppValidators.safeText()] }),
     tipo:                         new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     dataEvento:                   new FormControl<Date | null>(null, [Validators.required]),
     dataPreventivo:               new FormControl<Date | null>(null),
     importoTotalePreviventivato:  new FormControl<number | null>(null),
     businessUnitId:               new FormControl<number | null>(null, [Validators.required]),
-    contattoNome:                 new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-    contattoTelefono:             new FormControl<string | null>(null),
+    contattoNome:                 new FormControl<string>('', { nonNullable: true, validators: [Validators.required, AppValidators.onlyLetters()] }),
+    contattoTelefono:             new FormControl<string | null>(null, [AppValidators.phone()]),
     contattoEmail:                new FormControl<string | null>(null, [Validators.email]),
     numeroTotalePartecipanti:     new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
     numeroBambini:                new FormControl<number | null>(null, [Validators.min(0)]),
-    note:                         new FormControl<string | null>(null),
+    note:                         new FormControl<string | null>(null, [AppValidators.safeText()]),
   });
 
   // ── Step 2: Personale ──────────────────────────────────────────────────────
@@ -517,8 +533,8 @@ export class EventoFormDialogComponent implements OnInit, OnDestroy {
 
   private setMenuFile(file: File | null): void {
     if (file) {
-      if (file.type !== 'application/pdf') {
-        this.snackBar.open('Il file deve essere un PDF', 'OK', { duration: 3000 });
+      if (!EventoFormDialogComponent.MENU_ACCEPTED_MIMES.includes(file.type as typeof EventoFormDialogComponent.MENU_ACCEPTED_MIMES[number])) {
+        this.snackBar.open('Formato non supportato. Usa PDF o Word (.doc/.docx)', 'OK', { duration: 4000 });
         return;
       }
       if (file.size > EventoFormDialogComponent.MENU_MAX_BYTES) {
@@ -528,7 +544,8 @@ export class EventoFormDialogComponent implements OnInit, OnDestroy {
     }
     this.revokeMenuUrl();
     this.menuFile.set(file);
-    if (file) {
+    // Anteprima inline solo per PDF; i Word non sono visualizzabili in iframe
+    if (file && file.type === 'application/pdf') {
       this.menuObjectUrl = URL.createObjectURL(file);
       this.menuPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.menuObjectUrl));
     } else {

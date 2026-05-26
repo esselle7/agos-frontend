@@ -11,9 +11,12 @@
       <div class="form-row">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Ragione Sociale *</mat-label>
-          <input matInput formControlName="ragioneSociale" maxlength="255" />
+          <input matInput formControlName="ragioneSociale" maxlength="255" appInputFilter="safe-text" />
           @if (form.controls.ragioneSociale.hasError('required') && form.controls.ragioneSociale.touched) {
             <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.controls.ragioneSociale.hasError('pattern') && form.controls.ragioneSociale.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
           }
         </mat-form-field>
       </div>
@@ -29,7 +32,7 @@
       <div class="form-row two-col">
         <mat-form-field appearance="outline">
           <mat-label>Partita IVA</mat-label>
-          <input matInput formControlName="piva" maxlength="11" inputmode="numeric" />
+          <input matInput formControlName="piva" maxlength="11" inputmode="numeric" appInputFilter="digits-only" />
           @if (form.controls.piva.hasError('pattern') && form.controls.piva.touched) {
             <mat-error>Solo cifre (max 11)</mat-error>
           }
@@ -37,7 +40,10 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Codice SDI</mat-label>
-          <input matInput formControlName="codiceSdi" maxlength="7" />
+          <input matInput formControlName="codiceSdi" maxlength="7" appInputFilter="alphanumeric" />
+          @if (form.controls.codiceSdi.hasError('pattern') && form.controls.codiceSdi.touched) {
+            <mat-error>Solo lettere e cifre (max 7)</mat-error>
+          }
         </mat-form-field>
       </div>
 

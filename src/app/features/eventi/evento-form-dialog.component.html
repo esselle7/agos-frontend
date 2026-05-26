@@ -76,9 +76,12 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Nome contatto *</mat-label>
-              <input matInput formControlName="contattoNome" />
+              <input matInput formControlName="contattoNome" appInputFilter="letters-only" />
               @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
                 <mat-error>Campo obbligatorio</mat-error>
+              }
+              @if (form.controls.contattoNome.hasError('pattern') && form.controls.contattoNome.touched) {
+                <mat-error>Solo lettere, spazi e trattini</mat-error>
               }
             </mat-form-field>
           </div>
@@ -86,7 +89,10 @@
           <div class="form-row two-col">
             <mat-form-field appearance="outline">
               <mat-label>Telefono</mat-label>
-              <input matInput formControlName="contattoTelefono" type="tel" />
+              <input matInput formControlName="contattoTelefono" type="tel" appInputFilter="phone" />
+              @if (form.controls.contattoTelefono.hasError('pattern') && form.controls.contattoTelefono.touched) {
+                <mat-error>Formato non valido (es. +39 02 1234567)</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -153,7 +159,10 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Note</mat-label>
-              <textarea matInput formControlName="note" rows="3"></textarea>
+              <textarea matInput formControlName="note" rows="3" appInputFilter="safe-text"></textarea>
+              @if (form.controls.note.hasError('pattern') && form.controls.note.touched) {
+                <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+              }
             </mat-form-field>
           </div>
 
@@ -299,13 +308,13 @@
                 (dragover)="onMenuDragOver($event)"
                 (dragleave)="onMenuDragLeave($event)"
               >
-                <mat-icon>picture_as_pdf</mat-icon>
-                <p class="menu-dropzone-title">Carica il menu in PDF</p>
-                <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — max 10 MB</p>
+                <mat-icon>upload_file</mat-icon>
+                <p class="menu-dropzone-title">Carica il menu (PDF o Word)</p>
+                <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — PDF, .doc, .docx — max 10 MB</p>
               </div>
             } @else {
               <div class="menu-file-card">
-                <mat-icon class="pdf-ico">picture_as_pdf</mat-icon>
+                <mat-icon class="pdf-ico">{{ menuFileIsWord() ? 'description' : 'picture_as_pdf' }}</mat-icon>
                 <div class="menu-file-meta">
                   <div class="menu-file-name">{{ menuFile()!.name }}</div>
                   <div class="menu-file-size">{{ formatFileSize(menuFile()!.size) }}</div>
@@ -314,12 +323,22 @@
                   <mat-icon>close</mat-icon> Rimuovi
                 </button>
               </div>
-              @if (menuPreviewUrl(); as preview) {
-                <iframe class="menu-preview" [src]="preview" title="Anteprima menu"></iframe>
+              @if (menuFileIsWord()) {
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;border:1.5px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#6b7280;text-align:center">
+                  <mat-icon style="font-size:40px;width:40px;height:40px;color:#3b82f6">description</mat-icon>
+                  <p style="margin:0;font-size:14px;font-weight:600;color:#374151">Anteprima non disponibile</p>
+                  <p style="margin:0;font-size:12.5px">Il file è un documento Word e verrà caricato correttamente.<br>Per visualizzarlo sarà necessario scaricarlo.</p>
+                </div>
+              } @else {
+                @if (menuPreviewUrl(); as preview) {
+                  <iframe class="menu-preview" [src]="preview" title="Anteprima menu"></iframe>
+                }
               }
             }
 
-            <input #menuInput type="file" accept="application/pdf" hidden (change)="onMenuFileInput($event)" />
+            <input #menuInput type="file"
+                   accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                   hidden (change)="onMenuFileInput($event)" />
 
             <!-- Navigazione step 3 -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
