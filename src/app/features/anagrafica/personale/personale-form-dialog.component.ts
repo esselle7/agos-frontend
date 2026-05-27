@@ -20,6 +20,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -29,6 +30,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { PersonaleService } from '../../../core/services/personale.service';
 import { BuService } from '../../../core/services/bu.service';
 import { MansioneDTO, PersonaleDTO, BusinessUnitDTO } from '../../../core/models';
+import { TipoRetribuzione } from '../../../core/models/personale.models';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 export interface PersonaleFormDialogData {
@@ -47,6 +49,7 @@ export interface PersonaleFormDialogData {
     MatAutocompleteModule,
     MatSelectModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatIconModule,
     MatSlideToggleModule,
     MatProgressSpinnerModule,
@@ -54,6 +57,33 @@ export interface PersonaleFormDialogData {
     SkeletonLoaderComponent,
   ],
   templateUrl: './personale-form-dialog.component.html',
+  styles: [`
+    .full { width: 100%; }
+    .retribuzione-block {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .retribuzione-label {
+      font-size: 12px; font-weight: 700; color: #6b7280;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .retribuzione-toggle { width: 100%; }
+    .retribuzione-toggle .mat-button-toggle { flex: 1; }
+    .retribuzione-toggle mat-icon {
+      font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;
+    }
+    .retribuzione-hint {
+      display: flex; align-items: center; gap: 6px;
+      margin: 0; font-size: 12px; color: #6b7280;
+      background: #f6f7f9; border-radius: 8px; padding: 6px 10px;
+    }
+    .retribuzione-hint.oraria { background: #eef4fb; color: #1d4ed8; }
+    .retribuzione-hint mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  `],
 })
 export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
   private readonly dialogRef = inject(MatDialogRef<PersonaleFormDialogComponent>);
@@ -90,7 +120,9 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
     cognome:               new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
     mansione:              new FormControl<string | null>(null, [Validators.maxLength(100)]),
     businessUnitId:        new FormControl<number | null>(null),
+    tipoRetribuzione:      new FormControl<TipoRetribuzione>('MENSILE', { nonNullable: true }),
     costoAziendaleMensile: new FormControl<number | null>(null),
+    pagaOraria:            new FormControl<number | null>(null),
     isActive:              new FormControl<boolean>(true, { nonNullable: true }),
   });
 
@@ -139,7 +171,9 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
       cognome:               p.cognome,
       mansione:              p.mansione,
       businessUnitId:        p.businessUnitId,
+      tipoRetribuzione:      p.tipoRetribuzione ?? 'MENSILE',
       costoAziendaleMensile: p.costoAziendaleMensile,
+      pagaOraria:            p.pagaOraria,
       isActive:              p.isActive,
     });
   }
@@ -151,12 +185,15 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
     }
     this.saving.set(true);
     const v = this.form.getRawValue();
+    const oraria = v.tipoRetribuzione === 'ORARIA';
     const body = {
       nome:                  v.nome,
       cognome:               v.cognome,
       mansione:              v.mansione?.trim() || null,
       businessUnitId:        v.businessUnitId,
-      costoAziendaleMensile: v.costoAziendaleMensile,
+      tipoRetribuzione:      v.tipoRetribuzione,
+      costoAziendaleMensile: oraria ? null : v.costoAziendaleMensile,
+      pagaOraria:            oraria ? v.pagaOraria : null,
       isActive:              v.isActive,
     };
 

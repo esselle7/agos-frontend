@@ -4,6 +4,8 @@ export interface MansioneDTO {
   isActive: boolean;
 }
 
+export type TipoRetribuzione = 'MENSILE' | 'ORARIA';
+
 export interface PersonaleSummaryDTO {
   id: string;
   nome: string;
@@ -13,6 +15,8 @@ export interface PersonaleSummaryDTO {
   businessUnitId: number | null;
   businessUnitNome: string | null;
   costoAziendaleMensile: number | null;
+  tipoRetribuzione: TipoRetribuzione;
+  pagaOraria: number | null;
   isActive: boolean;
 }
 
@@ -30,7 +34,11 @@ export interface CreatePersonaleRequest {
   businessUnitId: number | null;
   /** Ignorato dal backend: il CDC viene derivato automaticamente dalla BU. */
   centroDiCostoId?: number | null;
+  /** Stipendio mensile lordo (tipoRetribuzione = MENSILE). */
   costoAziendaleMensile: number | null;
+  tipoRetribuzione: TipoRetribuzione;
+  /** Paga oraria lorda (tipoRetribuzione = ORARIA). */
+  pagaOraria: number | null;
   isActive: boolean;
 }
 

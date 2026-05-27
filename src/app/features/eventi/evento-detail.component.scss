@@ -561,14 +561,65 @@
 
   .personale-persona-row {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 8px;
     padding: 10px 14px;
     border-bottom: 1px solid #f3f4f6;
     transition: background 0.12s ease;
 
     &:last-child { border-bottom: none; }
     &:hover { background: #f9fafb; }
+  }
+
+  .pp-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pp-tipo-badge {
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: #6b7280;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1px 6px;
+    vertical-align: middle;
+
+    &.oraria { color: #1d4ed8; background: #eef4fb; border-color: #cfe0f2; }
+  }
+
+  .pp-ore {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px 8px 44px;
+    background: #f8fafc;
+    border: 1px dashed #cfe0f2;
+    border-radius: 8px;
+
+    .pp-ore-icon { font-size: 18px; width: 18px; height: 18px; color: #1d4ed8; }
+    .pp-ore-paga { font-size: 13px; color: #4b5563; font-weight: 600; }
+    .pp-ore-input {
+      width: 70px;
+      padding: 4px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .pp-ore-tot { font-size: 13px; font-weight: 700; color: #2e7d32; }
+    .pp-ore-chip {
+      font-size: 11px; font-weight: 600; color: #2e7d32;
+      background: #e8f5e9; border: 1px solid #a5d6a7;
+      border-radius: 10px; padding: 1px 8px;
+    }
+    .pp-ore-btn { margin-left: auto; }
   }
 
   .personale-avatar {
