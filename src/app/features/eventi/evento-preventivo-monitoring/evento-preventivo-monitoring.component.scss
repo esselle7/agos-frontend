@@ -377,6 +377,45 @@
   opacity: 0.85;
 }
 
+// ── Budget validation ──────────────────────────────────────────────────
+.budget-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 500;
+
+  mat-icon { font-size: 16px; height: 16px; width: 16px; color: #ef4444; flex-shrink: 0; }
+}
+
+.bd-overflow-warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 500;
+
+  mat-icon { font-size: 16px; height: 16px; width: 16px; color: #ef4444; flex-shrink: 0; }
+  strong { font-weight: 700; }
+}
+
+.bd-bar--overflow {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
 // ── Misc ──────────────────────────────────────────────────────────────
 .empty-hint { font-size: 13px; color: #9ca3af; margin: 8px 0; }
 

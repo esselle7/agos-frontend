@@ -38,6 +38,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
   }
 
   &__importo {
@@ -107,5 +108,27 @@
     font-size: 14px;
     width: 14px;
     height: 14px;
+  }
+}
+
+.liquida-conto-btn {
+  font-size: 13px !important;
+  padding: 0 12px !important;
+  height: 36px !important;
+
+  mat-icon {
+    font-size: 16px;
+    height: 16px;
+    width: 16px;
+    margin-right: 4px;
+    line-height: 16px;
+  }
+
+  &--ko {
+    border-color: #fca5a5 !important;
+    color: #b91c1c !important;
+    opacity: 0.75;
+
+    mat-icon { color: #ef4444 !important; }
   }
 }

@@ -21,7 +21,16 @@
       </div>
 
       @if (breakdown().tot > 0) {
-        <div class="bd-bar">
+        <!-- Indicatore overflow se la somma supera il preventivato -->
+        @if (sommaExceedsPreventivato()) {
+          <div class="bd-overflow-warn">
+            <mat-icon>error_outline</mat-icon>
+            Affitto + Catering ({{ (breakdown().affittoIncasso + breakdown().cateringRicavo) | euro }})
+            supera il preventivato di
+            <strong>{{ (breakdown().affittoIncasso + breakdown().cateringRicavo - breakdown().tot) | euro }}</strong>
+          </div>
+        }
+        <div class="bd-bar" [class.bd-bar--overflow]="sommaExceedsPreventivato()">
           @if (barWidths().affitto > 0) {
             <div class="bd-seg affitto" [style.width.%]="barWidths().affitto"></div>
           }
@@ -67,6 +76,21 @@
 
         <agos-currency-input formControlName="importoIncasso" label="Incasso affitto (€)" />
 
+        <!-- Errori budget in tempo reale -->
+        @if (preventivato() > 0 && !affitto()) {
+          @if (affittoExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          } @else if (sommaExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Affitto + catering supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          }
+        }
+
         <mat-form-field appearance="outline" class="full">
           <mat-label>Note (opzionale)</mat-label>
           <input matInput formControlName="note" />
@@ -76,7 +100,9 @@
           @if (affitto()) {
             <button mat-button color="warn" type="button" (click)="rimuovi(affitto())">Rimuovi</button>
           } @else {
-            <button mat-raised-button class="btn-affitto" type="button" (click)="salvaAffitto()" [disabled]="savingAffitto()">
+            <button mat-raised-button class="btn-affitto" type="button"
+                    (click)="salvaAffitto()"
+                    [disabled]="savingAffitto() || !canSaveAffitto()">
               @if (savingAffitto()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px" /> }
               Salva
             </button>
@@ -130,6 +156,21 @@
           <agos-currency-input formControlName="prezzoPerPersona" label="Prezzo/pers." />
         </div>
 
+        <!-- Errori budget catering in tempo reale -->
+        @if (preventivato() > 0 && !catering()) {
+          @if (cateringExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Il ricavo catering supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          } @else if (sommaExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Affitto + catering supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          }
+        }
+
         <!-- KPI strip in tempo reale -->
         <div class="catering-kpis">
           <div class="ck-item">
@@ -159,7 +200,9 @@
           @if (catering()) {
             <button mat-button color="warn" type="button" (click)="rimuovi(catering())">Rimuovi</button>
           } @else {
-            <button mat-raised-button color="primary" type="button" (click)="salvaCatering()" [disabled]="savingCatering()">
+            <button mat-raised-button color="primary" type="button"
+                    (click)="salvaCatering()"
+                    [disabled]="savingCatering() || !canSaveCatering()">
               @if (savingCatering()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px" /> }
               Salva
             </button>

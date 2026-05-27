@@ -406,3 +406,204 @@
     row-gap: 6px;
   }
 }
+
+// ── Uscite da liquidare ─────────────────────────────────────────────────────
+.uscite-section {
+  margin-top: 20px;
+}
+
+.uscite-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  .uscite-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+
+    mat-icon { font-size: 20px; width: 20px; height: 20px; color: #6b7280; }
+
+    .uscite-count {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+    }
+  }
+
+  .uscite-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .uscite-badge-scadute {
+      background: #fdecea;
+      color: #c62828;
+      border: 1px solid #f5c6cb;
+      border-radius: 10px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .uscite-total-label {
+      font-size: 13px;
+      color: #6b7280;
+      strong { color: #c62828; font-weight: 700; }
+    }
+  }
+}
+
+.uscite-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+
+  &::-webkit-scrollbar { height: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 2px; }
+}
+
+.uscita-card {
+  flex: 0 0 210px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow .15s, border-color .15s;
+  cursor: default;
+
+  &:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, .08); border-color: #d1d5db; }
+
+  .uc-urgency-bar {
+    height: 3px;
+    background: #e5e7eb;
+  }
+
+  &.uscita-card--scaduta { border-color: #f5c6cb; .uc-urgency-bar { background: #c62828; } }
+  &.uscita-card--alta    { .uc-urgency-bar { background: #ef6c00; } }
+  &.uscita-card--media   { .uc-urgency-bar { background: #f59e0b; } }
+
+  .uc-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+  }
+
+  .uc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .uc-fornitore {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111827;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  .uc-importo {
+    font-size: 13px;
+    font-weight: 700;
+    color: #c62828;
+    white-space: nowrap;
+  }
+
+  .uc-desc {
+    font-size: 11px;
+    color: #6b7280;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .uc-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+  }
+
+  .uc-scadenza {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2e7d32; // BASSA default
+
+    &.uc-scadenza--scaduta { color: #c62828; }
+    &.uc-scadenza--alta    { color: #ef6c00; }
+    &.uc-scadenza--media   { color: #b45309; }
+  }
+
+  .uc-date {
+    font-size: 10px;
+    color: #9ca3af;
+  }
+
+  // Menu item saldo insufficiente — sovrascrive stili del mat-menu overlay
+  // (usare ::ng-deep perché il menu viene renderizzato fuori dal component host)
+  // stylelint-disable-next-line selector-pseudo-element-no-unknown
+  ::ng-deep .conto-saldo-ko {
+    color: #b91c1c !important;
+
+    .mat-icon,
+    .icon-danger { color: #ef4444 !important; }
+
+    .saldo-ko-hint {
+      margin-left: auto;
+      font-size: 11px;
+      color: #ef4444;
+      font-weight: 600;
+    }
+  }
+
+  .uc-liquida-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    width: 100%;
+    padding: 5px 10px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    justify-content: center;
+    transition: background 0.15s;
+
+    mat-icon { font-size: 15px; height: 15px; width: 15px; line-height: 15px; }
+    .uc-liquida-chevron { margin-left: auto; }
+
+    &:hover:not(:disabled) { background: #1d4ed8; }
+    &:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    &--loading {
+      background: #93c5fd;
+      pointer-events: none;
+    }
+  }
+}

@@ -97,6 +97,43 @@ export class EventoPreventivoMonitoringComponent implements OnInit, OnChanges {
 
   readonly preventivato = computed(() => this.evento?.importoTotalePreviventivato ?? 0);
 
+  // ── Validazioni budget preventivato ─────────────────────────────────────
+
+  /** Importo incasso affitto live dal form. */
+  private readonly affittoIncassoLive = computed(() => this.affittoValues().importoIncasso ?? 0);
+
+  /** true se l'affitto da solo supera il preventivato. */
+  readonly affittoExceedsPreventivato = computed(() => {
+    const prev = this.preventivato();
+    return prev > 0 && this.affittoIncassoLive() > prev;
+  });
+
+  /** true se il ricavo catering da solo supera il preventivato. */
+  readonly cateringExceedsPreventivato = computed(() => {
+    const prev = this.preventivato();
+    // Calcolato sotto come signal separato per evitare dipendenza circolare
+    const ricavo = (this.cateringValues().prezzoPerPersona ?? 0) * this.numPersoneEff();
+    return prev > 0 && ricavo > prev;
+  });
+
+  /** true se la somma affitto + catering supera il preventivato. */
+  readonly sommaExceedsPreventivato = computed(() => {
+    const prev = this.preventivato();
+    const affitto = this.affittoIncassoLive();
+    const catering = (this.cateringValues().prezzoPerPersona ?? 0) * this.numPersoneEff();
+    return prev > 0 && (affitto + catering) > prev;
+  });
+
+  /** Salvataggio affitto bloccato se supera il limite. */
+  readonly canSaveAffitto = computed(() =>
+    !this.affittoExceedsPreventivato() && !this.sommaExceedsPreventivato()
+  );
+
+  /** Salvataggio catering bloccato se supera il limite. */
+  readonly canSaveCatering = computed(() =>
+    !this.cateringExceedsPreventivato() && !this.sommaExceedsPreventivato()
+  );
+
   /** Anteprima catering — usa numPersoneEff() come sorgente reattiva. */
   readonly cateringPreview = computed(() => {
     const v = this.cateringValues();
@@ -215,6 +252,10 @@ export class EventoPreventivoMonitoringComponent implements OnInit, OnChanges {
       this.snackBar.open('Inserisci l\'incasso dell\'affitto', 'OK', { duration: 3000 });
       return;
     }
+    if (!this.canSaveAffitto()) {
+      this.snackBar.open('L\'importo affitto supera il totale preventivato', 'OK', { duration: 3500 });
+      return;
+    }
     const req: EventoPreventivoTrackingRequest = {
       tipo: 'AFFITTO',
       importoIncasso: v.importoIncasso,
@@ -241,6 +282,10 @@ export class EventoPreventivoMonitoringComponent implements OnInit, OnChanges {
     const v = this.cateringForm.getRawValue();
     if (v.costoPerPersona == null || v.costoPerPersona < 0) {
       this.snackBar.open('Inserisci il costo per persona', 'OK', { duration: 3000 });
+      return;
+    }
+    if (!this.canSaveCatering()) {
+      this.snackBar.open('Il ricavo catering supera il totale preventivato', 'OK', { duration: 3500 });
       return;
     }
     const req: EventoPreventivoTrackingRequest = {

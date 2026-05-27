@@ -347,6 +347,98 @@
         </div>
 
       </div>
+
+      <!-- ── Uscite da liquidare (scadenze fornitori) ─────────────────── -->
+      @if (usciteDaLiquidare().length > 0) {
+        <div class="uscite-section">
+          <div class="uscite-header">
+            <div class="uscite-title">
+              <mat-icon>schedule_send</mat-icon>
+              <span>Uscite da liquidare</span>
+              <span class="uscite-count">{{ usciteDaLiquidare().length }}</span>
+            </div>
+            <div class="uscite-meta">
+              @if (usciteScadute().length > 0) {
+                <span class="uscite-badge-scadute">
+                  {{ usciteScadute().length }} scadut{{ usciteScadute().length === 1 ? 'a' : 'e' }}
+                </span>
+              }
+              <span class="uscite-total-label">
+                Totale: <strong class="euro">{{ totaleUsciteDaLiquidare() | euro }}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div class="uscite-scroll">
+            @for (u of usciteDaLiquidare(); track u.id) {
+              <div class="uscita-card"
+                   [class.uscita-card--scaduta]="u.urgenza === 'SCADUTA'"
+                   [class.uscita-card--alta]="u.urgenza === 'ALTA'"
+                   [class.uscita-card--media]="u.urgenza === 'MEDIA'">
+                <div class="uc-urgency-bar"></div>
+                <div class="uc-body">
+                  <div class="uc-top">
+                    <span class="uc-fornitore" [title]="u.fornitoreNome ?? ''">
+                      {{ u.fornitoreNome ?? '—' }}
+                    </span>
+                    <span class="uc-importo">{{ u.importo | euro }}</span>
+                  </div>
+                  <div class="uc-desc" [title]="u.descrizione ?? ''">
+                    {{ u.descrizione ?? (u.categoriaNome ?? u.businessUnitNome) ?? '—' }}
+                  </div>
+                  <div class="uc-bottom">
+                    <span class="uc-scadenza"
+                          [class.uc-scadenza--scaduta]="u.urgenza === 'SCADUTA'"
+                          [class.uc-scadenza--alta]="u.urgenza === 'ALTA'"
+                          [class.uc-scadenza--media]="u.urgenza === 'MEDIA'">
+                      @if (u.urgenza === 'SCADUTA') {
+                        Scaduta {{ -u.ggAllaScadenza }} gg fa
+                      } @else if (u.ggAllaScadenza === 0) {
+                        Scade oggi
+                      } @else {
+                        Tra {{ u.ggAllaScadenza }} gg
+                      }
+                    </span>
+                    <span class="uc-date">{{ formatDate(u.dataLiquidita) }}</span>
+                  </div>
+                  <!-- Liquida con scelta conto -->
+                  @if (liquidandoId() === u.id) {
+                    <button class="uc-liquida-btn uc-liquida-btn--loading" disabled>
+                      <mat-spinner diameter="14"></mat-spinner>
+                      Liquidando…
+                    </button>
+                  } @else {
+                    <button class="uc-liquida-btn"
+                            [matMenuTriggerFor]="liquidaMenu"
+                            [disabled]="liquidandoId() !== null">
+                      <mat-icon>payments</mat-icon>
+                      Liquida
+                      <mat-icon class="uc-liquida-chevron">expand_more</mat-icon>
+                    </button>
+                    <mat-menu #liquidaMenu="matMenu">
+                      @for (c of conti(); track c.id) {
+                        <button mat-menu-item
+                                (click)="liquidaUscita(u.id, c.id)"
+                                [disabled]="c.saldoCalcolato < u.importo"
+                                [class.conto-saldo-ko]="c.saldoCalcolato < u.importo">
+                          <mat-icon [class.icon-danger]="c.saldoCalcolato < u.importo">
+                            {{ c.saldoCalcolato < u.importo ? 'money_off' : contoIcon(c.tipo) }}
+                          </mat-icon>
+                          <span>{{ c.nome }}</span>
+                          @if (c.saldoCalcolato < u.importo) {
+                            <span class="saldo-ko-hint">saldo {{ c.saldoCalcolato | euro }}</span>
+                          }
+                        </button>
+                      }
+                    </mat-menu>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
     }
 
   }

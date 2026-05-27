@@ -64,7 +64,21 @@ export interface ScadenzaDTO {
   stato: 'PENDING' | 'PAID';
 }
 
+export interface UscitaDaLiquidareDTO {
+  id: string;
+  descrizione: string | null;
+  importo: number;
+  dataMovimento: string;
+  dataLiquidita: string;
+  ggAllaScadenza: number;          // negativo = già scaduta
+  urgenza: 'SCADUTA' | 'ALTA' | 'MEDIA' | 'BASSA';
+  categoriaNome: string | null;
+  businessUnitNome: string;
+  fornitoreNome: string | null;
+}
+
 export interface ScadenzeImminentiDTO {
   eventi: ScadenzaDTO[];
   rateRicorrenti: ScadenzaDTO[];
+  usciteDaLiquidare: UscitaDaLiquidareDTO[];
 }
