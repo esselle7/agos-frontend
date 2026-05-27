@@ -1,0 +1,254 @@
+// ── Section header ────────────────────────────────────────────────────
+.costi-section .section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .sh-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sh-hint {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+}
+
+.totale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 14px;
+  background: #fdecea;
+  color: #c62828;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid #f5c6cb;
+  white-space: nowrap;
+}
+
+// ── Block ──────────────────────────────────────────────────────────────
+.costo-block {
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+
+  &.fissi {
+    background: #f6f7f9;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #9ca3af;
+  }
+
+  &.variabili {
+    background: #eef4fb;
+    border: 1px solid #cfe0f2;
+    border-left: 3px solid #1976d2;
+  }
+}
+
+.block-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+
+  .bh-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #6b7280;
+  }
+
+  .bh-desc {
+    font-size: 11px;
+    font-weight: 400;
+    color: #9ca3af;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .bh-total {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 700;
+    color: #c62828;
+    background: #fdecea;
+    border: 1px solid #f5c6cb;
+    border-radius: 10px;
+    padding: 2px 10px;
+  }
+}
+
+// ── Card grid ─────────────────────────────────────────────────────────
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.costo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 8px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  font-family: inherit;
+  color: #374151;
+
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    color: #9ca3af;
+    transition: color .15s ease;
+  }
+
+  .cc-label {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  &:hover {
+    border-color: #9ca3af;
+    background: #f9fafb;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+
+    mat-icon { color: #6b7280; }
+  }
+
+  &.selected {
+    border-color: #1976d2;
+    background: #e8f0fe;
+    box-shadow: 0 0 0 2px #1976d233;
+
+    mat-icon { color: #1976d2; }
+
+    .cc-label { color: #1565c0; }
+  }
+}
+
+// ── Inline form ───────────────────────────────────────────────────────
+.costo-form {
+  border-radius: 10px;
+  padding: 14px;
+  margin: 10px 0 12px;
+  border: 1px solid;
+
+  &.fissi-form    { background: #fff; border-color: #d1d5db; }
+  &.variabili-form { background: #fff; border-color: #bfdbfe; }
+
+  .full { width: 100%; }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+}
+
+// ── Costs list ────────────────────────────────────────────────────────
+.costi-list {
+  margin-top: 8px;
+}
+
+.block-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 6px 0 0;
+  text-align: center;
+  padding: 8px 0;
+  font-style: italic;
+}
+
+// ── Cost row ──────────────────────────────────────────────────────────
+.costo-riga {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid #eceff1;
+  border-radius: 10px;
+  margin-bottom: 7px;
+  background: #fff;
+  transition: box-shadow .15s;
+
+  &:hover { box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+
+  .cr-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    flex-shrink: 0;
+
+    mat-icon { font-size: 19px; width: 19px; height: 19px; color: #6b7280; }
+  }
+
+  .cr-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .cr-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+
+  .cr-etichetta { font-size: 14px; font-weight: 600; color: #1f2937; }
+
+  .cr-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #2e7d32;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    padding: 1px 7px;
+
+    mat-icon { font-size: 12px; width: 12px; height: 12px; }
+  }
+
+  .cr-note { font-size: 12px; color: #9ca3af; font-style: italic; }
+
+  .cr-importo {
+    font-size: 15px;
+    font-weight: 700;
+    color: #c62828;
+    white-space: nowrap;
+  }
+}
+
+// ── Misc ──────────────────────────────────────────────────────────────
+.empty-hint {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 8px 0;
+}

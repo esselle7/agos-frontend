@@ -151,8 +151,16 @@ export interface EventoPartecipanteDTO {
   cognome: string;
   mansione: string | null;
   ruolo: string | null;
-  /** ADMIN-only: null per i DIPENDENTE. */
+  /** ADMIN-only: null per i DIPENDENTE. Per ORARIA = ore * pagaOraria. */
   costo: number | null;
+  /** MENSILE | ORARIA. */
+  tipoRetribuzione: 'MENSILE' | 'ORARIA';
+  /** ADMIN-only. Paga oraria lorda (solo ORARIA). */
+  pagaOraria: number | null;
+  /** ADMIN-only. Ore allocate per questo evento (solo ORARIA). */
+  ore: number | null;
+  /** True se esiste un movimento di costo attivo collegato. */
+  hasMovimento: boolean;
   note: string | null;
 }
 
@@ -161,4 +169,58 @@ export interface AggiungiPartecipanteRequest {
   ruolo: string | null;
   costo: number | null;
   note: string | null;
+}
+
+export type TipoCostoEvento = 'FISSO' | 'VARIABILE';
+export type VoceCostoEvento = 'DJ' | 'TORTA' | 'CUSTOM';
+
+/** Costo diretto reale (genera movimento USCITA). */
+export interface EventoCostoDirettoDTO {
+  id: number;
+  tipoCosto: TipoCostoEvento;
+  voce: VoceCostoEvento;
+  etichetta: string;
+  importo: number;
+  // Movimento collegato
+  movimentoId?: string | null;
+  movimentoData?: string | null;
+  contoCodice?: string | null;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface EventoCostoDirettoRequest {
+  tipoCosto: TipoCostoEvento;
+  voce: VoceCostoEvento;
+  etichetta?: string | null;
+  importo?: number | null;
+  note?: string | null;
+}
+
+// ── Monitoring preventivato (no contabilità) ──────────────────────────────
+export type TipoTrackingPreventivo = 'AFFITTO' | 'CATERING';
+
+export interface EventoPreventivoTrackingDTO {
+  id: number;
+  tipo: TipoTrackingPreventivo;
+  // AFFITTO
+  importoIncasso?: number | null;
+  // CATERING
+  costoPerPersona?: number | null;
+  prezzoPerPersona?: number | null;
+  numPersone?: number | null;
+  costoTotale?: number | null;
+  ricavo?: number | null;
+  margine?: number | null;
+  marginePerc?: number | null;
+  note?: string | null;
+}
+
+export interface EventoPreventivoTrackingRequest {
+  tipo: TipoTrackingPreventivo;
+  importoIncasso?: number | null;
+  costoPerPersona?: number | null;
+  prezzoPerPersona?: number | null;
+  numPersone?: number | null;
+  note?: string | null;
 }
