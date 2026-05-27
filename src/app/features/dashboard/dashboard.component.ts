@@ -15,18 +15,25 @@ import { catchError } from 'rxjs/operators';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartData, ChartOptions } from 'chart.js';
 
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DataRefreshService } from '../../core/services/data-refresh.service';
 import { GlobalPeriodService } from '../../core/services/global-period.service';
+import { MovimentiService } from '../../core/services/movimenti.service';
+import { ContiService } from '../../core/services/conti.service';
+import { ContoBancarioDTO } from '../../core/models/anagrafica.models';
 import {
   DashboardKpiDTO,
   AndamentoMensileDTO,
   FatturatoPerBuDTO,
   ScadenzaDTO,
   ScadenzeImminentiDTO,
+  UscitaDaLiquidareDTO,
 } from '../../core/models/dashboard.models';
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -44,6 +51,8 @@ const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott
     MatIconModule,
     MatButtonModule,
     MatDividerModule,
+    MatProgressSpinnerModule,
+    MatMenuModule,
     BaseChartDirective,
     StatCardComponent,
     SkeletonLoaderComponent,
@@ -59,14 +68,20 @@ export class DashboardComponent implements OnInit {
   readonly globalPeriod = inject(GlobalPeriodService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dataRefresh = inject(DataRefreshService);
+  private readonly movimentiSvc = inject(MovimentiService);
+  private readonly contiSvc = inject(ContiService);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly kpi = signal<DashboardKpiDTO | null>(null);
   readonly andamento = signal<AndamentoMensileDTO[]>([]);
   readonly fatturatoPerBu = signal<FatturatoPerBuDTO[]>([]);
-  readonly scadenzeEventi = signal<ScadenzaDTO[]>([]);
-  readonly scadenzeRate   = signal<ScadenzaDTO[]>([]);
+  readonly scadenzeEventi       = signal<ScadenzaDTO[]>([]);
+  readonly scadenzeRate         = signal<ScadenzaDTO[]>([]);
+  readonly usciteDaLiquidare    = signal<UscitaDaLiquidareDTO[]>([]);
   readonly loading = signal(true);
   readonly loadingPeriod = signal(false);
+  readonly liquidandoId = signal<string | null>(null);
+  readonly conti = signal<ContoBancarioDTO[]>([]);
 
   kpiError = false;
   andamentoError = false;
@@ -151,6 +166,14 @@ export class DashboardComponent implements OnInit {
     this.scadenzeRate()
       .filter(s => s.stato !== 'PAID')
       .reduce((sum, s) => sum + (s.importoAtteso ?? 0), 0)
+  );
+
+  readonly totaleUsciteDaLiquidare = computed(() =>
+    this.usciteDaLiquidare().reduce((sum, u) => sum + (u.importo ?? 0), 0)
+  );
+
+  readonly usciteScadute = computed(() =>
+    this.usciteDaLiquidare().filter(u => u.urgenza === 'SCADUTA')
   );
 
   readonly lineChartOptions: ChartOptions<'line'> = {
@@ -270,7 +293,7 @@ export class DashboardComponent implements OnInit {
             .pipe(catchError(() => { this.fatturatoError = true; return of([]); })),
           scadenze: this.dashboardSvc
             .getScadenzeImminenti(period, from ?? undefined, to ?? undefined)
-            .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [] }); })),
+            .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [], usciteDaLiquidare: [] }); })),
         })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(res => {
@@ -278,6 +301,7 @@ export class DashboardComponent implements OnInit {
             this.fatturatoPerBu.set(res.fatturato);
             this.scadenzeEventi.set(res.scadenze.eventi);
             this.scadenzeRate.set(res.scadenze.rateRicorrenti);
+            this.usciteDaLiquidare.set(res.scadenze.usciteDaLiquidare ?? []);
             this.loadingPeriod.set(false);
           });
       });
@@ -295,6 +319,9 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.contiSvc.getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(list => this.conti.set(list));
     this.reloadAll();
   }
 
@@ -319,7 +346,7 @@ export class DashboardComponent implements OnInit {
         .pipe(catchError(() => { this.fatturatoError = true; return of([]); })),
       scadenze: this.dashboardSvc
         .getScadenzeImminenti(period, from ?? undefined, to ?? undefined)
-        .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [] }); })),
+        .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [], usciteDaLiquidare: [] }); })),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {
@@ -328,6 +355,7 @@ export class DashboardComponent implements OnInit {
         this.fatturatoPerBu.set(res.fatturato);
         this.scadenzeEventi.set(res.scadenze.eventi);
         this.scadenzeRate.set(res.scadenze.rateRicorrenti);
+        this.usciteDaLiquidare.set(res.scadenze.usciteDaLiquidare ?? []);
         this.loading.set(false);
         this._initialized = true;
       });
@@ -369,6 +397,33 @@ export class DashboardComponent implements OnInit {
   formatTimestamp(iso: string): string {
     if (!iso) return '';
     return iso.length >= 16 ? iso.slice(11, 16) : iso;
+  }
+
+  liquidaUscita(id: string, contoBancarioId: number): void {
+    if (this.liquidandoId()) return;
+    this.liquidandoId.set(id);
+    this.movimentiSvc.liquida(id, contoBancarioId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          // Rimozione ottimistica dalla lista — la dashboard si aggiornerà
+          // anche via dashboardRefresh$ una volta che le cache vengono invalidate
+          this.usciteDaLiquidare.update(list => list.filter(u => u.id !== id));
+          this.liquidandoId.set(null);
+          this.snackBar.open('Movimento liquidato ✓', 'OK', { duration: 3000 });
+        },
+        error: () => {
+          this.liquidandoId.set(null);
+          this.snackBar.open('Errore durante la liquidazione', 'OK', { duration: 3000 });
+        },
+      });
+  }
+
+  contoIcon(tipo: string): string {
+    if (!tipo) return 'account_balance';
+    const t = tipo.toUpperCase();
+    if (t.includes('CASSA') || t.includes('CASH')) return 'payments';
+    return 'account_balance';
   }
 
   skeletonRows = [1, 2, 3, 4];

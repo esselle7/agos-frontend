@@ -37,6 +37,7 @@ export const API_PATHS = {
     BULK:             '/api/movimenti/bulk',
     NON_RICONCILIATI: '/api/movimenti/riconciliazione/non-riconciliati',
     MATCH_AUTO:       '/api/movimenti/riconciliazione/match-automatico',
+    LIQUIDA:          (id: string) => `/api/movimenti/${id}/liquida`,
   },
   DASHBOARD: {
     KPI:                '/api/dashboard/kpi',

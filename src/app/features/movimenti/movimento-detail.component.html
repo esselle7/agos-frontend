@@ -25,6 +25,34 @@
           <agos-badge [text]="mov.stato" [color]="statoColor(mov.stato)"></agos-badge>
         </div>
         <div class="mov-detail__header-actions">
+          @if (mov.stato === 'DA_LIQUIDARE') {
+            @if (liquidando()) {
+              <button mat-flat-button color="primary" disabled>
+                <mat-spinner diameter="18" color="accent"></mat-spinner>
+                Liquidando…
+              </button>
+            } @else {
+              <!-- Un bottone per ogni conto disponibile -->
+              @for (c of contiList(); track c.id) {
+                @if (c.saldoCalcolato >= (movimento()?.importo ?? 0)) {
+                  <button mat-flat-button color="primary"
+                          class="liquida-conto-btn"
+                          (click)="liquidaMovimento(c.id)">
+                    <mat-icon>payments</mat-icon>
+                    {{ c.nome }}
+                  </button>
+                } @else {
+                  <button mat-stroked-button
+                          class="liquida-conto-btn liquida-conto-btn--ko"
+                          disabled
+                          [matTooltip]="'Saldo insufficiente: ' + (c.saldoCalcolato | euro)">
+                    <mat-icon>money_off</mat-icon>
+                    {{ c.nome }}
+                  </button>
+                }
+              }
+            }
+          }
           <a mat-stroked-button [routerLink]="['/movimenti', mov.id, 'modifica']">
             <mat-icon>edit</mat-icon> Modifica
           </a>
@@ -72,13 +100,21 @@
         </div>
         @if (mov.dataFinanziaria) {
           <div class="mov-detail__field">
-            <span class="mov-detail__field-label">Conto bancario</span>
-            <span class="mov-detail__field-value">{{ contoNome(mov.contoBancarioId) }}</span>
+            <span class="mov-detail__field-label">Data liquidazione</span>
+            <span class="mov-detail__field-value">{{ formatDate(mov.dataFinanziaria) }}</span>
           </div>
-          <div class="mov-detail__field">
-            <span class="mov-detail__field-label">Metodo di pagamento</span>
-            <span class="mov-detail__field-value">{{ metodoPagamentoNome(mov.metodoPagamentoId) }}</span>
-          </div>
+          @if (mov.contoBancarioId) {
+            <div class="mov-detail__field">
+              <span class="mov-detail__field-label">Conto bancario</span>
+              <span class="mov-detail__field-value">{{ contoNome(mov.contoBancarioId) }}</span>
+            </div>
+          }
+          @if (mov.metodoPagamentoId) {
+            <div class="mov-detail__field">
+              <span class="mov-detail__field-label">Metodo di pagamento</span>
+              <span class="mov-detail__field-value">{{ metodoPagamentoNome(mov.metodoPagamentoId) }}</span>
+            </div>
+          }
         }
         <div class="mov-detail__field">
           <span class="mov-detail__field-label">Conto CoGe</span>
