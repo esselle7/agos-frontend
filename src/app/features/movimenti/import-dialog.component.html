@@ -49,6 +49,18 @@
         </div>
       }
 
+      @if (importResult()!.parcheggiati > 0) {
+        <div class="import-dialog__result-row import-dialog__result-row--warn">
+          <mat-icon>event</mat-icon>
+          <span>Eventi parcheggiati (da riconciliare): <strong>{{ importResult()!.parcheggiati }}</strong></span>
+        </div>
+      }
+
+      <div class="import-dialog__result-row">
+        <mat-icon>filter_alt</mat-icon>
+        <span>Righe escluse (POS/giroconti/ricorrenti): <strong>{{ importResult()!.scartati }}</strong></span>
+      </div>
+
       <div class="import-dialog__result-row">
         <mat-icon>info</mat-icon>
         <span>Duplicati saltati: <strong>{{ importResult()!.duplicati }}</strong></span>

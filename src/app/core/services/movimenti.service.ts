@@ -11,6 +11,9 @@ import {
   ImportLogDTO,
   AmbiguitaDTO,
   ClassificaAmbiguitaRequest,
+  ImportKpiDTO,
+  SuggerimentoControparteDTO,
+  RegolaClassificazioneDTO,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -175,5 +178,40 @@ export class MovimentiService {
       environment.apiBaseUrl + API_PATHS.MOVIMENTI.CLASSIFICA_AMBIGUITA(id),
       req
     );
+  }
+
+  // ── Triage assistito / KPI / regole data-driven (ETL v2 §8/§9/§13) ──────────
+
+  getImportKpi(): Observable<ImportKpiDTO> {
+    return this.http.get<ImportKpiDTO>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_KPI);
+  }
+
+  getSuggerimenti(ambiguitaId: string): Observable<SuggerimentoControparteDTO[]> {
+    return this.http.get<SuggerimentoControparteDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_SUGGERIMENTI(ambiguitaId)
+    );
+  }
+
+  getRegole(): Observable<RegolaClassificazioneDTO[]> {
+    return this.http.get<RegolaClassificazioneDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLE
+    );
+  }
+
+  createRegola(regola: RegolaClassificazioneDTO): Observable<{ id: number }> {
+    return this.http.post<{ id: number }>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLE, regola
+    );
+  }
+
+  setRegolaAttiva(id: number, attiva: boolean): Observable<void> {
+    let params = new HttpParams().set('attiva', attiva);
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLA_ATTIVA(id), null, { params }
+    );
+  }
+
+  deleteRegola(id: number): Observable<void> {
+    return this.http.delete<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLA(id));
   }
 }

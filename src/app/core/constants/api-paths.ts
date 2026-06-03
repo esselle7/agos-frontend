@@ -43,6 +43,11 @@ export const API_PATHS = {
     IMPORT_HISTORY:   '/api/movimenti/import/history',
     IMPORT_AMBIGUITA:     (logId: string) => `/api/movimenti/import/${logId}/ambiguita`,
     CLASSIFICA_AMBIGUITA: (id: string)    => `/api/movimenti/import/ambiguita/${id}/classifica`,
+    IMPORT_KPI:           '/api/movimenti/import/kpi',
+    IMPORT_SUGGERIMENTI:  (id: string)    => `/api/movimenti/import/ambiguita/${id}/suggerimenti`,
+    IMPORT_REGOLE:        '/api/movimenti/import/regole',
+    IMPORT_REGOLA_ATTIVA: (id: number)    => `/api/movimenti/import/regole/${id}/attiva`,
+    IMPORT_REGOLA:        (id: number)    => `/api/movimenti/import/regole/${id}`,
   },
   DASHBOARD: {
     KPI:                '/api/dashboard/kpi',

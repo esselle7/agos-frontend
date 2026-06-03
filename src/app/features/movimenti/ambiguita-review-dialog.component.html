@@ -19,7 +19,7 @@
     </p>
 
     @for (amb of righe(); track amb.id) {
-      <mat-expansion-panel class="ambiguita__row">
+      <mat-expansion-panel class="ambiguita__row" (opened)="caricaSuggerimenti(amb)">
         <mat-expansion-panel-header>
           <mat-panel-title>Riga {{ amb.rigaNumero }} · {{ amb.fonte }}</mat-panel-title>
           <mat-panel-description>
@@ -31,6 +31,22 @@
         <div class="ambiguita__raw">
           @for (e of rawEntries(amb.rawData); track e.k) {
             <span class="ambiguita__raw-item"><b>{{ e.k }}</b>: {{ e.v }}</span>
+          }
+        </div>
+
+        <!-- Suggerimenti controparte (one-click) -->
+        <div class="ambiguita__sugg">
+          @if (suggLoading() === amb.id) {
+            <span class="text-sub">Cerco suggerimenti…</span>
+          } @else if (suggerimentiFor(amb.id).length) {
+            <span class="ambiguita__sugg-label"><mat-icon>auto_awesome</mat-icon> Suggerimenti:</span>
+            <mat-chip-set>
+              @for (s of suggerimentiFor(amb.id); track s.controparteId) {
+                <mat-chip class="ambiguita__sugg-chip" (click)="applicaSuggerimento(amb.id, s)">
+                  {{ s.nome }}@if (s.cogeCodice) { · {{ s.cogeCodice }}} ({{ pct(s.similarita) }}%)
+                </mat-chip>
+              }
+            </mat-chip-set>
           }
         </div>
 

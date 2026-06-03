@@ -29,6 +29,7 @@ import { BuService } from '../../core/services/bu.service';
 import {
   AmbiguitaDTO,
   ClassificaAmbiguitaRequest,
+  SuggerimentoControparteDTO,
 } from '../../core/models/movimenti.models';
 import {
   ContoBancarioDTO,
@@ -90,6 +91,10 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
   righe = signal<AmbiguitaDTO[]>([]);
   classificate = signal(0);
 
+  // Suggerimenti controparte (ETL v2 §8.2): caricati on-demand all'apertura della riga.
+  suggerimenti = signal<Record<string, SuggerimentoControparteDTO[]>>({});
+  suggLoading = signal<string | null>(null);
+
   conti = signal<ContoBancarioDTO[]>([]);
   metodi = signal<MetodoPagamentoDTO[]>([]);
   coge = signal<PianoContiCogeDTO[]>([]);
@@ -142,6 +147,41 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
   canClassificare(id: string): boolean {
     const f = this.forms.get(id);
     return !!f && f.controls.cogeId.value != null && f.controls.businessUnitId.value != null;
+  }
+
+  // ── Suggerimenti controparte (top-3 fuzzy) ──────────────────────────────────
+  suggerimentiFor(id: string): SuggerimentoControparteDTO[] {
+    return this.suggerimenti()[id] ?? [];
+  }
+
+  pct(similarita: number): number {
+    return Math.round(similarita * 100);
+  }
+
+  caricaSuggerimenti(amb: AmbiguitaDTO): void {
+    if (this.suggerimenti()[amb.id] !== undefined) return; // già caricati
+    this.suggLoading.set(amb.id);
+    this.movimentiService.getSuggerimenti(amb.id).subscribe({
+      next: list => {
+        this.suggerimenti.update(m => ({ ...m, [amb.id]: list }));
+        this.suggLoading.set(null);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.suggerimenti.update(m => ({ ...m, [amb.id]: [] }));
+        this.suggLoading.set(null);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  applicaSuggerimento(id: string, s: SuggerimentoControparteDTO): void {
+    const f = this.forms.get(id);
+    if (!f) return;
+    if (s.cogeDefaultId != null) f.controls.cogeId.setValue(s.cogeDefaultId);
+    if (s.buDefault != null) f.controls.businessUnitId.setValue(s.buDefault);
+    if (s.fornitoreId) f.controls.fornitoreId.setValue(s.fornitoreId);
+    this.snackBar.open(`Applicato: ${s.nome}`, 'OK', { duration: 1500 });
   }
 
   classifica(amb: AmbiguitaDTO): void {

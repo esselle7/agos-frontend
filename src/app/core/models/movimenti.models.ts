@@ -136,6 +136,8 @@ export interface EtlImportResponse {
   importati: number;
   duplicati: number;
   ambigui: number;
+  scartati: number;      // SKIP_POS / SKIP_GIROCONTO / SKIP_RICORRENTE (Gate A)
+  parcheggiati: number;  // PARK_EVENTO → eventi_da_riconciliare (Gate B)
   errori: EtlRowError[];
 }
 
@@ -150,8 +152,52 @@ export interface ImportLogDTO {
   righeDuplicate: number | null;
   righeAmbigue: number | null;
   righeAmbigueClassificate: number | null;
+  righeScartate: number | null;
+  righeParcheggiate: number | null;
   stato: string;
   importedBy: string | null;
+}
+
+// ── Triage assistito / KPI / regole data-driven (ETL v2 §8/§9/§13) ──────────
+
+export interface ImportKpiDTO {
+  righeTotali: number;
+  importate: number;
+  ambigue: number;
+  scartate: number;
+  parcheggiate: number;
+  movimentiTransitori: number;
+  saldoTransitori: number;
+  tassoAmbiguitaPct: number;
+  coperturaFornitoriPct: number;
+}
+
+export interface SuggerimentoControparteDTO {
+  controparteId: string;
+  nome: string;
+  iban: string | null;
+  fornitoreId: string | null;
+  cogeDefaultId: number | null;
+  cogeCodice: string | null;
+  buDefault: number | null;
+  similarita: number;
+}
+
+export interface RegolaClassificazioneDTO {
+  id: number | null;
+  priorita: number;
+  sorgente: string;        // BILLY | CA | BPM | *
+  tipoMovimento: string;   // ENTRATA | USCITA | *
+  campo: string;           // CAUSALE | DESC_SPACED | DESC_COMPACT | IBAN
+  matchType: string;       // EQUALS | CONTAINS | STARTS_WITH | REGEX | IN_LIST
+  pattern: string;
+  azione: string;          // SKIP_POS | SKIP_GIROCONTO | SKIP_RICORRENTE | PARK_EVENTO | MAP
+  cogeCodice: string | null;
+  buId: number | null;
+  metodoCodice: string | null;
+  confidence: number | null;
+  attivo: boolean;
+  note: string | null;
 }
 
 export interface AmbiguitaDTO {

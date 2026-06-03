@@ -38,6 +38,28 @@ h2[mat-dialog-title] {
   font-size: 0.875rem;
 }
 
+.import-history__kpi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.import-history__kpi-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+
+  .lbl { font-size: 0.7rem; color: var(--text-secondary, #6B7280); text-transform: uppercase; letter-spacing: 0.02em; }
+  .val { font-size: 1.05rem; font-weight: 600; }
+  .val.ok   { color: var(--success); }
+  .val.warn { color: var(--warning); }
+}
+
 .import-history__table {
   width: 100%;
 }

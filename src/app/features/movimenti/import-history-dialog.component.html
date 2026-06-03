@@ -19,6 +19,30 @@
       Clicca <strong>Rivedi</strong> su un import con ambiguità in attesa per classificarle.
     </p>
 
+    @if (kpi(); as k) {
+      <div class="import-history__kpi">
+        <div class="import-history__kpi-item">
+          <span class="lbl">Importate</span><span class="val ok">{{ k.importate }}</span>
+        </div>
+        <div class="import-history__kpi-item">
+          <span class="lbl">Ambiguità</span><span class="val warn">{{ k.ambigue }} ({{ k.tassoAmbiguitaPct }}%)</span>
+        </div>
+        <div class="import-history__kpi-item">
+          <span class="lbl">Eventi parcheggiati</span><span class="val">{{ k.parcheggiate }}</span>
+        </div>
+        <div class="import-history__kpi-item">
+          <span class="lbl">Escluse</span><span class="val">{{ k.scartate }}</span>
+        </div>
+        <div class="import-history__kpi-item">
+          <span class="lbl">Conti transitori</span>
+          <span class="val" [class.warn]="k.movimentiTransitori > 0">{{ k.movimentiTransitori }}</span>
+        </div>
+        <div class="import-history__kpi-item">
+          <span class="lbl">Copertura fornitori</span><span class="val">{{ k.coperturaFornitoriPct }}%</span>
+        </div>
+      </div>
+    }
+
     <table mat-table [dataSource]="result()!.content" class="import-history__table">
 
       <!-- Data -->
@@ -52,6 +76,12 @@
             <span class="import-history__stat warn">
               {{ pendenti(row) }} pend.
             </span>
+          }
+          @if ((row.righeParcheggiate ?? 0) > 0) {
+            <span class="import-history__stat">{{ row.righeParcheggiate }} eventi</span>
+          }
+          @if ((row.righeScartate ?? 0) > 0) {
+            <span class="import-history__stat">{{ row.righeScartate }} escl.</span>
           }
           @if ((row.righeErrore ?? 0) > 0) {
             <span class="import-history__stat err">{{ row.righeErrore }} err.</span>

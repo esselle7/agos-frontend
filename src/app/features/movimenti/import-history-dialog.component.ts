@@ -17,7 +17,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { MovimentiService } from '../../core/services/movimenti.service';
-import { ImportLogDTO } from '../../core/models/movimenti.models';
+import { ImportLogDTO, ImportKpiDTO } from '../../core/models/movimenti.models';
 import { PagedResponse } from '../../core/models/shared.models';
 import { AmbiguitaReviewDialogComponent } from './ambiguita-review-dialog.component';
 
@@ -49,12 +49,21 @@ export class ImportHistoryDialogComponent implements OnInit {
 
   result = signal<PagedResponse<ImportLogDTO> | null>(null);
   loading = signal(true);
+  kpi = signal<ImportKpiDTO | null>(null);
 
   private page = 0;
   private size = 15;
 
   ngOnInit(): void {
     this.load();
+    this.loadKpi();
+  }
+
+  private loadKpi(): void {
+    this.movimentiService.getImportKpi().subscribe({
+      next: k => { this.kpi.set(k); this.cdr.markForCheck(); },
+      error: () => { /* KPI non bloccante per lo storico */ },
+    });
   }
 
   load(): void {
