@@ -309,7 +309,6 @@ export class CassaComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       ATTIVO:        '#2E7D32',
       ANNULLATO:     '#C62828',
-      RICONCILIATO:  '#1565C0',
     };
     return map[stato] ?? '#6B7280';
   }

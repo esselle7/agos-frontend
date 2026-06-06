@@ -14,6 +14,10 @@ import {
   ImportKpiDTO,
   SuggerimentoControparteDTO,
   RegolaClassificazioneDTO,
+  TransitorioDTO,
+  ClassificaTransitorioRequest,
+  EventoParcheggiatoDTO,
+  RisolviEventoRequest,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -111,29 +115,6 @@ export class MovimentiService {
     );
   }
 
-  getNonRiconciliati(): Observable<MovimentoDTO[]> {
-    return this.http.get<MovimentoDTO[]>(
-      environment.apiBaseUrl + API_PATHS.MOVIMENTI.NON_RICONCILIATI
-    );
-  }
-
-  riconcilia(id: string, note?: string): Observable<void> {
-    let params = new HttpParams();
-    if (note != null) params = params.set('note', note);
-    return this.http.post<void>(
-      `${environment.apiBaseUrl}/api/movimenti/riconciliazione/${id}/riconcilia`,
-      null,
-      { params }
-    );
-  }
-
-  matchAutomatico(): Observable<{ matched: number }> {
-    return this.http.post<{ matched: number }>(
-      environment.apiBaseUrl + API_PATHS.MOVIMENTI.MATCH_AUTO,
-      null
-    );
-  }
-
   // ── Import ETL (Billy / BPM / CA) ──────────────────────────────────────────
 
   importBilly(file: File): Observable<EtlImportResponse> {
@@ -213,5 +194,48 @@ export class MovimentiService {
 
   deleteRegola(id: number): Observable<void> {
     return this.http.delete<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLA(id));
+  }
+
+  rollbackImport(importLogId: string): Observable<Record<string, unknown>> {
+    return this.http.delete<Record<string, unknown>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_ROLLBACK(importLogId)
+    );
+  }
+
+  // ── Centro smistamento: transitori ──────────────────────────────────────────
+
+  getTransitori(tipo?: string, page = 0, size = 20): Observable<PagedResponse<TransitorioDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (tipo) params = params.set('tipo', tipo);
+    return this.http.get<PagedResponse<TransitorioDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORI, { params }
+    );
+  }
+
+  getSuggerimentiTransitorio(movimentoId: string): Observable<SuggerimentoControparteDTO[]> {
+    return this.http.get<SuggerimentoControparteDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORIO_SUGG(movimentoId)
+    );
+  }
+
+  classificaTransitorio(movimentoId: string, req: ClassificaTransitorioRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORIO_CLASSIFICA(movimentoId), req
+    );
+  }
+
+  // ── Centro smistamento: eventi parcheggiati ─────────────────────────────────
+
+  getEventiParcheggiati(stato = 'DA_RICONCILIARE', page = 0, size = 20): Observable<PagedResponse<EventoParcheggiatoDTO>> {
+    const params = new HttpParams().set('stato', stato).set('page', page).set('size', size);
+    return this.http.get<PagedResponse<EventoParcheggiatoDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_EVENTI, { params }
+    );
+  }
+
+  risolviEvento(id: string, req: RisolviEventoRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_EVENTO_RISOLVI(id), req
+    );
   }
 }

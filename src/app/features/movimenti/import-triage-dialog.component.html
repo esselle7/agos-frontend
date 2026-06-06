@@ -1,0 +1,187 @@
+<h2 mat-dialog-title>
+  <mat-icon>inbox</mat-icon>
+  Smistamento import
+</h2>
+
+<mat-dialog-content class="triage">
+
+  @if (loading()) {
+    <div class="triage__loading"><mat-spinner diameter="36"></mat-spinner></div>
+  } @else {
+
+    @if (kpi(); as k) {
+      <div class="triage__kpi">
+        <div class="triage__kpi-item"><span class="lbl">Da catalogare</span><span class="val warn">{{ k.movimentiTransitori }}</span></div>
+        <div class="triage__kpi-item"><span class="lbl">Saldo transitori</span><span class="val">€ {{ k.saldoTransitori }}</span></div>
+        <div class="triage__kpi-item"><span class="lbl">Copertura fornitori</span><span class="val">{{ k.coperturaFornitoriPct }}%</span></div>
+        <div class="triage__kpi-item"><span class="lbl">Importate</span><span class="val ok">{{ k.importate }}</span></div>
+      </div>
+    }
+
+    <mat-tab-group>
+      <!-- ════════ TRANSITORI ════════ -->
+      <mat-tab label="Da catalogare ({{ transitori().length }})">
+        @if (transitori().length === 0) {
+          <div class="triage__empty"><mat-icon>task_alt</mat-icon><p>Nessun movimento da catalogare. 🎉</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Questi movimenti sono su conti transitori. Assegna COGE e Business Unit; con
+            <strong>Apprendi controparte</strong> attivo, l'IBAN viene memorizzato e i prossimi import lo riconoscono da soli.
+          </p>
+
+          @for (t of transitori(); track t.id) {
+            <mat-expansion-panel class="triage__row" (opened)="caricaSuggerimenti(t)">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="triage__amount" [class.in]="t.tipo === 'ENTRATA'" [class.out]="t.tipo === 'USCITA'">
+                    {{ t.tipo === 'ENTRATA' ? '+' : '−' }} € {{ t.importo }}
+                  </span>
+                  <span class="triage__who">{{ t.controparteEstratta || '—' }}</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="triage__date">{{ t.dataMovimento }}</span>
+                  <mat-chip-set><mat-chip highlighted>{{ t.cogeCodiceAttuale }}</mat-chip></mat-chip-set>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <p class="triage__desc">{{ t.descrizione }}</p>
+              @if (t.ibanEstratto) { <p class="triage__iban">IBAN: {{ t.ibanEstratto }}</p> }
+
+              <!-- Suggerimenti one-click -->
+              <div class="triage__sugg">
+                @if (suggLoading() === t.id) {
+                  <span class="text-sub">Cerco suggerimenti…</span>
+                } @else if (suggerimentiFor(t.id).length) {
+                  <span class="triage__sugg-label"><mat-icon>auto_awesome</mat-icon> Suggerimenti:</span>
+                  <mat-chip-set>
+                    @for (s of suggerimentiFor(t.id); track s.controparteId) {
+                      <mat-chip class="triage__sugg-chip" (click)="applicaSuggerimento(t.id, s)"
+                                [matTooltip]="'Applica ' + s.nome">
+                        {{ s.nome }}@if (s.cogeCodice) { · {{ s.cogeCodice }}} ({{ pct(s.similarita) }}%)
+                      </mat-chip>
+                    }
+                  </mat-chip-set>
+                }
+              </div>
+
+              <form [formGroup]="transFormFor(t.id)" class="triage__form">
+                <mat-form-field appearance="outline">
+                  <mat-label>Conto COGE *</mat-label>
+                  <mat-select formControlName="cogeId">
+                    @for (c of coge(); track c.id) { <mat-option [value]="c.id">{{ c.codice }} — {{ c.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Business Unit *</mat-label>
+                  <mat-select formControlName="businessUnitId">
+                    @for (b of bu(); track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Fornitore</mat-label>
+                  <mat-select formControlName="fornitoreId">
+                    <mat-option [value]="null">—</mat-option>
+                    @for (f of fornitori(); track f.id) { <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="triage__nota">
+                  <mat-label>Nota</mat-label>
+                  <input matInput formControlName="nota">
+                </mat-form-field>
+
+                <mat-slide-toggle formControlName="apprendiControparte"
+                                  [matTooltip]="t.ibanEstratto ? 'Memorizza l\'IBAN per i prossimi import' : 'IBAN non rilevato su questa riga'">
+                  Apprendi controparte (per IBAN)
+                </mat-slide-toggle>
+
+                <div class="triage__row-actions">
+                  <button mat-flat-button color="primary"
+                          [disabled]="saving() === t.id || !canClassificareTrans(t.id)"
+                          (click)="classificaTrans(t)">
+                    @if (saving() === t.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>check</mat-icon> }
+                    Cataloga
+                  </button>
+                </div>
+              </form>
+            </mat-expansion-panel>
+          }
+        }
+      </mat-tab>
+
+      <!-- ════════ EVENTI ════════ -->
+      <mat-tab label="Eventi parcheggiati ({{ eventi().length }})">
+        @if (eventi().length === 0) {
+          <div class="triage__empty"><mat-icon>event_available</mat-icon><p>Nessun evento in attesa.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Incassi-evento messi da parte. <strong>Scarta</strong> se non è un evento,
+            <strong>Riconcilia</strong> se gestito altrove, oppure <strong>registra come movimento</strong>.
+          </p>
+
+          @for (ev of eventi(); track ev.id) {
+            <mat-expansion-panel class="triage__row">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="triage__amount in">+ € {{ ev.importo }}</span>
+                  <span class="triage__who">{{ ev.controparteNome || '—' }}</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="triage__date">{{ ev.dataMovimento }}</span>
+                  @if (ev.tipoEventoPresunto) { <mat-chip-set><mat-chip highlighted>{{ ev.tipoEventoPresunto }}</mat-chip></mat-chip-set> }
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <p class="triage__desc">{{ ev.descrizioneNorm }}</p>
+              <p class="triage__meta">
+                Fonte: {{ ev.fonte }} · Chiave: {{ ev.chiaveAggancio || '—' }}
+                @if (ev.dataEventoEstratta) { · Data evento: {{ ev.dataEventoEstratta }} }
+                @if (ev.controparteIban) { · IBAN: {{ ev.controparteIban }} }
+              </p>
+
+              <form [formGroup]="eventoFormFor(ev.id)" class="triage__form triage__form--evento">
+                <mat-form-field appearance="outline">
+                  <mat-label>COGE (per registrare)</mat-label>
+                  <mat-select formControlName="cogeId">
+                    <mat-option [value]="null">—</mat-option>
+                    @for (c of coge(); track c.id) { <mat-option [value]="c.id">{{ c.codice }} — {{ c.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Business Unit</mat-label>
+                  <mat-select formControlName="businessUnitId">
+                    <mat-option [value]="null">—</mat-option>
+                    @for (b of bu(); track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="triage__nota">
+                  <mat-label>Nota</mat-label>
+                  <input matInput formControlName="nota">
+                </mat-form-field>
+
+                <div class="triage__row-actions triage__row-actions--evento">
+                  <button mat-stroked-button color="warn" [disabled]="saving() === ev.id" (click)="scartaEvento(ev)">
+                    <mat-icon>delete</mat-icon> Scarta
+                  </button>
+                  <button mat-stroked-button [disabled]="saving() === ev.id" (click)="riconciliaEvento(ev)">
+                    <mat-icon>link</mat-icon> Riconcilia
+                  </button>
+                  <button mat-flat-button color="primary"
+                          [disabled]="saving() === ev.id || !canClassificareEvento(ev.id)"
+                          (click)="classificaEvento(ev)">
+                    @if (saving() === ev.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>check</mat-icon> }
+                    Registra movimento
+                  </button>
+                </div>
+              </form>
+            </mat-expansion-panel>
+          }
+        }
+      </mat-tab>
+    </mat-tab-group>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button color="primary" (click)="close()">Chiudi</button>
+</mat-dialog-actions>

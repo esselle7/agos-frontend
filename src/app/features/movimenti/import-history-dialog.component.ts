@@ -20,6 +20,7 @@ import { MovimentiService } from '../../core/services/movimenti.service';
 import { ImportLogDTO, ImportKpiDTO } from '../../core/models/movimenti.models';
 import { PagedResponse } from '../../core/models/shared.models';
 import { AmbiguitaReviewDialogComponent } from './ambiguita-review-dialog.component';
+import { ImportTriageDialogComponent } from './import-triage-dialog.component';
 
 @Component({
   selector: 'app-import-history-dialog',
@@ -99,6 +100,15 @@ export class ImportHistoryDialogComponent implements OnInit {
       maxHeight: '90vh',
     }).afterClosed().subscribe(classified => {
       if (classified) this.load();
+    });
+  }
+
+  apriSmistamento(): void {
+    this.dialog.open(ImportTriageDialogComponent, {
+      width: '960px',
+      maxHeight: '92vh',
+    }).afterClosed().subscribe(modificato => {
+      if (modificato) { this.load(); this.loadKpi(); }
     });
   }
 

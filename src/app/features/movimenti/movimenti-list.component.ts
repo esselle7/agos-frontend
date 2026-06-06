@@ -36,7 +36,6 @@ import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { RiconciliazioneDialogComponent } from './riconciliazione-dialog.component';
 import { ImportDialogComponent } from './import-dialog.component';
 import { ImportHistoryDialogComponent } from './import-history-dialog.component';
 
@@ -185,10 +184,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
     this.dialog.open(ImportHistoryDialogComponent, { width: '960px', maxHeight: '90vh' });
   }
 
-  openRiconciliazione(): void {
-    this.dialog.open(RiconciliazioneDialogComponent, { width: '800px', maxHeight: '90vh' });
-  }
-
   openImport(): void {
     this.dialog.open(ImportDialogComponent, { width: '600px' }).afterClosed().subscribe(imported => {
       if (imported) this.loadData();
@@ -246,7 +241,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       REGISTRATO:   '#1565C0',
       DA_LIQUIDARE: '#F57C00',
       ANNULLATO:    '#C62828',
-      RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';
   }
@@ -256,7 +250,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       REGISTRATO:   'Registrato',
       DA_LIQUIDARE: 'Da liquidare',
       ANNULLATO:    'Annullato',
-      RICONCILIATO: 'Riconciliato',
     };
     return map[stato] ?? stato;
   }

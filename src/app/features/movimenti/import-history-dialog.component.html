@@ -129,5 +129,9 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
+  <button mat-stroked-button color="primary" (click)="apriSmistamento()">
+    <mat-icon>inbox</mat-icon>
+    Smistamento ({{ (kpi()?.movimentiTransitori ?? 0) + (kpi()?.parcheggiate ?? 0) }})
+  </button>
   <button mat-flat-button color="primary" (click)="close()">Chiudi</button>
 </mat-dialog-actions>

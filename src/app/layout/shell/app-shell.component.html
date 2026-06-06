@@ -121,21 +121,6 @@
           </button>
         }
 
-        @if (isAdmin() && nonRiconciliatiCount() > 0) {
-          <button
-            mat-icon-button
-            class="badge-btn"
-            matTooltip="Movimenti da riconciliare"
-            [routerLink]="['/movimenti']"
-          >
-            <mat-icon
-              [matBadge]="nonRiconciliatiCount()"
-              matBadgeColor="accent"
-              matBadgeSize="small"
-            >sync_problem</mat-icon>
-          </button>
-        }
-
         <!-- Avatar menu -->
         <button mat-icon-button [matMenuTriggerFor]="userMenu" class="avatar-btn">
           <div class="avatar">

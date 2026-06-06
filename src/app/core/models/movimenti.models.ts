@@ -1,5 +1,5 @@
 export type TipoMovimento = 'ENTRATA' | 'USCITA';
-export type StatoMovimento = 'REGISTRATO' | 'DA_LIQUIDARE' | 'ANNULLATO' | 'RICONCILIATO';
+export type StatoMovimento = 'REGISTRATO' | 'DA_LIQUIDARE' | 'ANNULLATO';
 export type FonteMovimento = 'MANUALE' | 'IMPORT_CSV' | 'STRIPE' | 'SATISPAY' | 'SHOPIFY' | 'BILLY';
 
 export interface MovimentoDTO {
@@ -198,6 +198,54 @@ export interface RegolaClassificazioneDTO {
   confidence: number | null;
   attivo: boolean;
   note: string | null;
+}
+
+// ── Centro smistamento import: transitori + eventi parcheggiati ─────────────
+
+export interface TransitorioDTO {
+  id: string;
+  tipo: string;               // ENTRATA | USCITA
+  importo: number;
+  dataMovimento: string;
+  descrizione: string;
+  cogeCodiceAttuale: string;  // 39.99.999 | 49.99.999
+  fornitoreId: string | null;
+  contoBancarioId: number | null;
+  ibanEstratto: string | null;
+  controparteEstratta: string | null;
+}
+
+export interface ClassificaTransitorioRequest {
+  cogeId: number;
+  businessUnitId: number;
+  fornitoreId: string | null;
+  apprendiControparte: boolean;
+  nota: string | null;
+}
+
+export interface EventoParcheggiatoDTO {
+  id: string;
+  fonte: string;
+  chiaveAggancio: string | null;
+  dataMovimento: string | null;
+  importo: number;
+  tipo: string;
+  contoBancarioId: number | null;
+  descrizioneNorm: string | null;
+  tipoEventoPresunto: string | null;  // CAPARRA | ACCONTO | SALDO | AFFITTO_SALA | null
+  keywordMatch: string | null;
+  controparteNome: string | null;
+  controparteIban: string | null;
+  dataEventoEstratta: string | null;
+  stato: string;                       // DA_RICONCILIARE | RICONCILIATO | SCARTATO
+}
+
+export interface RisolviEventoRequest {
+  azione: 'SCARTA' | 'CLASSIFICA' | 'RICONCILIA';
+  cogeId: number | null;
+  businessUnitId: number | null;
+  eventoId: string | null;
+  nota: string | null;
 }
 
 export interface AmbiguitaDTO {

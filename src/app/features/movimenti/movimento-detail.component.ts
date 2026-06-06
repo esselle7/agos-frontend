@@ -160,7 +160,6 @@ export class MovimentoDetailComponent implements OnInit {
       REGISTRATO:   '#1565C0',
       DA_LIQUIDARE: '#F57C00',
       ANNULLATO:    '#C62828',
-      RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';
   }
