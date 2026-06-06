@@ -4,7 +4,6 @@ import {
   inject,
   signal,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -88,7 +87,6 @@ export class ImportTriageDialogComponent implements OnInit {
   private readonly fornitoriService = inject(FornitoriService);
   private readonly buService = inject(BuService);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   loading = signal(true);
   saving = signal<string | null>(null);
@@ -127,18 +125,16 @@ export class ImportTriageDialogComponent implements OnInit {
         eventi.content.forEach(e => this.eventoForms.set(e.id, this.buildEventoForm()));
         this.eventi.set(eventi.content);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento dello smistamento import', 'OK', { duration: 4000 });
-        this.cdr.markForCheck();
       },
     });
   }
 
   private refreshKpi(): void {
-    this.movimentiService.getImportKpi().subscribe(k => { this.kpi.set(k); this.cdr.markForCheck(); });
+    this.movimentiService.getImportKpi().subscribe(k => { this.kpi.set(k); });
   }
 
   // ── Transitori ──────────────────────────────────────────────────────────────
@@ -156,8 +152,8 @@ export class ImportTriageDialogComponent implements OnInit {
     if (this.suggerimenti()[t.id] !== undefined) return;
     this.suggLoading.set(t.id);
     this.movimentiService.getSuggerimentiTransitorio(t.id).subscribe({
-      next: list => { this.suggerimenti.update(m => ({ ...m, [t.id]: list })); this.suggLoading.set(null); this.cdr.markForCheck(); },
-      error: () => { this.suggerimenti.update(m => ({ ...m, [t.id]: [] })); this.suggLoading.set(null); this.cdr.markForCheck(); },
+      next: list => { this.suggerimenti.update(m => ({ ...m, [t.id]: list })); this.suggLoading.set(null); },
+      error: () => { this.suggerimenti.update(m => ({ ...m, [t.id]: [] })); this.suggLoading.set(null); },
     });
   }
 
@@ -189,7 +185,6 @@ export class ImportTriageDialogComponent implements OnInit {
         this.modificato = true;
         this.refreshKpi();
         this.snackBar.open('Movimento catalogato' + (req.apprendiControparte ? ' e controparte appresa' : ''), 'OK', { duration: 2500 });
-        this.cdr.markForCheck();
       },
       error: err => this.fail(err),
     });
@@ -226,7 +221,6 @@ export class ImportTriageDialogComponent implements OnInit {
         this.modificato = true;
         this.refreshKpi();
         this.snackBar.open(okMsg, 'OK', { duration: 2500 });
-        this.cdr.markForCheck();
       },
       error: err => this.fail(err),
     });
@@ -235,7 +229,6 @@ export class ImportTriageDialogComponent implements OnInit {
   private fail(err: { error?: { message?: string } }): void {
     this.saving.set(null);
     this.snackBar.open(err.error?.message ?? 'Operazione non riuscita', 'OK', { duration: 4000 });
-    this.cdr.markForCheck();
   }
 
   close(): void { this.dialogRef.close(this.modificato); }

@@ -4,7 +4,6 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,7 +43,6 @@ export class ImportHistoryDialogComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly dialogRef = inject(MatDialogRef<ImportHistoryDialogComponent>);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly displayedColumns = ['dataImport', 'fonte', 'filename', 'righe', 'stato', 'azioni'];
 
@@ -62,7 +60,7 @@ export class ImportHistoryDialogComponent implements OnInit {
 
   private loadKpi(): void {
     this.movimentiService.getImportKpi().subscribe({
-      next: k => { this.kpi.set(k); this.cdr.markForCheck(); },
+      next: k => { this.kpi.set(k); },
       error: () => { /* KPI non bloccante per lo storico */ },
     });
   }
@@ -73,12 +71,10 @@ export class ImportHistoryDialogComponent implements OnInit {
       next: res => {
         this.result.set(res);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento dello storico', 'OK', { duration: 3000 });
-        this.cdr.markForCheck();
       },
     });
   }

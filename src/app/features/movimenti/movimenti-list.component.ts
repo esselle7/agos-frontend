@@ -5,7 +5,6 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -74,7 +73,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
   readonly displayedColumns = ['dataMovimento', 'tipo', 'descrizione', 'bu', 'fonte', 'importo', 'stato', 'azioni'];
@@ -98,7 +96,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.buService.getAll().subscribe(units => {
       this.buMap.set(new Map(units.map(u => [u.id, u])));
-      this.cdr.markForCheck();
     });
 
     this.searchControl.valueChanges.pipe(
@@ -127,17 +124,15 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       next: res => {
         this.result.set(res);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento dei movimenti', 'OK', { duration: 3000 });
-        this.cdr.markForCheck();
       },
     });
 
     this.movimentiService.getSommario(baseFilter).subscribe({
-      next: s => { this.sommario.set(s); this.cdr.markForCheck(); },
+      next: s => { this.sommario.set(s); },
       error: () => {},
     });
   }

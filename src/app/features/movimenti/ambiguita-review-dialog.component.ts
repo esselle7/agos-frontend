@@ -4,7 +4,6 @@ import {
   inject,
   signal,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -82,7 +81,6 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
   private readonly eventiService = inject(EventiService);
   private readonly buService = inject(BuService);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly tipiEvento = ['CAPARRA', 'ACCONTO', 'SALDO', 'RIMBORSO'];
 
@@ -124,12 +122,10 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
         ambiguita.content.forEach(a => this.forms.set(a.id, this.buildForm()));
         this.righe.set(ambiguita.content);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento delle ambiguità', 'OK', { duration: 4000 });
-        this.cdr.markForCheck();
       },
     });
   }
@@ -165,12 +161,10 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
       next: list => {
         this.suggerimenti.update(m => ({ ...m, [amb.id]: list }));
         this.suggLoading.set(null);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.suggerimenti.update(m => ({ ...m, [amb.id]: [] }));
         this.suggLoading.set(null);
-        this.cdr.markForCheck();
       },
     });
   }
@@ -220,13 +214,11 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
         if (!req.scarta) this.classificate.update(c => c + 1);
         this.forms.delete(amb.id);
         this.snackBar.open(okMsg, 'OK', { duration: 2500 });
-        this.cdr.markForCheck();
       },
       error: err => {
         this.saving.set(null);
         const msg = err.error?.message ?? 'Errore durante la classificazione';
         this.snackBar.open(msg, 'OK', { duration: 4000 });
-        this.cdr.markForCheck();
       },
     });
   }
