@@ -18,6 +18,9 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../shared/directives/input-filter.directive';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
+import { AppValidators } from '../../shared/validators/app-validators';
 import { Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -104,6 +107,8 @@ interface PreviewImpatto {
     CurrencyInputComponent,
     EuroPipe,
     SkeletonLoaderComponent,
+    InputFilterDirective,
+    DateMaskDirective,
   ],
   templateUrl: './movimenti-form.component.html',
   styleUrls: ['./movimenti-form.component.scss'],
@@ -231,7 +236,7 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     tipo:                new FormControl<TipoMovimento>('ENTRATA', { nonNullable: true }),
     importo:             new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
     dataMovimento:       new FormControl<Date | null>(new Date(), Validators.required),
-    descrizione:         new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
+    descrizione:         new FormControl<string>('', { nonNullable: true, validators: [Validators.required, AppValidators.safeText()] }),
     businessUnitId:      new FormControl<number | null>(null, Validators.required),
     // Validators applied dynamically based on tipoFlusso + statoFinanziario
     contoBancarioId:     new FormControl<number | null>(null),
@@ -241,15 +246,15 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     contoCoge:           new FormControl<string>('', { nonNullable: true, validators: Validators.required }),
     fornitoreId:         new FormControl<string | null>(null),
     eventoId:            new FormControl<string | null>(null),
-    tipoEventoMovimento: new FormControl<string | null>(null),
+    tipoEventoMovimento: new FormControl<string | null>(null, [AppValidators.safeText()]),
     /** Data di liquidazione effettiva. Visibile per differito+incassato. */
     dataFinanziaria:     new FormControl<Date | null>(null),
     /** Scadenza finanziaria attesa. Visibile per differito+nonIncassato. */
     dataLiquidita:       new FormControl<Date | null>(null),
     importoLordo:        new FormControl<number | null>(null),
     aliquotaIva:         new FormControl<number | null>(null),
-    note:                new FormControl<string | null>(null),
-    riferimentoEsterno:  new FormControl<string | null>(null),
+    note:                new FormControl<string | null>(null, [AppValidators.safeText()]),
+    riferimentoEsterno:  new FormControl<string | null>(null, [AppValidators.safeText()]),
     fonte:               new FormControl<string>('MANUALE', { nonNullable: true }),
   });
 

@@ -33,7 +33,10 @@
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Descrizione</mat-label>
-        <input matInput formControlName="descrizione" />
+        <input matInput formControlName="descrizione" appInputFilter="safe-text" />
+        @if (form.controls.descrizione.hasError('pattern') && form.controls.descrizione.touched) {
+          <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+        }
       </mat-form-field>
     </div>
 

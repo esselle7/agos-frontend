@@ -26,6 +26,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
@@ -65,6 +66,7 @@ import { BuSelectorComponent } from '../../shared/components/bu-selector/bu-sele
     MatTooltipModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    DateMaskDirective,
     MatProgressSpinnerModule,
     MatAutocompleteModule,
     EuroPipe,
@@ -307,7 +309,6 @@ export class CassaComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       ATTIVO:        '#2E7D32',
       ANNULLATO:     '#C62828',
-      RICONCILIATO:  '#1565C0',
     };
     return map[stato] ?? '#6B7280';
   }

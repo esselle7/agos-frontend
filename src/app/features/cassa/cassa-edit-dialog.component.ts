@@ -13,6 +13,9 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../shared/directives/input-filter.directive';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
+import { AppValidators } from '../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -57,6 +60,8 @@ export interface CassaEditDialogData {
     MatAutocompleteModule,
     CurrencyInputComponent,
     BuSelectorComponent,
+    InputFilterDirective,
+    DateMaskDirective,
   ],
   templateUrl: './cassa-edit-dialog.component.html',
 })
@@ -81,7 +86,7 @@ export class CassaEditDialogComponent implements OnInit, OnDestroy {
     tipo:           new FormControl<string>('PRELIEVO_DA_BANCA', { nonNullable: true }),
     importo:        new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
     dataMovimento:  new FormControl<Date | null>(null, [Validators.required]),
-    descrizione:    new FormControl<string | null>(null),
+    descrizione:    new FormControl<string | null>(null, [AppValidators.safeText()]),
     contoBancaId:   new FormControl<number | null>(null, [Validators.required]),
     businessUnitId: new FormControl<number | null>(null),
     contoCoge:      new FormControl<number | null>(null),

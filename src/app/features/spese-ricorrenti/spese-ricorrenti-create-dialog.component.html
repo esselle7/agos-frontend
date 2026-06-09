@@ -84,11 +84,14 @@
 
         <mat-form-field appearance="outline" class="src-field src-field--full">
           <mat-label>Nome del piano</mat-label>
-          <input matInput formControlName="descrizione"
+          <input matInput formControlName="descrizione" appInputFilter="safe-text"
                  placeholder="Es. Mutuo BPM 2026, Leasing auto Ford, Canone Adobe..." />
           <mat-icon matPrefix class="src-field-icon">label</mat-icon>
           @if (form.get('descrizione')?.hasError('required') && form.get('descrizione')?.touched) {
             <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.get('descrizione')?.hasError('pattern') && form.get('descrizione')?.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
           }
         </mat-form-field>
 
@@ -290,9 +293,15 @@
           <mat-form-field appearance="outline" class="src-field"
                           matTooltip="0 = importo fisso. Positivo = aumenta ogni rata. Negativo = diminuisce.">
             <mat-label>Variazione per rata</mat-label>
-            <input matInput type="number" formControlName="variazionePct" step="0.001" placeholder="0" />
+            <input matInput type="number" formControlName="variazionePct" step="0.001" placeholder="0" appInputFilter="positive-decimal" />
             <span matTextSuffix>&nbsp;%</span>
             <mat-hint>0 = fisso &nbsp;·&nbsp; 1 = +1% ogni rata</mat-hint>
+            @if (form.get('variazionePct')?.hasError('min') && form.get('variazionePct')?.touched) {
+              <mat-error>Minimo -100%</mat-error>
+            }
+            @if (form.get('variazionePct')?.hasError('max') && form.get('variazionePct')?.touched) {
+              <mat-error>Massimo +100%</mat-error>
+            }
           </mat-form-field>
         }
 
@@ -364,9 +373,12 @@
         <!-- ── Note ── -->
         <mat-form-field appearance="outline" class="src-field src-field--full">
           <mat-label>Note (opzionale)</mat-label>
-          <textarea matInput formControlName="note" rows="2"
+          <textarea matInput formControlName="note" rows="2" appInputFilter="safe-text"
                     placeholder="Riferimento contratto, IBAN, contatto banca..."></textarea>
           <mat-icon matPrefix class="src-field-icon">notes</mat-icon>
+          @if (form.get('note')?.hasError('pattern') && form.get('note')?.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+          }
         </mat-form-field>
 
         <!-- ── Errore step 1 ── -->

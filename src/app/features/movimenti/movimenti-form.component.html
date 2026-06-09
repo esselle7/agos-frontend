@@ -141,9 +141,12 @@
         <!-- Descrizione -->
         <mat-form-field appearance="outline" class="mov-form__field--full">
           <mat-label>Descrizione *</mat-label>
-          <input matInput formControlName="descrizione" placeholder="es. Pranzo domenicale - coperto 45 persone">
+          <input matInput formControlName="descrizione" placeholder="es. Pranzo domenicale - coperto 45 persone" appInputFilter="safe-text">
           @if (form.controls.descrizione.hasError('required')) {
             <mat-error>Descrizione obbligatoria</mat-error>
+          }
+          @if (form.controls.descrizione.hasError('pattern') && form.controls.descrizione.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
           }
         </mat-form-field>
 
@@ -487,13 +490,19 @@
 
         <mat-form-field appearance="outline" class="mov-form__field--full">
           <mat-label>Note</mat-label>
-          <textarea matInput formControlName="note" rows="3" placeholder="Note aggiuntive..."></textarea>
+          <textarea matInput formControlName="note" rows="3" placeholder="Note aggiuntive..." appInputFilter="safe-text"></textarea>
+          @if (form.controls.note.hasError('pattern') && form.controls.note.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+          }
         </mat-form-field>
 
         <div class="mov-form__row">
           <mat-form-field appearance="outline" class="mov-form__field--md">
             <mat-label>Riferimento esterno</mat-label>
-            <input matInput formControlName="riferimentoEsterno" placeholder="es. Fattura n° 2024/123">
+            <input matInput formControlName="riferimentoEsterno" placeholder="es. Fattura n° 2024/123" appInputFilter="safe-text">
+            @if (form.controls.riferimentoEsterno.hasError('pattern') && form.controls.riferimentoEsterno.touched) {
+              <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline" class="mov-form__field--sm">
             <mat-label>Fonte</mat-label>

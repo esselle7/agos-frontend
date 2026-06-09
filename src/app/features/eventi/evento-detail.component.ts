@@ -99,15 +99,21 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly destroy$ = new Subject<void>();
 
-  // ── Menu PDF ───────────────────────────────────────────────────────────────
+  // ── Menu (PDF / Word) ──────────────────────────────────────────────────────
   static readonly MENU_MAX_BYTES = 10 * 1024 * 1024;
-  readonly menuPanelOpen = signal(false);
-  readonly menuDragOver = signal(false);
-  readonly menuUploading = signal(false);
+  static readonly MENU_ACCEPTED_MIMES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ] as const;
+
+  readonly menuPanelOpen  = signal(false);
+  readonly menuDragOver   = signal(false);
+  readonly menuUploading  = signal(false);
 
   /**
-   * blob: URL dell'ultimo PDF scaricato via HttpClient (autenticato).
-   * L'iframe/object usa questo URL invece di chiamare il backend direttamente,
+   * blob: URL del file menu scaricato via HttpClient (autenticato).
+   * L'iframe usa questo URL invece di chiamare il backend direttamente,
    * evitando il problema di iframe che non trasportano l'Authorization header.
    */
   private menuBlobUrl: string | null = null;
@@ -116,6 +122,14 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   readonly menuPdfSafeUrl = computed<SafeResourceUrl | null>(() => {
     const url = this.menuPdfBlobSignal();
     return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  });
+
+  /** True quando il menu salvato è un documento Word (.doc/.docx). */
+  readonly menuIsWord = computed(() => {
+    const url = this.evento()?.menuPdfUrl;
+    if (!url) return false;
+    const ext = url.split('.').pop()?.toLowerCase();
+    return ext === 'doc' || ext === 'docx';
   });
 
   readonly statoColors = STATO_COLORS;
@@ -361,9 +375,11 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   downloadMenu(): void {
     const url = this.menuBlobUrl;
     if (!url) return;
+    const storedUrl = this.evento()?.menuPdfUrl ?? '';
+    const ext = storedUrl.split('.').pop() ?? 'pdf';
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'menu.pdf';
+    a.download = `menu.${ext}`;
     a.click();
   }
 
@@ -402,8 +418,8 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   }
 
   private uploadMenu(file: File): void {
-    if (file.type !== 'application/pdf') {
-      this.snackBar.open('Il file deve essere un PDF', 'OK', { duration: 3000 });
+    if (!EventoDetailComponent.MENU_ACCEPTED_MIMES.includes(file.type as typeof EventoDetailComponent.MENU_ACCEPTED_MIMES[number])) {
+      this.snackBar.open('Formato non supportato. Usa PDF o Word (.doc/.docx)', 'OK', { duration: 4000 });
       return;
     }
     if (file.size > EventoDetailComponent.MENU_MAX_BYTES) {

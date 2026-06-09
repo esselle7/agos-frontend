@@ -142,12 +142,20 @@
       </div>
 
       @if (ev.menuPdfUrl) {
-        @if (menuPdfSafeUrl(); as safeUrl) {
-          <iframe class="menu-viewer" [src]="safeUrl" type="application/pdf" title="Menu evento"></iframe>
+        @if (menuIsWord()) {
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 24px;border:1.5px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#6b7280;text-align:center">
+            <mat-icon style="font-size:48px;width:48px;height:48px;color:#3b82f6">description</mat-icon>
+            <p style="margin:0;font-size:15px;font-weight:600;color:#374151">Anteprima non disponibile</p>
+            <p style="margin:0;font-size:13px">Il file è un documento Word — scaricalo per visualizzarlo.</p>
+          </div>
+        } @else {
+          @if (menuPdfSafeUrl(); as safeUrl) {
+            <iframe class="menu-viewer" [src]="safeUrl" type="application/pdf" title="Menu evento"></iframe>
+          }
+          <div class="menu-fallback">
+            <button class="menu-link-btn" (click)="openMenuNewTab()">Apri PDF in una nuova scheda</button>
+          </div>
         }
-        <div class="menu-fallback">
-          <button class="menu-link-btn" (click)="openMenuNewTab()">Apri PDF in una nuova scheda</button>
-        </div>
 
         <div class="menu-buttons">
           <button mat-flat-button color="primary" (click)="downloadMenu()">
@@ -173,12 +181,14 @@
             <mat-spinner diameter="32" />
             <p class="menu-dropzone-sub">Caricamento in corso…</p>
           } @else {
-            <mat-icon>picture_as_pdf</mat-icon>
-            <p class="menu-dropzone-title">{{ ev.menuPdfUrl ? 'Sostituisci il menu' : 'Carica il menu in PDF' }}</p>
-            <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — max 10 MB</p>
+            <mat-icon>upload_file</mat-icon>
+            <p class="menu-dropzone-title">{{ ev.menuPdfUrl ? 'Sostituisci il menu' : 'Carica il menu (PDF o Word)' }}</p>
+            <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — PDF, .doc, .docx — max 10 MB</p>
           }
         </div>
-        <input #menuFileInput type="file" accept="application/pdf" hidden (change)="onMenuFileInput($event)" />
+        <input #menuFileInput type="file"
+               accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+               hidden (change)="onMenuFileInput($event)" />
       }
     </div>
     }

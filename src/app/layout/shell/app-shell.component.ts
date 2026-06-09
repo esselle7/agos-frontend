@@ -21,7 +21,6 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
 import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
-import { MovimentoDTO } from '../../core/models/movimenti.models';
 import { ScadenzeImminentiDTO } from '../../core/models/dashboard.models';
 import { API_PATHS } from '../../core/constants/api-paths';
 import { environment } from '../../../environments/environment';
@@ -81,7 +80,6 @@ export class AppShellComponent implements OnInit {
   );
 
   readonly businessUnits = signal<BusinessUnitDTO[]>([]);
-  readonly nonRiconciliatiCount = signal<number>(0);
   readonly scadenzeCount = signal<number>(0);
 
   readonly visibleNavItems = computed(() =>
@@ -101,7 +99,6 @@ export class AppShellComponent implements OnInit {
     this.buService.getAll().subscribe(units => this.businessUnits.set(units));
 
     if (this.isAdmin()) {
-      this.loadNonRiconciliati();
       this.loadScadenze();
     }
   }
@@ -112,17 +109,6 @@ export class AppShellComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-  }
-
-  private loadNonRiconciliati(): void {
-    this.http
-      .get<MovimentoDTO[]>(
-        environment.apiBaseUrl + API_PATHS.MOVIMENTI.NON_RICONCILIATI
-      )
-      .subscribe({
-        next: list => this.nonRiconciliatiCount.set(list.length),
-        error: () => {},
-      });
   }
 
   private loadScadenze(): void {

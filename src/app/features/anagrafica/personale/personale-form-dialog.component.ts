@@ -14,6 +14,8 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../../shared/directives/input-filter.directive';
+import { AppValidators } from '../../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -55,6 +57,7 @@ export interface PersonaleFormDialogData {
     MatProgressSpinnerModule,
     MatTooltipModule,
     SkeletonLoaderComponent,
+    InputFilterDirective,
   ],
   templateUrl: './personale-form-dialog.component.html',
   styles: [`
@@ -116,13 +119,13 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
   });
 
   readonly form = new FormGroup({
-    nome:                  new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
-    cognome:               new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
-    mansione:              new FormControl<string | null>(null, [Validators.maxLength(100)]),
+    nome:                  new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100), AppValidators.onlyLetters()] }),
+    cognome:               new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100), AppValidators.onlyLetters()] }),
+    mansione:              new FormControl<string | null>(null, [Validators.maxLength(100), AppValidators.safeText()]),
     businessUnitId:        new FormControl<number | null>(null),
     tipoRetribuzione:      new FormControl<TipoRetribuzione>('MENSILE', { nonNullable: true }),
-    costoAziendaleMensile: new FormControl<number | null>(null),
-    pagaOraria:            new FormControl<number | null>(null),
+    costoAziendaleMensile: new FormControl<number | null>(null, [Validators.min(0)]),
+    pagaOraria:            new FormControl<number | null>(null, [Validators.min(0)]),
     isActive:              new FormControl<boolean>(true, { nonNullable: true }),
   });
 

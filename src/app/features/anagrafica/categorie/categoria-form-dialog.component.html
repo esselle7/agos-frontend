@@ -31,12 +31,15 @@
       <div class="form-row">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nome categoria *</mat-label>
-          <input matInput formControlName="nome" maxlength="100" placeholder="es. Ricavi Ristorazione" />
+          <input matInput formControlName="nome" maxlength="100" placeholder="es. Ricavi Ristorazione" appInputFilter="safe-text" />
           @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
             <mat-error>Campo obbligatorio</mat-error>
           }
           @if (form.controls.nome.hasError('maxlength') && form.controls.nome.touched) {
             <mat-error>Massimo 100 caratteri</mat-error>
+          }
+          @if (form.controls.nome.hasError('pattern') && form.controls.nome.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
           }
         </mat-form-field>
       </div>
@@ -44,8 +47,11 @@
       <div class="form-row">
         <mat-form-field appearance="outline" class="half-width">
           <mat-label>Ordinamento</mat-label>
-          <input matInput formControlName="ordinamento" type="number" min="0" />
+          <input matInput formControlName="ordinamento" type="number" min="0" appInputFilter="digits-only" />
           <mat-hint>Numero più basso = prima nella lista</mat-hint>
+          @if (form.controls.ordinamento.hasError('min') && form.controls.ordinamento.touched) {
+            <mat-error>Valore non può essere negativo</mat-error>
+          }
         </mat-form-field>
       </div>
 

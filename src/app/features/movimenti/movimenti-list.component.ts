@@ -5,7 +5,6 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -21,6 +20,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
@@ -38,8 +38,8 @@ import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { RiconciliazioneDialogComponent } from './riconciliazione-dialog.component';
 import { ImportDialogComponent } from './import-dialog.component';
+import { ImportHistoryDialogComponent } from './import-history-dialog.component';
 
 @Component({
   selector: 'app-movimenti-list',
@@ -58,6 +58,7 @@ import { ImportDialogComponent } from './import-dialog.component';
     MatTooltipModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    DateMaskDirective,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatMenuModule,
@@ -78,7 +79,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
   readonly displayedColumns = ['dataMovimento', 'tipo', 'descrizione', 'bu', 'fonte', 'importo', 'stato', 'azioni'];
@@ -104,12 +104,10 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.contiService.getAll().pipe(takeUntil(this.destroy$)).subscribe(list => {
       this.conti.set(list);
-      this.cdr.markForCheck();
     });
 
     this.buService.getAll().subscribe(units => {
       this.buMap.set(new Map(units.map(u => [u.id, u])));
-      this.cdr.markForCheck();
     });
 
     this.searchControl.valueChanges.pipe(
@@ -138,17 +136,15 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       next: res => {
         this.result.set(res);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento dei movimenti', 'OK', { duration: 3000 });
-        this.cdr.markForCheck();
       },
     });
 
     this.movimentiService.getSommario(baseFilter).subscribe({
-      next: s => { this.sommario.set(s); this.cdr.markForCheck(); },
+      next: s => { this.sommario.set(s); },
       error: () => {},
     });
   }
@@ -191,8 +187,8 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/movimenti', row.id]);
   }
 
-  openRiconciliazione(): void {
-    this.dialog.open(RiconciliazioneDialogComponent, { width: '800px', maxHeight: '90vh' });
+  openImportHistory(): void {
+    this.dialog.open(ImportHistoryDialogComponent, { width: '960px', maxHeight: '90vh' });
   }
 
   openImport(): void {
@@ -269,7 +265,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       REGISTRATO:   '#1565C0',
       DA_LIQUIDARE: '#F57C00',
       ANNULLATO:    '#C62828',
-      RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';
   }
@@ -279,7 +274,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       REGISTRATO:   'Registrato',
       DA_LIQUIDARE: 'Da liquidare',
       ANNULLATO:    'Annullato',
-      RICONCILIATO: 'Riconciliato',
     };
     return map[stato] ?? stato;
   }

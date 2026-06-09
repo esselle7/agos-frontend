@@ -21,6 +21,42 @@ h2[mat-dialog-title] {
   font-size: 0.875rem;
 }
 
+.import-dialog__fonti {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.import-dialog__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: center;
+  color: var(--text-sub);
+  transition: border-color 0.15s ease;
+
+  &:hover { border-color: var(--primary); }
+
+  mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    color: var(--primary);
+  }
+}
+
+.import-dialog__filename {
+  font-weight: 500;
+  color: var(--text);
+  word-break: break-all;
+}
+
 .import-dialog__textarea-field {
   width: 100%;
 }
