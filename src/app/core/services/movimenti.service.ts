@@ -102,6 +102,13 @@ export class MovimentiService {
     );
   }
 
+  liquida(id: string, contoBancarioId: number, metodoPagamentoId?: number): Observable<MovimentoDTO> {
+    return this.http.patch<MovimentoDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.LIQUIDA(id),
+      { contoBancarioId, metodoPagamentoId: metodoPagamentoId ?? null }
+    );
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(
       `${environment.apiBaseUrl}${API_PATHS.MOVIMENTI.BASE}/${id}`

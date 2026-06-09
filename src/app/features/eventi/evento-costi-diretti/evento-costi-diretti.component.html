@@ -1,0 +1,161 @@
+<div class="section costi-section">
+  <div class="section-header">
+    <div class="sh-left">
+      <h2 class="section-title">Costi Diretti</h2>
+      <span class="sh-hint">Ogni costo genera un movimento di uscita</span>
+    </div>
+    @if (totale() > 0) {
+      <span class="totale-badge">{{ totale() | euro }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="empty-hint">Caricamento costi…</p>
+  } @else {
+
+    <!-- ====== BLOCCO COSTI FISSI ====== -->
+    <div class="costo-block fissi">
+      <div class="block-head">
+        <mat-icon class="bh-icon">settings</mat-icon>
+        <span>Costi fissi</span>
+        <span class="bh-desc">DJ, servizi a tariffa fissa</span>
+        @if (costiFissi().length > 0) {
+          <span class="bh-total">{{ totaleFissi() | euro }}</span>
+        }
+      </div>
+
+      <div class="card-grid">
+        @for (card of fissi; track cardKey(card)) {
+          <button type="button" class="costo-card" [class.selected]="isOpen(card)" (click)="openCard(card)">
+            <mat-icon>{{ card.icon }}</mat-icon>
+            <span class="cc-label">{{ card.label }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Form inline — fissi -->
+      @if (expandedKey()?.startsWith('FISSO:')) {
+        <div class="costo-form fissi-form">
+          <form [formGroup]="form">
+            @if (isCustomOpen()) {
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Etichetta *</mat-label>
+                <input matInput formControlName="etichetta" placeholder="Es. Fotografo, Fiori..." />
+              </mat-form-field>
+            }
+            <agos-currency-input formControlName="importo" label="Importo *" [required]="true" />
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Note (opzionale)</mat-label>
+              <textarea matInput formControlName="note" rows="2"></textarea>
+            </mat-form-field>
+            <div class="form-actions">
+              <button mat-button type="button" (click)="cancelForm()" [disabled]="saving()">Annulla</button>
+              <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
+                @if (saving()) {
+                  <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+                }
+                Aggiungi
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Lista costi fissi -->
+      @if (costiFissi().length > 0) {
+        <div class="costi-list">
+          @for (c of costiFissi(); track c.id) {
+            <ng-container [ngTemplateOutlet]="rigaCosto" [ngTemplateOutletContext]="{ c }"></ng-container>
+          }
+        </div>
+      } @else if (!expandedKey()?.startsWith('FISSO:')) {
+        <p class="block-empty">Nessun costo fisso ancora registrato</p>
+      }
+    </div>
+
+    <!-- ====== BLOCCO COSTI VARIABILI ====== -->
+    <div class="costo-block variabili">
+      <div class="block-head">
+        <mat-icon class="bh-icon">people</mat-icon>
+        <span>Costi variabili</span>
+        <span class="bh-desc">Torta, forniture per persona</span>
+        @if (costiVariabili().length > 0) {
+          <span class="bh-total">{{ totaleVariabili() | euro }}</span>
+        }
+      </div>
+
+      <div class="card-grid">
+        @for (card of variabili; track cardKey(card)) {
+          <button type="button" class="costo-card" [class.selected]="isOpen(card)" (click)="openCard(card)">
+            <mat-icon>{{ card.icon }}</mat-icon>
+            <span class="cc-label">{{ card.label }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Form inline — variabili -->
+      @if (expandedKey()?.startsWith('VARIABILE:')) {
+        <div class="costo-form variabili-form">
+          <form [formGroup]="form">
+            @if (isCustomOpen()) {
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Etichetta *</mat-label>
+                <input matInput formControlName="etichetta" placeholder="Es. Fotografo, Fiori..." />
+              </mat-form-field>
+            }
+            <agos-currency-input formControlName="importo" label="Importo *" [required]="true" />
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Note (opzionale)</mat-label>
+              <textarea matInput formControlName="note" rows="2"></textarea>
+            </mat-form-field>
+            <div class="form-actions">
+              <button mat-button type="button" (click)="cancelForm()" [disabled]="saving()">Annulla</button>
+              <button mat-raised-button color="primary" type="button" (click)="submit()" [disabled]="saving()">
+                @if (saving()) {
+                  <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+                }
+                Aggiungi
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Lista costi variabili -->
+      @if (costiVariabili().length > 0) {
+        <div class="costi-list">
+          @for (c of costiVariabili(); track c.id) {
+            <ng-container [ngTemplateOutlet]="rigaCosto" [ngTemplateOutletContext]="{ c }"></ng-container>
+          }
+        </div>
+      } @else if (!expandedKey()?.startsWith('VARIABILE:')) {
+        <p class="block-empty">Nessun costo variabile ancora registrato</p>
+      }
+    </div>
+
+  }
+
+  <!-- ====== TEMPLATE RIGA COSTO ====== -->
+  <ng-template #rigaCosto let-c="c">
+    <div class="costo-riga">
+      <div class="cr-icon"><mat-icon>{{ voceIcon(c.voce) }}</mat-icon></div>
+      <div class="cr-main">
+        <div class="cr-top">
+          <span class="cr-etichetta">{{ c.etichetta }}</span>
+          @if (c.movimentoId) {
+            <span class="cr-chip">
+              <mat-icon>swap_horiz</mat-icon> mov. registrato
+            </span>
+          }
+        </div>
+        @if (c.note) {
+          <span class="cr-note">{{ c.note }}</span>
+        }
+      </div>
+      <span class="cr-importo">{{ c.importo | euro }}</span>
+      <button mat-icon-button color="warn" matTooltip="Rimuovi costo" (click)="remove(c)">
+        <mat-icon>delete_outline</mat-icon>
+      </button>
+    </div>
+  </ng-template>
+</div>

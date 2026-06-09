@@ -7,6 +7,8 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
 import { Location } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,13 +20,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MovimentiService } from '../../core/services/movimenti.service';
-import { BuService } from '../../core/services/bu.service';
 import { ContiService } from '../../core/services/conti.service';
+import { BuService } from '../../core/services/bu.service';
 import { FornitoriService } from '../../core/services/fornitori.service';
 import { LookupService } from '../../core/services/lookup.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { MovimentoDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
 import { BusinessUnitDTO, ContoBancarioDTO, MetodoPagamentoDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
+
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
@@ -42,6 +45,8 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
     MatDividerModule,
     MatChipsModule,
     MatTooltipModule,
+    MatProgressSpinnerModule,
+    MatMenuModule,
     EuroPipe,
     BadgeComponent,
     SkeletonLoaderComponent,
@@ -53,8 +58,8 @@ export class MovimentoDetailComponent implements OnInit {
   @Input() id!: string;
 
   private readonly movimentiService = inject(MovimentiService);
-  private readonly buService = inject(BuService);
   private readonly contiService = inject(ContiService);
+  private readonly buService = inject(BuService);
   private readonly fornitoriService = inject(FornitoriService);
   private readonly lookupService = inject(LookupService);
   readonly authService = inject(AuthService);
@@ -66,8 +71,10 @@ export class MovimentoDetailComponent implements OnInit {
 
   movimento = signal<MovimentoDTO | null>(null);
   loading = signal(true);
+  liquidando = signal(false);
   buMap = signal<Map<number, BusinessUnitDTO>>(new Map());
   contiMap = signal<Map<number, ContoBancarioDTO>>(new Map());
+  contiList = signal<ContoBancarioDTO[]>([]);
   fornitoreNome = signal<string | null>(null);
 
   metodiPagamento: MetodoPagamentoDTO[] = [];
@@ -90,6 +97,7 @@ export class MovimentoDetailComponent implements OnInit {
     });
     this.contiService.getAll().subscribe(conti => {
       this.contiMap.set(new Map(conti.map(c => [c.id, c])));
+      this.contiList.set(conti);
       this.cdr.markForCheck();
     });
 
@@ -115,6 +123,25 @@ export class MovimentoDetailComponent implements OnInit {
 
   goBack(): void {
     this.location.back();
+  }
+
+  liquidaMovimento(contoBancarioId: number): void {
+    const mov = this.movimento();
+    if (!mov || this.liquidando()) return;
+    this.liquidando.set(true);
+    this.movimentiService.liquida(mov.id, contoBancarioId).subscribe({
+      next: updated => {
+        this.movimento.set(updated);
+        this.liquidando.set(false);
+        this.cdr.markForCheck();
+        this.snackBar.open('Movimento liquidato ✓', 'OK', { duration: 3000 });
+      },
+      error: () => {
+        this.liquidando.set(false);
+        this.cdr.markForCheck();
+        this.snackBar.open('Errore durante la liquidazione', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   deleteMovimento(): void {

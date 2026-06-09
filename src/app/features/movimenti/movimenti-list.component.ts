@@ -22,13 +22,16 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatMenuModule } from '@angular/material/menu';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { MovimentiService, MovimentiFilter } from '../../core/services/movimenti.service';
+import { ContiService } from '../../core/services/conti.service';
 import { ReportingService } from '../../core/services/reporting.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
 import { MovimentoDTO, MovimentiSommarioDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
-import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
+import { BusinessUnitDTO, ContoBancarioDTO } from '../../core/models/anagrafica.models';
 import { PagedResponse } from '../../core/models/shared.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
@@ -57,6 +60,8 @@ import { ImportHistoryDialogComponent } from './import-history-dialog.component'
     MatNativeDateModule,
     DateMaskDirective,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
+    MatMenuModule,
     EuroPipe,
     BadgeComponent,
     EmptyStateComponent,
@@ -69,6 +74,7 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly movimentiService = inject(MovimentiService);
   private readonly reportingService = inject(ReportingService);
   private readonly buService = inject(BuService);
+  private readonly contiService = inject(ContiService);
   readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -76,6 +82,8 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly displayedColumns = ['dataMovimento', 'tipo', 'descrizione', 'bu', 'fonte', 'importo', 'stato', 'azioni'];
+  readonly liquidandoId = signal<string | null>(null);
+  readonly conti = signal<ContoBancarioDTO[]>([]);
 
   result = signal<PagedResponse<MovimentoDTO> | null>(null);
   sommario = signal<MovimentiSommarioDTO | null>(null);
@@ -94,6 +102,10 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   private currentSize = 20;
 
   ngOnInit(): void {
+    this.contiService.getAll().pipe(takeUntil(this.destroy$)).subscribe(list => {
+      this.conti.set(list);
+    });
+
     this.buService.getAll().subscribe(units => {
       this.buMap.set(new Map(units.map(u => [u.id, u])));
     });
@@ -193,6 +205,23 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
     const toStr = to ? this.toIso(to) : this.toIso(today);
     this.reportingService.exportMovimenti(fromStr, toStr, 'csv').subscribe(blob => {
       this.reportingService.downloadBlob(blob, `movimenti-${fromStr}.csv`);
+    });
+  }
+
+  liquidaMovimento(mov: MovimentoDTO, contoBancarioId: number, event?: Event): void {
+    event?.stopPropagation();
+    if (this.liquidandoId()) return;
+    this.liquidandoId.set(mov.id);
+    this.movimentiService.liquida(mov.id, contoBancarioId).subscribe({
+      next: () => {
+        this.liquidandoId.set(null);
+        this.snackBar.open('Movimento liquidato ✓', 'OK', { duration: 3000 });
+        this.loadData();
+      },
+      error: () => {
+        this.liquidandoId.set(null);
+        this.snackBar.open('Errore durante la liquidazione', 'OK', { duration: 3000 });
+      },
     });
   }
 

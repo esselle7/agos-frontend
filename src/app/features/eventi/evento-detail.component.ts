@@ -33,6 +33,8 @@ import { DecimalPipe } from '@angular/common';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { EventoCostiDirettiComponent } from './evento-costi-diretti/evento-costi-diretti.component';
+import { EventoPreventivoMonitoringComponent } from './evento-preventivo-monitoring/evento-preventivo-monitoring.component';
 import { forkJoin } from 'rxjs';
 
 const STATO_COLORS: Record<StatoEvento, string> = {
@@ -79,6 +81,8 @@ const STEP_ORDER: StatoEvento[] = ['PREVENTIVATO', 'CONFERMATO', 'SALDATO'];
     DecimalPipe,
     EuroPipe,
     SkeletonLoaderComponent,
+    EventoCostiDirettiComponent,
+    EventoPreventivoMonitoringComponent,
   ],
   templateUrl: './evento-detail.component.html',
   styleUrls: ['./evento-detail.component.scss'],
@@ -139,6 +143,11 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
   loading = signal(true);
   loadingPartecipanti = signal(false);
 
+  /** Bozza ore inserite per partecipante (chiave = id partecipante). */
+  oreDraft = signal<Map<number, number | null>>(new Map());
+  /** Id del partecipante per cui è in corso un salvataggio ore. */
+  savingOre = signal<number | null>(null);
+
   /** Partecipanti raggruppati per mansione, ordinati alfabeticamente. */
   readonly partecipantiPerMansione = computed(() => {
     const map = new Map<string, EventoPartecipanteDTO[]>();
@@ -187,6 +196,9 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
     this.eventiService.getPartecipanti(eventoId).subscribe({
       next: list => {
         this.partecipanti.set(list);
+        const draft = new Map<number, number | null>();
+        list.forEach(p => draft.set(p.id, p.ore));
+        this.oreDraft.set(draft);
         this.loadingPartecipanti.set(false);
         this.cdr.markForCheck();
       },
@@ -273,6 +285,67 @@ export class EventoDetailComponent implements OnInit, OnDestroy {
         next: () => { this.partecipanti.update(l => l.filter(p => p.id !== id)); this.cdr.markForCheck(); },
       });
     });
+  }
+
+  onCostiUpdated(): void { this.reloadEvento(); }
+
+  // ── Allocazione ore (dipendenti ORARIA) ────────────────────────────────────
+
+  oreVal(id: number): number | null { return this.oreDraft().get(id) ?? null; }
+
+  onOreInput(id: number, ev: Event): void {
+    const raw = (ev.target as HTMLInputElement).value;
+    const val = raw === '' ? null : Number(raw);
+    const m = new Map(this.oreDraft());
+    m.set(id, val);
+    this.oreDraft.set(m);
+  }
+
+  oreTotale(p: EventoPartecipanteDTO): number {
+    return (this.oreVal(p.id) ?? 0) * (p.pagaOraria ?? 0);
+  }
+
+  allocaOre(p: EventoPartecipanteDTO): void {
+    const ore = this.oreVal(p.id);
+    if (!ore || ore <= 0) {
+      this.snackBar.open('Inserisci le ore da allocare', 'OK', { duration: 3000 });
+      return;
+    }
+    this.savingOre.set(p.id);
+    this.eventiService.allocaOrePartecipante(p.id, ore).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.savingOre.set(null);
+        this.snackBar.open('Ore allocate, costo registrato', 'OK', { duration: 3000 });
+        this.refreshAfterOre();
+      },
+      error: err => {
+        this.savingOre.set(null);
+        this.snackBar.open(err?.error?.message ?? 'Errore durante l\'allocazione', 'OK', { duration: 4000 });
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  rimuoviOre(p: EventoPartecipanteDTO): void {
+    this.savingOre.set(p.id);
+    this.eventiService.rimuoviOrePartecipante(p.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.savingOre.set(null);
+        this.snackBar.open('Allocazione ore rimossa', 'OK', { duration: 3000 });
+        this.refreshAfterOre();
+      },
+      error: () => {
+        this.savingOre.set(null);
+        this.snackBar.open('Errore durante la rimozione', 'OK', { duration: 3000 });
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private refreshAfterOre(): void {
+    const id = this.evento()!.id;
+    this.loadPartecipanti(id);
+    this.reloadEvento();
   }
 
   goBack(): void { this.router.navigate(['/eventi']); }

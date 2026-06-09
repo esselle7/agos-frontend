@@ -52,6 +52,9 @@ export const API_PATHS = {
     IMPORT_TRANSITORIO_CLASSIFICA:(id: string) => `/api/movimenti/import/transitori/${id}/classifica`,
     IMPORT_EVENTI:               '/api/movimenti/import/eventi',
     IMPORT_EVENTO_RISOLVI:       (id: string) => `/api/movimenti/import/eventi/${id}/risolvi`,
+    NON_RICONCILIATI: '/api/movimenti/riconciliazione/non-riconciliati',
+    MATCH_AUTO:       '/api/movimenti/riconciliazione/match-automatico',
+    LIQUIDA:          (id: string) => `/api/movimenti/${id}/liquida`,
   },
   DASHBOARD: {
     KPI:                '/api/dashboard/kpi',

@@ -4,6 +4,10 @@ import { Observable, of, tap } from 'rxjs';
 import {
   AggiungiPartecipanteRequest,
   EventoCalendarioDTO,
+  EventoCostoDirettoDTO,
+  EventoCostoDirettoRequest,
+  EventoPreventivoTrackingDTO,
+  EventoPreventivoTrackingRequest,
   EventoCreateRequest,
   EventoDTO,
   EventoPartecipanteDTO,
@@ -146,6 +150,59 @@ export class EventiService {
     return this.http.delete<void>(
       `${environment.apiBaseUrl}${API_PATHS.EVENTI}/partecipanti/${id}`
     );
+  }
+
+  getCostiDiretti(eventoId: string): Observable<EventoCostoDirettoDTO[]> {
+    return this.http.get<EventoCostoDirettoDTO[]>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/costi-diretti`
+    );
+  }
+
+  aggiungiCostoDiretto(eventoId: string, req: EventoCostoDirettoRequest): Observable<EventoCostoDirettoDTO> {
+    return this.http.post<EventoCostoDirettoDTO>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/costi-diretti`,
+      req
+    ).pipe(tap(() => this.invalidateCalendarCache()));
+  }
+
+  rimuoviCostoDiretto(eventoId: string, costoId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/costi-diretti/${costoId}`
+    ).pipe(tap(() => this.invalidateCalendarCache()));
+  }
+
+  // ── Monitoring preventivato ────────────────────────────────────────────────
+  getPreventivoTracking(eventoId: string): Observable<EventoPreventivoTrackingDTO[]> {
+    return this.http.get<EventoPreventivoTrackingDTO[]>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/preventivo-tracking`
+    );
+  }
+
+  savePreventivoTracking(eventoId: string, req: EventoPreventivoTrackingRequest): Observable<EventoPreventivoTrackingDTO> {
+    return this.http.post<EventoPreventivoTrackingDTO>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/preventivo-tracking`,
+      req
+    );
+  }
+
+  deletePreventivoTracking(eventoId: string, trackingId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/${eventoId}/preventivo-tracking/${trackingId}`
+    );
+  }
+
+  // ── Ore personale su evento ────────────────────────────────────────────────
+  allocaOrePartecipante(partecipanteId: number, ore: number): Observable<EventoPartecipanteDTO> {
+    return this.http.post<EventoPartecipanteDTO>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/partecipanti/${partecipanteId}/ore`,
+      { ore }
+    ).pipe(tap(() => this.invalidateCalendarCache()));
+  }
+
+  rimuoviOrePartecipante(partecipanteId: number): Observable<EventoPartecipanteDTO> {
+    return this.http.delete<EventoPartecipanteDTO>(
+      `${environment.apiBaseUrl}${API_PATHS.EVENTI}/partecipanti/${partecipanteId}/ore`
+    ).pipe(tap(() => this.invalidateCalendarCache()));
   }
 
   getMiei(page = 0, size = 20): Observable<PagedResponse<EventoDTO>> {

@@ -86,6 +86,32 @@
     opacity: 0;
     transition: opacity 0.12s ease;
   }
+
+  &__liquida-btn {
+    color: #2563eb !important;
+
+    mat-icon { color: #2563eb; }
+
+    &:hover:not([disabled]) {
+      background: rgba(37, 99, 235, 0.1);
+    }
+  }
+}
+
+// Menu item saldo insufficiente (overlay fuori dal component host)
+// stylelint-disable-next-line selector-pseudo-element-no-unknown
+::ng-deep .conto-saldo-ko {
+  color: #b91c1c !important;
+
+  .mat-icon,
+  .icon-danger { color: #ef4444 !important; }
+
+  .saldo-ko-hint {
+    margin-left: auto;
+    font-size: 11px;
+    color: #ef4444;
+    font-weight: 600;
+  }
 }
 
 .text-right {

@@ -1,0 +1,215 @@
+<div class="section monitoring-section">
+  <div class="section-header">
+    <div class="sh-left">
+      <h2 class="section-title">Monitoring Preventivato</h2>
+      <span class="sh-hint-chip">
+        <mat-icon>analytics</mat-icon>
+        Solo tracciamento · nessun movimento contabile
+      </span>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p class="empty-hint">Caricamento…</p>
+  } @else {
+
+    <!-- ── Scomposizione visiva del preventivato ───────────────────────── -->
+    <div class="breakdown">
+      <div class="bd-header">
+        <span class="bd-label">Totale preventivato</span>
+        <strong class="bd-total">{{ breakdown().tot | euro }}</strong>
+      </div>
+
+      @if (breakdown().tot > 0) {
+        <!-- Indicatore overflow se la somma supera il preventivato -->
+        @if (sommaExceedsPreventivato()) {
+          <div class="bd-overflow-warn">
+            <mat-icon>error_outline</mat-icon>
+            Affitto + Catering ({{ (breakdown().affittoIncasso + breakdown().cateringRicavo) | euro }})
+            supera il preventivato di
+            <strong>{{ (breakdown().affittoIncasso + breakdown().cateringRicavo - breakdown().tot) | euro }}</strong>
+          </div>
+        }
+        <div class="bd-bar" [class.bd-bar--overflow]="sommaExceedsPreventivato()">
+          @if (barWidths().affitto > 0) {
+            <div class="bd-seg affitto" [style.width.%]="barWidths().affitto"></div>
+          }
+          @if (barWidths().catering > 0) {
+            <div class="bd-seg catering" [style.width.%]="barWidths().catering"></div>
+          }
+          @if (barWidths().residuo > 0) {
+            <div class="bd-seg residuo" [style.width.%]="barWidths().residuo"></div>
+          }
+        </div>
+      }
+
+      <div class="bd-legend">
+        <div class="bdl-item">
+          <span class="bdl-dot affitto-dot"></span>
+          <span class="bdl-label">Affitto (incasso)</span>
+          <span class="bdl-value">{{ breakdown().affittoIncasso | euro }}</span>
+        </div>
+        <div class="bdl-item">
+          <span class="bdl-dot catering-dot"></span>
+          <span class="bdl-label">Catering (ricavo)</span>
+          <span class="bdl-value">{{ breakdown().cateringRicavo | euro }}</span>
+        </div>
+        <div class="bdl-item residuo-item" [class.neg]="breakdown().residuo < 0">
+          <span class="bdl-dot residuo-dot" [class.neg]="breakdown().residuo < 0"></span>
+          <span class="bdl-label">Residuo / altro</span>
+          <strong class="bdl-value">{{ breakdown().residuo | euro }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Cards AFFITTO + CATERING ────────────────────────────────────── -->
+    <div class="cards">
+
+      <!-- AFFITTO ── incasso per l'agriturismo -->
+      <form [formGroup]="affittoForm" class="track-card affitto">
+        <div class="tc-head">
+          <mat-icon>home</mat-icon>
+          <span>Affitto sala</span>
+          <span class="tc-badge incasso">incasso</span>
+          @if (affitto()) { <span class="saved-chip">salvato</span> }
+        </div>
+
+        <agos-currency-input formControlName="importoIncasso" label="Incasso affitto (€)" />
+
+        <!-- Errori budget in tempo reale -->
+        @if (preventivato() > 0 && !affitto()) {
+          @if (affittoExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          } @else if (sommaExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Affitto + catering supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          }
+        }
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Note (opzionale)</mat-label>
+          <input matInput formControlName="note" />
+        </mat-form-field>
+
+        <div class="tc-actions">
+          @if (affitto()) {
+            <button mat-button color="warn" type="button" (click)="rimuovi(affitto())">Rimuovi</button>
+          } @else {
+            <button mat-raised-button class="btn-affitto" type="button"
+                    (click)="salvaAffitto()"
+                    [disabled]="savingAffitto() || !canSaveAffitto()">
+              @if (savingAffitto()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px" /> }
+              Salva
+            </button>
+          }
+        </div>
+      </form>
+
+      <!-- CATERING ── analisi di marginalità -->
+      <form [formGroup]="cateringForm" class="track-card catering">
+        <div class="tc-head">
+          <mat-icon>restaurant</mat-icon>
+          <span>Catering</span>
+          <span class="tc-badge analisi">analisi</span>
+          @if (catering()) { <span class="saved-chip">salvato</span> }
+        </div>
+
+        <!-- Chip partecipanti: view / edit -->
+        @if (!editingPersone()) {
+          <div class="persone-chip">
+            <mat-icon>people</mat-icon>
+            <span class="pc-label">Partecipanti</span>
+            <strong class="pc-val">{{ numPersoneEff() }}</strong>
+            <button type="button" class="pc-btn" (click)="startEditPersone()" matTooltip="Modifica numero partecipanti">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <div class="persone-chip editing">
+            <mat-icon>people</mat-icon>
+            <span class="pc-label">Partecipanti</span>
+            <input type="number"
+                   [formControl]="personeDraftControl"
+                   class="persone-input"
+                   min="1"
+                   aria-label="Numero partecipanti" />
+            <button type="button" class="pc-btn save" (click)="savePersone()" [disabled]="savingPersone()" matTooltip="Salva e aggiorna evento">
+              @if (savingPersone()) {
+                <mat-spinner diameter="12" />
+              } @else {
+                <mat-icon>check</mat-icon>
+              }
+            </button>
+            <button type="button" class="pc-btn cancel" (click)="cancelEditPersone()" [disabled]="savingPersone()" matTooltip="Annulla">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+
+        <div class="row-2">
+          <agos-currency-input formControlName="costoPerPersona" label="Costo/pers. *" />
+          <agos-currency-input formControlName="prezzoPerPersona" label="Prezzo/pers." />
+        </div>
+
+        <!-- Errori budget catering in tempo reale -->
+        @if (preventivato() > 0 && !catering()) {
+          @if (cateringExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Il ricavo catering supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          } @else if (sommaExceedsPreventivato()) {
+            <p class="budget-error">
+              <mat-icon>warning</mat-icon>
+              Affitto + catering supera il preventivato ({{ preventivato() | euro }})
+            </p>
+          }
+        }
+
+        <!-- KPI strip in tempo reale -->
+        <div class="catering-kpis">
+          <div class="ck-item">
+            <span class="ck-label">Costo totale</span>
+            <strong class="ck-val cost">{{ cateringPreview().costo | euro }}</strong>
+          </div>
+          <div class="ck-div"></div>
+          <div class="ck-item">
+            <span class="ck-label">Ricavo</span>
+            <strong class="ck-val">{{ cateringPreview().ricavo | euro }}</strong>
+          </div>
+          <div class="ck-div"></div>
+          <div class="ck-item"
+               [class.kpi-pos]="cateringPreview().margine >= 0"
+               [class.kpi-neg]="cateringPreview().margine < 0">
+            <span class="ck-label">Margine</span>
+            <strong class="ck-val">
+              {{ cateringPreview().margine | euro }}
+              @if (cateringPreview().marginePerc != null) {
+                <span class="ck-perc">{{ cateringPreview().marginePerc | number:'1.0-1' }}%</span>
+              }
+            </strong>
+          </div>
+        </div>
+
+        <div class="tc-actions">
+          @if (catering()) {
+            <button mat-button color="warn" type="button" (click)="rimuovi(catering())">Rimuovi</button>
+          } @else {
+            <button mat-raised-button color="primary" type="button"
+                    (click)="salvaCatering()"
+                    [disabled]="savingCatering() || !canSaveCatering()">
+              @if (savingCatering()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px" /> }
+              Salva
+            </button>
+          }
+        </div>
+      </form>
+
+    </div>
+  }
+</div>

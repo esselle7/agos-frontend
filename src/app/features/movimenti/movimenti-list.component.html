@@ -224,6 +224,38 @@
                       matTooltip="Modifica" (click)="$event.stopPropagation()">
                 <mat-icon>edit</mat-icon>
               </button>
+              @if (row.stato === 'DA_LIQUIDARE') {
+                @if (liquidandoId() === row.id) {
+                  <button mat-icon-button disabled class="mov-list__liquida-btn">
+                    <mat-spinner diameter="18"></mat-spinner>
+                  </button>
+                } @else {
+                  <button mat-icon-button
+                          matTooltip="Liquida oggi"
+                          class="mov-list__liquida-btn"
+                          [disabled]="liquidandoId() !== null"
+                          [matMenuTriggerFor]="liquidaRowMenu"
+                          (click)="$event.stopPropagation()">
+                    <mat-icon>payments</mat-icon>
+                  </button>
+                  <mat-menu #liquidaRowMenu="matMenu">
+                    @for (c of conti(); track c.id) {
+                      <button mat-menu-item
+                              (click)="liquidaMovimento(row, c.id)"
+                              [disabled]="c.saldoCalcolato < row.importo"
+                              [class.conto-saldo-ko]="c.saldoCalcolato < row.importo">
+                        <mat-icon [class.icon-danger]="c.saldoCalcolato < row.importo">
+                          {{ c.saldoCalcolato < row.importo ? 'money_off' : 'account_balance' }}
+                        </mat-icon>
+                        <span>{{ c.nome }}</span>
+                        @if (c.saldoCalcolato < row.importo) {
+                          <span class="saldo-ko-hint">saldo {{ c.saldoCalcolato | euro }}</span>
+                        }
+                      </button>
+                    }
+                  </mat-menu>
+                }
+              }
               @if (authService.isAdmin() && row.stato !== 'ANNULLATO') {
                 <button mat-icon-button color="warn"
                         matTooltip="Elimina"
