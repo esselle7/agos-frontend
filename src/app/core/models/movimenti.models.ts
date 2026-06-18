@@ -136,9 +136,13 @@ export interface EtlImportResponse {
   importati: number;
   duplicati: number;
   ambigui: number;
-  scartati: number;      // SKIP_POS / SKIP_GIROCONTO / SKIP_RICORRENTE (Gate A)
+  scartati: number;      // SKIP_POS / SKIP_GIROCONTO (Gate A)
   parcheggiati: number;  // PARK_EVENTO → eventi_da_riconciliare (Gate B)
+  ricorrenti?: number;   // spese ricorrenti/finanziamenti parcheggiate (V9, flusso congiunto)
   errori: EtlRowError[];
+  /** Avvisi non bloccanti: scontrini Billy non agganciati. messaggio prefissato da
+   *  EVENTO_ATTESO: (incasso-evento) o SPACCIO_DA_VERIFICARE: (spaccio non riconciliato). */
+  avvisi?: EtlRowError[];
 }
 
 export interface ImportLogDTO {
@@ -170,17 +174,10 @@ export interface ImportKpiDTO {
   saldoTransitori: number;
   tassoAmbiguitaPct: number;
   coperturaFornitoriPct: number;
-}
-
-export interface SuggerimentoControparteDTO {
-  controparteId: string;
-  nome: string;
-  iban: string | null;
-  fornitoreId: string | null;
-  cogeDefaultId: number | null;
-  cogeCodice: string | null;
-  buDefault: number | null;
-  similarita: number;
+  ricaviTransitoriCount: number;
+  ricaviDaClassificare: number;
+  costiTransitoriCount: number;
+  costiDaClassificare: number;
 }
 
 export interface RegolaClassificazioneDTO {
@@ -219,8 +216,39 @@ export interface ClassificaTransitorioRequest {
   cogeId: number;
   businessUnitId: number;
   fornitoreId: string | null;
-  apprendiControparte: boolean;
+  apprendiKeyword: boolean;
   nota: string | null;
+}
+
+// ── Quadratura di periodo POS (Billy = verità) ──────────────────────────────
+// Pannello informativo che sostituisce la vecchia vista "Incassi POS da ripartire" a scontrino:
+// confronto Σ Billy elettronico ↔ Σ POS banca scomposto per causa (PROMPT-RICONCILIAZIONE-PERIODO §5).
+export interface InAttesaDTO {
+  data: string | null;
+  importo: number;
+  rif: string;
+  descrizione: string;
+}
+
+export interface QuadraturaPeriodoDTO {
+  importLogId: string;
+  importDataOra: string | null;
+  anno: number;
+  billyElettronicoNonAgri: number;
+  billyContabilizzato: number;
+  posBancaTotale: number;
+  posBancaCore: number;
+  sigmaBpm: number;
+  sigmaCa: number;
+  assegnatoBpm: number;
+  assegnatoCa: number;
+  codaTesta: number;
+  codaFondo: number;
+  residuoCore: number;
+  maxDelBanca: string | null;
+  note: string[];
+  approssimazioni: string[];
+  inAttesa: InAttesaDTO[];
 }
 
 export interface EventoParcheggiatoDTO {
@@ -248,6 +276,43 @@ export interface RisolviEventoRequest {
   nota: string | null;
 }
 
+// ── Analisi duplicati eventi (aggancio cross-sorgente senza chiave) ────────────
+
+export type TonoMotivo = 'FORTE' | 'MEDIO' | 'DEBOLE' | 'CONFLITTO';
+
+export interface MotivoMatchDTO {
+  segnale: string;
+  dettaglio: string;
+  tono: TonoMotivo;
+}
+
+export interface EventoBreveDTO {
+  id: string;
+  fonte: string;                     // IMPORT_BILLY | IMPORT_BANCA
+  dataMovimento: string | null;
+  importo: number;
+  tipo: string;
+  controparteNome: string | null;
+  controparteIban: string | null;
+  dataEvento: string | null;
+  tipoEvento: string | null;
+  descrizione: string | null;
+}
+
+export interface CoppiaSospettaDTO {
+  confidenza: 'CERTA' | 'PROBABILE';
+  punteggio: number;                 // 0-100
+  eventoA: EventoBreveDTO;
+  eventoB: EventoBreveDTO;
+  motivi: MotivoMatchDTO[];
+}
+
+export interface AnalisiDuplicatiDTO {
+  eventiInCoda: number;
+  coppieSospette: number;
+  coppie: CoppiaSospettaDTO[];
+}
+
 export interface AmbiguitaDTO {
   id: string;
   importLogId: string;
@@ -270,6 +335,75 @@ export interface ClassificaAmbiguitaRequest {
   eventoId: string | null;
   tipoEventoMovimento: string | null;
   nota: string | null;
-  aggiungiRegola: boolean;
+  apprendiKeyword: boolean;
   scarta: boolean;
+}
+
+// ── Gestione Keyword (PROMPT-KEYWORD-LEARNING.md §4.8) ──────────────────────
+
+export interface KeywordFirmaDTO {
+  id: string | null;
+  natura: 'DOMINIO' | 'IDENTITA';
+  azione: 'BOOK' | 'PARK_EVENTO';
+  tipoMovimento: string;   // ENTRATA | USCITA | *
+  sorgente: string;        // BILLY | BPM | CA | *
+  buId: number | null;
+  cogeCodice: string | null;
+  fornitoreId: string | null;
+  eventoForza: string | null;   // FORTE | DEBOLE
+  tipoEvento: string | null;
+  confidence: number | null;
+  origine: string | null;       // APPRESA | MANUALE | SEED
+  stato: string | null;         // ATTIVA | IN_CONFLITTO | DISATTIVATA
+  note: string | null;
+  token: string[];
+  createdAt: string | null;
+}
+
+export interface KeywordConflittoDTO {
+  id: string;
+  tipo: string;            // APPRENDIMENTO | MATCH
+  stato: string;           // APERTO | RISOLTO | IGNORATO
+  signatureHash: string | null;
+  firmaEsistenteId: string | null;
+  movimentoId: string | null;
+  targetEsistente: string | null;
+  targetNuovo: string | null;
+  descrizione: string | null;
+  createdAt: string | null;
+}
+
+export interface RisolviConflittoKeywordRequest {
+  azione: 'TIENI_ESISTENTE' | 'USA_NUOVO' | 'SCARTA';
+  note: string | null;
+}
+
+export interface KeywordAnteprimaFirma {
+  token: string[];
+  natura: 'DOMINIO' | 'IDENTITA';
+}
+
+export interface KeywordAnteprimaDTO {
+  firme: KeywordAnteprimaFirma[];
+}
+
+// ── Parcheggio spese ricorrenti / finanziamenti (V9) ────────────────────────
+
+export interface RicorrenteParcheggiataDTO {
+  id: string;
+  fonte: string;
+  dataMovimento: string | null;
+  importo: number;
+  tipo: string;
+  contoBancarioId: number | null;
+  descrizione: string;
+  tipoPresunto: string;   // MUTUO | FINANZIAMENTO | LEASING | CANONE | CAMBIALE | ASSICURAZIONE | BOLLO | RATA | ALTRO
+  recurringPlanId: string | null;
+  stato: string;          // DA_RICONCILIARE | RICONCILIATA | IGNORATA
+}
+
+export interface RisolviRicorrenteRequest {
+  azione: 'COLLEGA' | 'IGNORA';
+  recurringPlanId: string | null;
+  nota: string | null;
 }

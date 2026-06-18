@@ -3,10 +3,11 @@ import {
   OnInit,
   inject,
   signal,
+  computed,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -29,10 +30,16 @@ import {
   ImportKpiDTO,
   TransitorioDTO,
   EventoParcheggiatoDTO,
-  SuggerimentoControparteDTO,
   ClassificaTransitorioRequest,
   RisolviEventoRequest,
+  CoppiaSospettaDTO,
+  EventoBreveDTO,
+  MotivoMatchDTO,
+  RicorrenteParcheggiataDTO,
 } from '../../core/models/movimenti.models';
+import { SpeseRicorrentiService } from '../../core/services/spese-ricorrenti.service';
+import { PlanSummaryDTO } from '../spese-ricorrenti/spese-ricorrenti.models';
+import { ImportCountsService } from '../import/import-counts.service';
 import {
   PianoContiCogeDTO,
   FornitoreSummaryDTO,
@@ -43,7 +50,7 @@ interface TransForm {
   cogeId: FormControl<number | null>;
   businessUnitId: FormControl<number | null>;
   fornitoreId: FormControl<string | null>;
-  apprendiControparte: FormControl<boolean>;
+  apprendiKeyword: FormControl<boolean>;
   nota: FormControl<string | null>;
 }
 
@@ -64,7 +71,6 @@ interface EventoForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    MatDialogModule,
     MatButtonModule,
     MatIconModule,
     MatTabsModule,
@@ -81,12 +87,21 @@ interface EventoForm {
   styleUrls: ['./import-triage-dialog.component.scss'],
 })
 export class ImportTriageDialogComponent implements OnInit {
-  private readonly dialogRef = inject(MatDialogRef<ImportTriageDialogComponent, boolean>);
+  private readonly route = inject(ActivatedRoute);
+  private readonly counts = inject(ImportCountsService);
   private readonly movimentiService = inject(MovimentiService);
   private readonly lookupService = inject(LookupService);
   private readonly fornitoriService = inject(FornitoriService);
   private readonly buService = inject(BuService);
+  private readonly speseService = inject(SpeseRicorrentiService);
   private readonly snackBar = inject(MatSnackBar);
+
+  /** Sezione attiva (da rotta :sezione) → indice del tab (header nascosti, guida la nav laterale). */
+  sezione = signal<string>('catalogare');
+  private readonly tabIndex: Record<string, number> = {
+    catalogare: 0, eventi: 1, duplicati: 2, ricorrenti: 3, riba: 4,
+  };
+  selectedIndex = computed(() => this.tabIndex[this.sezione()] ?? 0);
 
   loading = signal(true);
   saving = signal<string | null>(null);
@@ -95,46 +110,91 @@ export class ImportTriageDialogComponent implements OnInit {
   kpi = signal<ImportKpiDTO | null>(null);
   transitori = signal<TransitorioDTO[]>([]);
   eventi = signal<EventoParcheggiatoDTO[]>([]);
+  coppie = signal<CoppiaSospettaDTO[]>([]);
+  ricorrenti = signal<RicorrenteParcheggiataDTO[]>([]);
+  riba = signal<TransitorioDTO[]>([]);
+  piani = signal<PlanSummaryDTO[]>([]);
+
+  /** selezione del piano per ogni ricorrente (id ricorrente → id piano). */
+  pianoSel = signal<Record<string, string>>({});
+
+  /** Circonferenza del ring punteggio (r=20). */
+  readonly ringCirc = 2 * Math.PI * 20;
 
   coge = signal<PianoContiCogeDTO[]>([]);
   bu = signal<BusinessUnitDTO[]>([]);
   fornitori = signal<FornitoreSummaryDTO[]>([]);
 
-  suggerimenti = signal<Record<string, SuggerimentoControparteDTO[]>>({});
-  suggLoading = signal<string | null>(null);
+  // Anteprima keyword: "queste keyword imparerò da questa riga" (caricata all'apertura del pannello).
+  anteprime = signal<Record<string, { token: string[]; natura: string }[]>>({});
 
   private readonly transForms = new Map<string, FormGroup<TransForm>>();
   private readonly eventoForms = new Map<string, FormGroup<EventoForm>>();
 
+  /** Sezioni già caricate (lazy): si carica solo la sezione attiva, non tutte e 6. */
+  private readonly caricate = new Set<string>();
+  /** Sezione attualmente in caricamento (per mostrare lo spinner, non un falso "vuoto"). */
+  sezioneLoading = signal<string | null>(null);
+
   ngOnInit(): void {
+    // 1) Lookups UNA volta sola (coge/bu/fornitori/piani: cambiano di rado).
     forkJoin({
       coge: this.lookupService.getPianoConti(),
       bu: this.buService.getAll(),
       fornitori: this.fornitoriService.getList({ size: 300 }),
-      kpi: this.movimentiService.getImportKpi(),
-      transitori: this.movimentiService.getTransitori(undefined, 0, 200),
-      eventi: this.movimentiService.getEventiParcheggiati('DA_RICONCILIARE', 0, 200),
+      piani: this.speseService.listPlans(),
     }).subscribe({
-      next: ({ coge, bu, fornitori, kpi, transitori, eventi }) => {
-        this.coge.set(coge);
-        this.bu.set(bu);
-        this.fornitori.set(fornitori.content);
-        this.kpi.set(kpi);
-        transitori.content.forEach(t => this.transForms.set(t.id, this.buildTransForm()));
-        this.transitori.set(transitori.content);
-        eventi.content.forEach(e => this.eventoForms.set(e.id, this.buildEventoForm()));
-        this.eventi.set(eventi.content);
+      next: ({ coge, bu, fornitori, piani }) => {
+        this.coge.set(coge); this.bu.set(bu); this.fornitori.set(fornitori.content); this.piani.set(piani);
         this.loading.set(false);
+        this.caricaSezione(this.sezione());
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento dello smistamento import', 'OK', { duration: 4000 });
       },
     });
+    // 2) La sezione attiva (e i suoi dati) seguono la rotta, in modo lazy.
+    this.route.paramMap.subscribe(p => {
+      const s = p.get('sezione') ?? 'catalogare';
+      this.sezione.set(s);
+      if (!this.loading()) this.caricaSezione(s);
+    });
   }
 
+  /** Carica i dati della SOLA sezione richiesta, una volta (lazy load → niente over-fetch). */
+  private caricaSezione(s: string): void {
+    if (this.caricate.has(s)) return;
+    this.caricate.add(s);
+    this.sezioneLoading.set(s);
+    const done = () => { if (this.sezioneLoading() === s) this.sezioneLoading.set(null); };
+    const fail = (e: unknown) => { this.caricate.delete(s); done(); this.fail(e as { error?: { message?: string } }); };
+    switch (s) {
+      case 'catalogare':
+        this.movimentiService.getTransitori(undefined, 0, 2000).subscribe({
+          next: r => { r.content.forEach(t => this.transForms.set(t.id, this.buildTransForm())); this.transitori.set(r.content); done(); }, error: fail });
+        break;
+      case 'riba':
+        this.movimentiService.getRibaTransitori(0, 2000).subscribe({
+          next: r => { r.content.forEach(t => this.transForms.set(t.id, this.buildTransForm())); this.riba.set(r.content); done(); }, error: fail });
+        break;
+      case 'ricorrenti':
+        this.movimentiService.getRicorrenti('DA_RICONCILIARE', 0, 2000).subscribe({ next: r => { this.ricorrenti.set(r.content); done(); }, error: fail });
+        break;
+      case 'eventi':
+        this.movimentiService.getEventiParcheggiati('DA_RICONCILIARE', 0, 2000).subscribe({
+          next: r => { r.content.forEach(e => this.eventoForms.set(e.id, this.buildEventoForm())); this.eventi.set(r.content); done(); }, error: fail });
+        break;
+      case 'duplicati':
+        this.movimentiService.getAnalisiDuplicati().subscribe({ next: a => { this.coppie.set(a.coppie); this.counts.setDuplicati(a.coppie.length); done(); }, error: fail });
+        break;
+      default: done();
+    }
+  }
+
+  /** Dopo un'azione: ricarica i badge dello shell (il KPI lo possiede lo shell). */
   private refreshKpi(): void {
-    this.movimentiService.getImportKpi().subscribe(k => { this.kpi.set(k); });
+    this.counts.reload();
   }
 
   // ── Transitori ──────────────────────────────────────────────────────────────
@@ -145,26 +205,18 @@ export class ImportTriageDialogComponent implements OnInit {
     return !!f && f.controls.cogeId.value != null && f.controls.businessUnitId.value != null;
   }
 
-  suggerimentiFor(id: string): SuggerimentoControparteDTO[] { return this.suggerimenti()[id] ?? []; }
   pct(s: number): number { return Math.round(s * 100); }
 
-  caricaSuggerimenti(t: TransitorioDTO): void {
-    if (this.suggerimenti()[t.id] !== undefined) return;
-    this.suggLoading.set(t.id);
-    this.movimentiService.getSuggerimentiTransitorio(t.id).subscribe({
-      next: list => { this.suggerimenti.update(m => ({ ...m, [t.id]: list })); this.suggLoading.set(null); },
-      error: () => { this.suggerimenti.update(m => ({ ...m, [t.id]: [] })); this.suggLoading.set(null); },
-    });
-  }
+  anteprimaFor(id: string): { token: string[]; natura: string }[] { return this.anteprime()[id] ?? []; }
 
-  applicaSuggerimento(id: string, s: SuggerimentoControparteDTO): void {
-    const f = this.transForms.get(id);
-    if (!f) return;
-    if (s.cogeDefaultId != null) f.controls.cogeId.setValue(s.cogeDefaultId);
-    if (s.buDefault != null) f.controls.businessUnitId.setValue(s.buDefault);
-    if (s.fornitoreId) f.controls.fornitoreId.setValue(s.fornitoreId);
-    f.controls.apprendiControparte.setValue(true);
-    this.snackBar.open(`Applicato: ${s.nome}`, 'OK', { duration: 1500 });
+  /** Carica l'anteprima delle keyword che verrebbero apprese dalla descrizione di questa riga. */
+  caricaAnteprima(t: TransitorioDTO): void {
+    if (this.anteprime()[t.id] !== undefined) return;
+    const sorgente = t.contoBancarioId === 1 ? 'BPM' : t.contoBancarioId === 2 ? 'CA' : undefined;
+    this.movimentiService.anteprimaKeyword(t.descrizione, sorgente).subscribe({
+      next: a => this.anteprime.update(m => ({ ...m, [t.id]: a.firme })),
+      error: () => this.anteprime.update(m => ({ ...m, [t.id]: [] })),
+    });
   }
 
   classificaTrans(t: TransitorioDTO): void {
@@ -173,7 +225,7 @@ export class ImportTriageDialogComponent implements OnInit {
       cogeId: f.controls.cogeId.value!,
       businessUnitId: f.controls.businessUnitId.value!,
       fornitoreId: f.controls.fornitoreId.value,
-      apprendiControparte: f.controls.apprendiControparte.value,
+      apprendiKeyword: f.controls.apprendiKeyword.value,
       nota: f.controls.nota.value,
     };
     this.saving.set(t.id);
@@ -184,8 +236,56 @@ export class ImportTriageDialogComponent implements OnInit {
         this.transForms.delete(t.id);
         this.modificato = true;
         this.refreshKpi();
-        this.snackBar.open('Movimento catalogato' + (req.apprendiControparte ? ' e controparte appresa' : ''), 'OK', { duration: 2500 });
+        this.snackBar.open('Movimento catalogato' + (req.apprendiKeyword ? ' e keyword apprese' : ''), 'OK', { duration: 2500 });
       },
+      error: err => this.fail(err),
+    });
+  }
+
+  // ── Spese ricorrenti parcheggiate (V9) ───────────────────────────────────────
+  setPiano(ricorrenteId: string, planId: string): void {
+    this.pianoSel.update(m => ({ ...m, [ricorrenteId]: planId }));
+  }
+
+  collegaRicorrente(r: RicorrenteParcheggiataDTO): void {
+    const planId = this.pianoSel()[r.id];
+    if (!planId) { this.snackBar.open('Seleziona prima un piano ricorrente', 'OK', { duration: 2500 }); return; }
+    this.saving.set(r.id);
+    this.movimentiService.risolviRicorrente(r.id, { azione: 'COLLEGA', recurringPlanId: planId, nota: null }).subscribe({
+      next: () => { this.saving.set(null); this.ricorrenti.update(rs => rs.filter(x => x.id !== r.id)); this.modificato = true;
+        this.counts.reload();
+        this.snackBar.open('Ricorrente collegata al piano', 'OK', { duration: 2500 }); },
+      error: err => this.fail(err),
+    });
+  }
+
+  ignoraRicorrente(r: RicorrenteParcheggiataDTO): void {
+    this.saving.set(r.id);
+    this.movimentiService.risolviRicorrente(r.id, { azione: 'IGNORA', recurringPlanId: null, nota: null }).subscribe({
+      next: () => { this.saving.set(null); this.ricorrenti.update(rs => rs.filter(x => x.id !== r.id)); this.modificato = true;
+        this.counts.reload();
+        this.snackBar.open('Ricorrente ignorata', 'OK', { duration: 2000 }); },
+      error: err => this.fail(err),
+    });
+  }
+
+  // ── Effetti / RiBa (transitori filtrati) ─────────────────────────────────────
+  classificaRiba(t: TransitorioDTO): void {
+    const f = this.transForms.get(t.id)!;
+    const req: ClassificaTransitorioRequest = {
+      cogeId: f.controls.cogeId.value!,
+      businessUnitId: f.controls.businessUnitId.value!,
+      fornitoreId: f.controls.fornitoreId.value,
+      // MAI imparare keyword dalle RiBa: la descrizione ("EFFETTI RITIRATI") è generica e
+      // creerebbe una firma spuria che dirotterebbe tutte le RiBa future su un solo fornitore.
+      apprendiKeyword: false,
+      nota: f.controls.nota.value,
+    };
+    this.saving.set(t.id);
+    this.movimentiService.classificaTransitorio(t.id, req).subscribe({
+      next: () => { this.saving.set(null); this.riba.update(rs => rs.filter(x => x.id !== t.id)); this.transForms.delete(t.id);
+        this.modificato = true; this.refreshKpi();
+        this.snackBar.open('Effetto/RiBa catalogato', 'OK', { duration: 2500 }); },
       error: err => this.fail(err),
     });
   }
@@ -231,14 +331,64 @@ export class ImportTriageDialogComponent implements OnInit {
     this.snackBar.open(err.error?.message ?? 'Operazione non riuscita', 'OK', { duration: 4000 });
   }
 
-  close(): void { this.dialogRef.close(this.modificato); }
+  // ── Possibili duplicati ─────────────────────────────────────────────────────
+
+  /** Offset del ring SVG in funzione del punteggio 0-100. */
+  ringOffset(punteggio: number): number {
+    return this.ringCirc * (1 - Math.max(0, Math.min(100, punteggio)) / 100);
+  }
+
+  confLabel(c: CoppiaSospettaDTO): string {
+    return c.confidenza === 'CERTA' ? 'Confidenza certa' : 'Da verificare';
+  }
+
+  fonteLabel(fonte: string): string {
+    return fonte === 'IMPORT_BILLY' ? 'Billy · Cassa' : 'Banca · Estratto conto';
+  }
+
+  fonteClass(fonte: string): string {
+    return 'triage__dup-src ' + (fonte === 'IMPORT_BILLY' ? 'billy' : 'banca');
+  }
+
+  /** Titolo della coppia: il nominativo più informativo tra i due lati. */
+  titoloCoppia(c: CoppiaSospettaDTO): string {
+    const nomi = [c.eventoA.controparteNome, c.eventoB.controparteNome]
+      .filter((n): n is string => !!n)
+      .sort((a, b) => b.length - a.length);
+    return nomi[0] ?? 'Intestatario non indicato';
+  }
+
+  motivoClass(m: MotivoMatchDTO): string {
+    return 'triage__dup-reason ' + m.tono.toLowerCase();
+  }
+
+  /** Scarta uno dei due eventi come duplicato (riusa la risoluzione evento). */
+  scartaDuplicato(ev: EventoBreveDTO): void {
+    this.saving.set(ev.id);
+    this.movimentiService.risolviEvento(ev.id, {
+      azione: 'SCARTA', cogeId: null, businessUnitId: null, eventoId: null,
+      nota: 'Duplicato cross-sorgente',
+    }).subscribe({
+      next: () => {
+        this.saving.set(null);
+        this.coppie.update(cs => cs.filter(c => c.eventoA.id !== ev.id && c.eventoB.id !== ev.id));
+        this.eventi.update(rs => rs.filter(r => r.id !== ev.id));
+        this.eventoForms.delete(ev.id);
+        this.modificato = true;
+        this.refreshKpi();
+        this.snackBar.open('Evento scartato come duplicato', 'OK', { duration: 2500 });
+      },
+      error: err => this.fail(err),
+    });
+  }
+
 
   private buildTransForm(): FormGroup<TransForm> {
     return new FormGroup<TransForm>({
       cogeId: new FormControl<number | null>(null),
       businessUnitId: new FormControl<number | null>(null),
       fornitoreId: new FormControl<string | null>(null),
-      apprendiControparte: new FormControl<boolean>(true, { nonNullable: true }),
+      apprendiKeyword: new FormControl<boolean>(true, { nonNullable: true }),
       nota: new FormControl<string | null>(null),
     });
   }

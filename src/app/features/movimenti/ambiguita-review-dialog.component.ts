@@ -16,6 +16,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 
@@ -28,7 +29,6 @@ import { BuService } from '../../core/services/bu.service';
 import {
   AmbiguitaDTO,
   ClassificaAmbiguitaRequest,
-  SuggerimentoControparteDTO,
 } from '../../core/models/movimenti.models';
 import {
   ContoBancarioDTO,
@@ -48,7 +48,7 @@ interface RigaForm {
   eventoId: FormControl<string | null>;
   tipoEventoMovimento: FormControl<string | null>;
   nota: FormControl<string | null>;
-  aggiungiRegola: FormControl<boolean>;
+  apprendiKeyword: FormControl<boolean>;
 }
 
 @Component({
@@ -67,6 +67,7 @@ interface RigaForm {
     MatExpansionModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTooltipModule,
   ],
   templateUrl: './ambiguita-review-dialog.component.html',
   styleUrls: ['./ambiguita-review-dialog.component.scss'],
@@ -88,10 +89,6 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
   saving = signal<string | null>(null); // id riga in salvataggio
   righe = signal<AmbiguitaDTO[]>([]);
   classificate = signal(0);
-
-  // Suggerimenti controparte (ETL v2 §8.2): caricati on-demand all'apertura della riga.
-  suggerimenti = signal<Record<string, SuggerimentoControparteDTO[]>>({});
-  suggLoading = signal<string | null>(null);
 
   conti = signal<ContoBancarioDTO[]>([]);
   metodi = signal<MetodoPagamentoDTO[]>([]);
@@ -145,39 +142,6 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
     return !!f && f.controls.cogeId.value != null && f.controls.businessUnitId.value != null;
   }
 
-  // ── Suggerimenti controparte (top-3 fuzzy) ──────────────────────────────────
-  suggerimentiFor(id: string): SuggerimentoControparteDTO[] {
-    return this.suggerimenti()[id] ?? [];
-  }
-
-  pct(similarita: number): number {
-    return Math.round(similarita * 100);
-  }
-
-  caricaSuggerimenti(amb: AmbiguitaDTO): void {
-    if (this.suggerimenti()[amb.id] !== undefined) return; // già caricati
-    this.suggLoading.set(amb.id);
-    this.movimentiService.getSuggerimenti(amb.id).subscribe({
-      next: list => {
-        this.suggerimenti.update(m => ({ ...m, [amb.id]: list }));
-        this.suggLoading.set(null);
-      },
-      error: () => {
-        this.suggerimenti.update(m => ({ ...m, [amb.id]: [] }));
-        this.suggLoading.set(null);
-      },
-    });
-  }
-
-  applicaSuggerimento(id: string, s: SuggerimentoControparteDTO): void {
-    const f = this.forms.get(id);
-    if (!f) return;
-    if (s.cogeDefaultId != null) f.controls.cogeId.setValue(s.cogeDefaultId);
-    if (s.buDefault != null) f.controls.businessUnitId.setValue(s.buDefault);
-    if (s.fornitoreId) f.controls.fornitoreId.setValue(s.fornitoreId);
-    this.snackBar.open(`Applicato: ${s.nome}`, 'OK', { duration: 1500 });
-  }
-
   classifica(amb: AmbiguitaDTO): void {
     const f = this.forms.get(amb.id)!;
     const req: ClassificaAmbiguitaRequest = {
@@ -189,7 +153,7 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
       eventoId: f.controls.eventoId.value,
       tipoEventoMovimento: f.controls.tipoEventoMovimento.value,
       nota: f.controls.nota.value,
-      aggiungiRegola: f.controls.aggiungiRegola.value,
+      apprendiKeyword: f.controls.apprendiKeyword.value,
       scarta: false,
     };
     this.invia(amb, req, 'Riga classificata');
@@ -200,7 +164,7 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
     const req: ClassificaAmbiguitaRequest = {
       cogeId: null, businessUnitId: null, metodoPagamentoId: null, contoBancarioId: null,
       fornitoreId: null, eventoId: null, tipoEventoMovimento: null,
-      nota: f.controls.nota.value, aggiungiRegola: false, scarta: true,
+      nota: f.controls.nota.value, apprendiKeyword: false, scarta: true,
     };
     this.invia(amb, req, 'Riga scartata');
   }
@@ -237,7 +201,7 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
       eventoId: new FormControl<string | null>(null),
       tipoEventoMovimento: new FormControl<string | null>(null),
       nota: new FormControl<string | null>(null),
-      aggiungiRegola: new FormControl<boolean>(false, { nonNullable: true }),
+      apprendiKeyword: new FormControl<boolean>(true, { nonNullable: true }),
     });
   }
 }

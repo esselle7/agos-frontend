@@ -1,0 +1,10 @@
+.storico {
+  &__loading, &__empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 3rem; color: #98a2b3; }
+  &__table { width: 100%; background: transparent; }
+  &__stat { display: inline-block; font-size: .76rem; font-weight: 600; padding: .08rem .45rem; border-radius: 6px; margin-right: .3rem; background: #eef1f5; color: #475467;
+    &.ok { background: #ecfdf3; color: #027a48; }
+    &.warn { background: #fff7ed; color: #b45309; }
+    &.err { background: #fef2f2; color: #b42318; } }
+  &__stato { font-weight: 700; font-size: .85rem; }
+  &__azioni { display: flex; gap: .35rem; align-items: center; justify-content: flex-end; }
+}

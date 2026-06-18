@@ -12,12 +12,19 @@ import {
   AmbiguitaDTO,
   ClassificaAmbiguitaRequest,
   ImportKpiDTO,
-  SuggerimentoControparteDTO,
   RegolaClassificazioneDTO,
   TransitorioDTO,
   ClassificaTransitorioRequest,
   EventoParcheggiatoDTO,
   RisolviEventoRequest,
+  AnalisiDuplicatiDTO,
+  KeywordFirmaDTO,
+  KeywordConflittoDTO,
+  RisolviConflittoKeywordRequest,
+  KeywordAnteprimaDTO,
+  RicorrenteParcheggiataDTO,
+  RisolviRicorrenteRequest,
+  QuadraturaPeriodoDTO,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -122,25 +129,23 @@ export class MovimentiService {
     );
   }
 
-  // ── Import ETL (Billy / BPM / CA) ──────────────────────────────────────────
+  // ── Import ETL CONGIUNTO (unica modalità: Billy + BPM + CA insieme) ───────────
 
-  importBilly(file: File): Observable<EtlImportResponse> {
-    return this.uploadImport(API_PATHS.MOVIMENTI.IMPORT_BILLY, file);
-  }
-
-  importBpm(file: File): Observable<EtlImportResponse> {
-    return this.uploadImport(API_PATHS.MOVIMENTI.IMPORT_BPM, file);
-  }
-
-  importCa(file: File): Observable<EtlImportResponse> {
-    return this.uploadImport(API_PATHS.MOVIMENTI.IMPORT_CA, file);
-  }
-
-  private uploadImport(path: string, file: File): Observable<EtlImportResponse> {
+  /**
+   * Import CONGIUNTO: i 3 file (Billy + BPM + CA) dello stesso periodo, caricati e
+   * riconciliati insieme in un'unica operazione (rollback atomico). L'import single-file
+   * è stato rimosso (PROMPT-KEYWORD-LEARNING.md §4.9).
+   */
+  importCongiunto(billy: File, bpm: File, ca: File): Observable<EtlImportResponse> {
     const fd = new FormData();
-    fd.append('file', file, file.name);
-    fd.append('filename', file.name);
-    return this.http.post<EtlImportResponse>(environment.apiBaseUrl + path, fd);
+    fd.append('billy', billy, billy.name);
+    fd.append('bpm', bpm, bpm.name);
+    fd.append('ca', ca, ca.name);
+    fd.append('filenameBilly', billy.name);
+    fd.append('filenameBpm', bpm.name);
+    fd.append('filenameCa', ca.name);
+    return this.http.post<EtlImportResponse>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_CONGIUNTO, fd);
   }
 
   getImportHistory(fonte?: string, page = 0, size = 20): Observable<PagedResponse<ImportLogDTO>> {
@@ -172,12 +177,6 @@ export class MovimentiService {
 
   getImportKpi(): Observable<ImportKpiDTO> {
     return this.http.get<ImportKpiDTO>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_KPI);
-  }
-
-  getSuggerimenti(ambiguitaId: string): Observable<SuggerimentoControparteDTO[]> {
-    return this.http.get<SuggerimentoControparteDTO[]>(
-      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_SUGGERIMENTI(ambiguitaId)
-    );
   }
 
   getRegole(): Observable<RegolaClassificazioneDTO[]> {
@@ -219,12 +218,6 @@ export class MovimentiService {
     );
   }
 
-  getSuggerimentiTransitorio(movimentoId: string): Observable<SuggerimentoControparteDTO[]> {
-    return this.http.get<SuggerimentoControparteDTO[]>(
-      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORIO_SUGG(movimentoId)
-    );
-  }
-
   classificaTransitorio(movimentoId: string, req: ClassificaTransitorioRequest): Observable<void> {
     return this.http.put<void>(
       environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORIO_CLASSIFICA(movimentoId), req
@@ -243,6 +236,89 @@ export class MovimentiService {
   risolviEvento(id: string, req: RisolviEventoRequest): Observable<void> {
     return this.http.put<void>(
       environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_EVENTO_RISOLVI(id), req
+    );
+  }
+
+  // ── Parcheggio spese ricorrenti (V9) + vista RiBa ───────────────────────────
+
+  getRicorrenti(stato = 'DA_RICONCILIARE', page = 0, size = 2000): Observable<PagedResponse<RicorrenteParcheggiataDTO>> {
+    const params = new HttpParams().set('stato', stato).set('page', page).set('size', size);
+    return this.http.get<PagedResponse<RicorrenteParcheggiataDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_RICORRENTI, { params });
+  }
+
+  risolviRicorrente(id: string, req: RisolviRicorrenteRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_RICORRENTE_RISOLVI(id), req);
+  }
+
+  getRibaTransitori(page = 0, size = 2000): Observable<PagedResponse<TransitorioDTO>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PagedResponse<TransitorioDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORI_RIBA, { params });
+  }
+
+  /**
+   * Quadratura di periodo dell'ultimo import congiunto (o di {@code importLogId} se passato).
+   * 204 (body vuoto) se non c'è ancora nessuna quadratura → ritorna null.
+   */
+  getQuadratura(importLogId?: string): Observable<QuadraturaPeriodoDTO | null> {
+    let params = new HttpParams();
+    if (importLogId) params = params.set('importLogId', importLogId);
+    return this.http.get<QuadraturaPeriodoDTO | null>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_QUADRATURA, { params });
+  }
+
+  /** Coppie di eventi sospette duplicate (confidenza + motivazioni), per la revisione. */
+  getAnalisiDuplicati(): Observable<AnalisiDuplicatiDTO> {
+    return this.http.get<AnalisiDuplicatiDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_ANALISI_DUPLICATI
+    );
+  }
+
+  // ── Gestione Keyword (PROMPT-KEYWORD-LEARNING.md §4.8) ──────────────────────
+
+  getKeyword(natura?: string, stato?: string): Observable<KeywordFirmaDTO[]> {
+    let params = new HttpParams();
+    if (natura) params = params.set('natura', natura);
+    if (stato) params = params.set('stato', stato);
+    return this.http.get<KeywordFirmaDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD, { params }
+    );
+  }
+
+  createKeyword(firma: KeywordFirmaDTO): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD, firma
+    );
+  }
+
+  updateKeyword(id: string, firma: KeywordFirmaDTO): Observable<void> {
+    return this.http.put<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_ID(id), firma);
+  }
+
+  deleteKeyword(id: string): Observable<void> {
+    return this.http.delete<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_ID(id));
+  }
+
+  getKeywordConflitti(stato?: string): Observable<KeywordConflittoDTO[]> {
+    let params = new HttpParams();
+    if (stato) params = params.set('stato', stato);
+    return this.http.get<KeywordConflittoDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_CONFLITTI, { params }
+    );
+  }
+
+  risolviKeywordConflitto(id: string, req: RisolviConflittoKeywordRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_CONFLITTO_RISOLVI(id), req
+    );
+  }
+
+  /** Anteprima delle keyword che verrebbero apprese da una descrizione (per il triage). */
+  anteprimaKeyword(descrizione: string, sorgente?: string): Observable<KeywordAnteprimaDTO> {
+    return this.http.post<KeywordAnteprimaDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_ANTEPRIMA, { descrizione, sorgente: sorgente ?? null }
     );
   }
 }

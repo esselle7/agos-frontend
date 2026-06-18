@@ -37,7 +37,9 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',        icon: 'dashboard',              route: '/dashboard',         adminOnly: false },
   { label: 'Movimenti',        icon: 'swap_horiz',             route: '/movimenti',         adminOnly: true  },
+  { label: 'Import & Smistamento', icon: 'inbox',              route: '/import',            adminOnly: true  },
   { label: 'Spese Ricorrenti', icon: 'repeat',                 route: '/spese-ricorrenti',  adminOnly: true  },
+  { label: 'Keyword',          icon: 'sell',                   route: '/keyword',           adminOnly: true  },
   { label: 'Cassa',            icon: 'account_balance_wallet', route: '/cassa',             adminOnly: true  },
   { label: 'Forecasting',      icon: 'trending_up',            route: '/forecasting',       adminOnly: true  },
 ];

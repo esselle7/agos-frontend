@@ -57,6 +57,22 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
+        path: 'import',
+        loadChildren: () =>
+          import('./features/import/import.routes').then(m => m.importRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'keyword',
+        loadComponent: () =>
+          import('./features/keyword/keyword-page.component').then(
+            m => m.KeywordPageComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'forecasting',
         loadComponent: () =>
           import('./features/reporting/forecasting.component').then(

@@ -38,8 +38,6 @@ import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { ImportDialogComponent } from './import-dialog.component';
-import { ImportHistoryDialogComponent } from './import-history-dialog.component';
 
 @Component({
   selector: 'app-movimenti-list',
@@ -185,16 +183,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   onRowClick(row: MovimentoDTO): void {
     this.router.navigate(['/movimenti', row.id]);
-  }
-
-  openImportHistory(): void {
-    this.dialog.open(ImportHistoryDialogComponent, { width: '960px', maxHeight: '90vh' });
-  }
-
-  openImport(): void {
-    this.dialog.open(ImportDialogComponent, { width: '600px' }).afterClosed().subscribe(imported => {
-      if (imported) this.loadData();
-    });
   }
 
   esportaCsv(): void {
