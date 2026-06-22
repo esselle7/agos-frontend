@@ -94,7 +94,7 @@ export class CashFlowComponent implements OnInit {
         {
           label: 'Saldo Cumulato',
           data: rows.map(r => r.saldoCumulato),
-          borderColor: '#1565C0',
+          borderColor: '#2C6E8F',
           backgroundColor: 'transparent',
           borderDash: [6, 3],
           fill: false,
@@ -151,7 +151,7 @@ export class CashFlowComponent implements OnInit {
       datasets: [{
         label: 'Liquidità Proiettata',
         data: rows.map(r => r.liquiditaProiettata),
-        borderColor: '#1565C0',
+        borderColor: '#2C6E8F',
         backgroundColor: 'rgba(21,101,192,0.08)',
         borderDash: [8, 4],
         fill: true,

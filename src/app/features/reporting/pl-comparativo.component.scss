@@ -100,7 +100,7 @@
   height: 18px;
   vertical-align: middle;
   margin-right: 6px;
-  color: var(--primary, #1565c0);
+  color: var(--primary);
 }
 
 .plc-table-note {
@@ -132,7 +132,7 @@
   border-radius: 8px;
   transition: background .15s;
 
-  &:hover { background: rgba(0,0,0,.02); }
+  &:hover { background: color-mix(in srgb, var(--text-main) 2%, transparent); }
 
   &__label {
     flex: 1;
@@ -158,22 +158,22 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background: rgba(21,101,192,.08);
-    color: var(--primary, #1565c0);
+    color: var(--primary);
 
     &--minus {
       background: rgba(198,40,40,.08);
-      color: #c62828;
+      color: var(--danger);
     }
 
     &--result {
       background: rgba(21,101,192,.12);
-      color: var(--primary, #1565c0);
+      color: var(--primary);
       font-weight: 800;
     }
 
     &--utile {
       background: rgba(46,125,50,.12);
-      color: #2e7d32;
+      color: var(--success);
       font-weight: 800;
     }
   }

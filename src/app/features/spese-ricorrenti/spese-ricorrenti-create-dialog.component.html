@@ -113,20 +113,22 @@
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="src-field">
-          <mat-label>{{ isFinanziamento() ? 'Conto COGE – quota capitale (Passività)' : 'Conto COGE' }}</mat-label>
-          <mat-select formControlName="contoCoge">
-            @for (c of contiCoge(); track c.id) {
-              <mat-option [value]="c.id">{{ c.codice }} – {{ c.descrizione }}</mat-option>
-            }
-          </mat-select>
+        <div class="src-field">
+          <app-coge-picker
+            [label]="isFinanziamento() ? 'Conto COGE – quota capitale (Passività)' : 'Conto COGE'"
+            [required]="true"
+            [allowedIds]="cogeIds()"
+            [value]="form.get('contoCoge')?.value"
+            [invalid]="!!form.get('contoCoge')?.touched && !!form.get('contoCoge')?.hasError('required')"
+            (cogeChange)="setContoCoge($event)"
+          ></app-coge-picker>
           @if (isFinanziamento()) {
-            <mat-hint>Ramo 20 – riduce il debito a bilancio</mat-hint>
+            <p class="src-field__hint">Ramo 20 – riduce il debito a bilancio</p>
           }
           @if (form.get('contoCoge')?.hasError('required') && form.get('contoCoge')?.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
+            <p class="src-field__err">Campo obbligatorio</p>
           }
-        </mat-form-field>
+        </div>
 
         <!-- ── Sezione: Dettagli finanziamento (solo FINANZIAMENTO) ── -->
         @if (isFinanziamento()) {
@@ -172,18 +174,20 @@
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="src-field src-field--full">
-            <mat-label>Conto COGE – quota interessi (Onere finanziario)</mat-label>
-            <mat-select formControlName="contoCogeInteressiId">
-              @for (c of contiCogeInteressi(); track c.id) {
-                <mat-option [value]="c.id">{{ c.codice }} – {{ c.descrizione }}</mat-option>
-              }
-            </mat-select>
-            <mat-hint>Ramo 60 – oneri finanziari → entra nel P&amp;L</mat-hint>
+          <div class="src-field src-field--full">
+            <app-coge-picker
+              label="Conto COGE – quota interessi (Onere finanziario)"
+              [required]="true"
+              [allowedIds]="cogeInteressiIds()"
+              [value]="form.get('contoCogeInteressiId')?.value"
+              [invalid]="!!form.get('contoCogeInteressiId')?.touched && !!form.get('contoCogeInteressiId')?.hasError('required')"
+              (cogeChange)="setCogeInteressi($event)"
+            ></app-coge-picker>
+            <p class="src-field__hint">Ramo 60 – oneri finanziari → entra nel P&amp;L</p>
             @if (form.get('contoCogeInteressiId')?.hasError('required') && form.get('contoCogeInteressiId')?.touched) {
-              <mat-error>Campo obbligatorio</mat-error>
+              <p class="src-field__err">Campo obbligatorio</p>
             }
-          </mat-form-field>
+          </div>
 
           <!-- ── Come configuri il piano? ── -->
           <div class="src-calc-mode src-field--full">

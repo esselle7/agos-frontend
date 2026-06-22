@@ -41,8 +41,8 @@
   border-radius: 999px;
   font-family: 'DM Sans', sans-serif;
 
-  &--fin     { background: rgba(21,101,192,0.12); color: #1565C0; }
-  &--forecast { background: rgba(230,81,0,0.12); color: #E65100; }
+  &--fin     { background: rgba(21,101,192,0.12); color: var(--info); }
+  &--forecast { background: rgba(230,81,0,0.12); color: var(--warning); }
 }
 
 .cf-controls {
@@ -109,7 +109,7 @@
   color: var(--text-main);
 
   mat-icon {
-    color: #E65100;
+    color: var(--warning);
     font-size: 18px;
     width: 18px;
     height: 18px;

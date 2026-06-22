@@ -26,6 +26,7 @@ import { MovimentiService } from '../../core/services/movimenti.service';
 import { LookupService } from '../../core/services/lookup.service';
 import { FornitoriService } from '../../core/services/fornitori.service';
 import { BuService } from '../../core/services/bu.service';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 import {
   ImportKpiDTO,
   TransitorioDTO,
@@ -82,6 +83,7 @@ interface EventoForm {
     MatProgressSpinnerModule,
     MatChipsModule,
     MatTooltipModule,
+    CogePickerComponent,
   ],
   templateUrl: './import-triage-dialog.component.html',
   styleUrls: ['./import-triage-dialog.component.scss'],
@@ -199,6 +201,18 @@ export class ImportTriageDialogComponent implements OnInit {
 
   // ── Transitori ──────────────────────────────────────────────────────────────
   transFormFor(id: string): FormGroup<TransForm> { return this.transForms.get(id)!; }
+
+  /** Scelta COGE dal picker per le righe transitorio/RiBa (id nel control, come il vecchio select). */
+  setCogeTrans(id: string, conto: PianoContiCogeDTO | null): void {
+    const c = this.transForms.get(id)!.controls.cogeId;
+    c.setValue(conto?.id ?? null);
+    c.markAsTouched();
+  }
+
+  /** Scelta COGE (opzionale) per la registrazione di un evento. */
+  setCogeEvento(id: string, conto: PianoContiCogeDTO | null): void {
+    this.eventoForms.get(id)!.controls.cogeId.setValue(conto?.id ?? null);
+  }
 
   canClassificareTrans(id: string): boolean {
     const f = this.transForms.get(id);

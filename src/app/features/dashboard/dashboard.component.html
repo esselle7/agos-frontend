@@ -3,12 +3,15 @@
   <!-- ── Header ────────────────────────────────────────────────────── -->
   <div class="dashboard__header">
     <div class="dashboard__title">
-      <h2>Dashboard</h2>
-      @if (kpi()?.aggiornatoAl) {
-        <span class="text-sub update-label">
-          Aggiornato alle {{ formatTimestamp(kpi()!.aggiornatoAl) }}
-        </span>
-      }
+      <span class="dashboard__eyebrow">Panoramica</span>
+      <div class="dashboard__title-row">
+        <h2>Dashboard</h2>
+        @if (kpi()?.aggiornatoAl) {
+          <span class="text-sub update-label">
+            Aggiornato alle {{ formatTimestamp(kpi()!.aggiornatoAl) }}
+          </span>
+        }
+      </div>
     </div>
     <agos-date-range-picker
       [period]="globalPeriod.period()"

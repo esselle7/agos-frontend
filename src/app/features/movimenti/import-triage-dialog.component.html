@@ -38,12 +38,12 @@
               @if (t.ibanEstratto) { <p class="triage__iban">IBAN: {{ t.ibanEstratto }}</p> }
 
               <form [formGroup]="transFormFor(t.id)" class="triage__form">
-                <mat-form-field appearance="outline">
-                  <mat-label>Conto COGE *</mat-label>
-                  <mat-select formControlName="cogeId">
-                    @for (c of coge(); track c.id) { <mat-option [value]="c.id">{{ c.codice }} — {{ c.nome }}</mat-option> }
-                  </mat-select>
-                </mat-form-field>
+                <app-coge-picker
+                  label="Conto COGE" [required]="true"
+                  [value]="transFormFor(t.id).controls.cogeId.value"
+                  [invalid]="transFormFor(t.id).controls.cogeId.touched && transFormFor(t.id).controls.cogeId.invalid"
+                  (cogeChange)="setCogeTrans(t.id, $event)"
+                ></app-coge-picker>
                 <mat-form-field appearance="outline">
                   <mat-label>Business Unit *</mat-label>
                   <mat-select formControlName="businessUnitId">
@@ -132,13 +132,11 @@
               </p>
 
               <form [formGroup]="eventoFormFor(ev.id)" class="triage__form triage__form--evento">
-                <mat-form-field appearance="outline">
-                  <mat-label>COGE (per registrare)</mat-label>
-                  <mat-select formControlName="cogeId">
-                    <mat-option [value]="null">—</mat-option>
-                    @for (c of coge(); track c.id) { <mat-option [value]="c.id">{{ c.codice }} — {{ c.nome }}</mat-option> }
-                  </mat-select>
-                </mat-form-field>
+                <app-coge-picker
+                  label="COGE (per registrare)"
+                  [value]="eventoFormFor(ev.id).controls.cogeId.value"
+                  (cogeChange)="setCogeEvento(ev.id, $event)"
+                ></app-coge-picker>
                 <mat-form-field appearance="outline">
                   <mat-label>Business Unit</mat-label>
                   <mat-select formControlName="businessUnitId">
@@ -317,12 +315,12 @@
                     @for (f of fornitori(); track f.id) { <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option> }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Conto COGE *</mat-label>
-                  <mat-select formControlName="cogeId">
-                    @for (c of coge(); track c.id) { <mat-option [value]="c.id">{{ c.codice }} — {{ c.nome }}</mat-option> }
-                  </mat-select>
-                </mat-form-field>
+                <app-coge-picker
+                  label="Conto COGE" [required]="true"
+                  [value]="transFormFor(t.id).controls.cogeId.value"
+                  [invalid]="transFormFor(t.id).controls.cogeId.touched && transFormFor(t.id).controls.cogeId.invalid"
+                  (cogeChange)="setCogeTrans(t.id, $event)"
+                ></app-coge-picker>
                 <mat-form-field appearance="outline">
                   <mat-label>Business Unit *</mat-label>
                   <mat-select formControlName="businessUnitId">

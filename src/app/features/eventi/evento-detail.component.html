@@ -143,9 +143,9 @@
 
       @if (ev.menuPdfUrl) {
         @if (menuIsWord()) {
-          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 24px;border:1.5px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#6b7280;text-align:center">
-            <mat-icon style="font-size:48px;width:48px;height:48px;color:#3b82f6">description</mat-icon>
-            <p style="margin:0;font-size:15px;font-weight:600;color:#374151">Anteprima non disponibile</p>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 24px;border:1.5px dashed var(--border-strong);border-radius:12px;background:var(--surface-sunken);color:var(--text-sub);text-align:center">
+            <mat-icon style="font-size:48px;width:48px;height:48px;color:var(--info)">description</mat-icon>
+            <p style="margin:0;font-size:15px;font-weight:600;color:var(--text-main)">Anteprima non disponibile</p>
             <p style="margin:0;font-size:13px">Il file è un documento Word — scaricalo per visualizzarlo.</p>
           </div>
         } @else {
@@ -380,7 +380,7 @@
       <div class="section-header">
         <h2 class="section-title">Personale impiegato</h2>
         @if (partecipanti().length > 0) {
-          <span style="font-size:13px;color:#6b7280">{{ partecipanti().length }} dipendente{{ partecipanti().length === 1 ? '' : 'i' }}</span>
+          <span style="font-size:13px;color:var(--text-sub)">{{ partecipanti().length }} dipendente{{ partecipanti().length === 1 ? '' : 'i' }}</span>
         }
       </div>
 
@@ -393,7 +393,7 @@
         @for (gruppo of partecipantiPerMansione(); track gruppo.mansione) {
           <div class="personale-gruppo-card">
             <div class="personale-gruppo-header">
-              <mat-icon style="font-size:16px;width:16px;height:16px;color:#6b7280">work_outline</mat-icon>
+              <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--text-sub)">work_outline</mat-icon>
               <span class="personale-gruppo-titolo">{{ gruppo.mansione }}</span>
               <span class="personale-gruppo-count">{{ gruppo.persone.length }}</span>
             </div>

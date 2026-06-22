@@ -14,7 +14,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SpeseRicorrentiService } from '../../core/services/spese-ricorrenti.service';
 import { CogeOption, TipoPiano } from './spese-ricorrenti.models';
-import { ContoBancarioDTO } from '../../core/models/anagrafica.models';
+import { ContoBancarioDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 
 export interface RataPreview {
   numero: number;
@@ -56,6 +57,7 @@ export interface FinComputato {
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatProgressSpinnerModule, MatTooltipModule,
     InputFilterDirective,
+    CogePickerComponent,
   ],
   templateUrl: './spese-ricorrenti-create-dialog.component.html',
   styleUrls: ['./spese-ricorrenti-create-dialog.component.scss'],
@@ -68,6 +70,9 @@ export class SpeseRicorrentiCreateDialogComponent implements OnInit {
 
   readonly contiCoge          = signal<CogeOption[]>([]);
   readonly contiCogeInteressi = signal<CogeOption[]>([]);
+  // Id ammessi per il picker: stesso identico subset curato dal server (nessuna voce in più).
+  readonly cogeIds          = computed(() => this.contiCoge().map(c => c.id));
+  readonly cogeInteressiIds = computed(() => this.contiCogeInteressi().map(c => c.id));
   readonly contiBancari       = signal<ContoBancarioDTO[]>([]);
   readonly saving             = signal(false);
   readonly loadingLookup      = signal(true);
@@ -138,6 +143,16 @@ export class SpeseRicorrentiCreateDialogComponent implements OnInit {
     { value: 'BIMESTRALE',  label: 'Bimestrale',  sub: 'ogni 2 mesi' },
     { value: 'TRIMESTRALE', label: 'Trimestrale', sub: 'ogni 3 mesi' },
   ];
+
+  /** Scelta COGE dal picker → scrive l'id nel control (identico al vecchio select). */
+  setContoCoge(conto: PianoContiCogeDTO | null): void {
+    const c = this.form.get('contoCoge')!;
+    c.setValue(conto?.id ?? null); c.markAsTouched();
+  }
+  setCogeInteressi(conto: PianoContiCogeDTO | null): void {
+    const c = this.form.get('contoCogeInteressiId')!;
+    c.setValue(conto?.id ?? null); c.markAsTouched();
+  }
 
   ngOnInit(): void {
     const now         = new Date();

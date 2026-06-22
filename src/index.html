@@ -5,8 +5,24 @@
   <title>Agostinelli</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="assets/logo.png">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script>
+    // Anti-FOUC: imposta il tema su <html> prima del render, evitando il flash bianco.
+    (function () {
+      try {
+        var t = localStorage.getItem('agos_theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

@@ -1,7 +1,8 @@
-<div class="stat-card card">
+<div class="stat-card card" [style.background]="cardBg">
+  <span class="stat-card__accent" [style.background]="colorVar"></span>
   @if (icon) {
     <div class="stat-card__icon" [style.background]="iconBg">
-      <mat-icon [style.color]="hexColor">{{ icon }}</mat-icon>
+      <mat-icon [style.color]="colorVar">{{ icon }}</mat-icon>
     </div>
   }
 

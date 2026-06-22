@@ -72,8 +72,8 @@ export class PlComparativoComponent implements OnInit {
         {
           label: 'Ricavi',
           data: rows.map(r => r.ricavi),
-          backgroundColor: rows.map(r => (busMap.get(r.bu.id)?.colore ?? '#2D6A4F') + 'BB'),
-          borderColor: rows.map(r => busMap.get(r.bu.id)?.colore ?? '#2D6A4F'),
+          backgroundColor: rows.map(r => (busMap.get(r.bu.id)?.colore ?? '#1F5C43') + 'BB'),
+          borderColor: rows.map(r => busMap.get(r.bu.id)?.colore ?? '#1F5C43'),
           borderWidth: 1,
         },
         {

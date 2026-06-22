@@ -152,7 +152,7 @@ export class FornitoreDetailDialogComponent implements OnInit {
 
   aliasColor(matchType: string): string {
     const map: Record<string, string> = {
-      EXACT:    '#1565C0',
+      EXACT:    '#2C6E8F',
       CONTAINS: '#2E7D32',
       REGEX:    '#6A1B9A',
     };

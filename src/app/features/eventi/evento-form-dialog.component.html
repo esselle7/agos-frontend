@@ -1,4 +1,10 @@
-<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Evento' : 'Nuovo Evento' }}</h2>
+<div class="dform__head">
+  <span class="dform__head-ico"><mat-icon>celebration</mat-icon></span>
+  <span class="dform__head-tt">
+    <h2 mat-dialog-title>{{ isEdit() ? 'Modifica evento' : 'Nuovo evento' }}</h2>
+    <span class="dform__head-sub">Cerimonia o ricevimento: dati, personale e menu</span>
+  </span>
+</div>
 
 <mat-dialog-content style="padding:0 0 8px">
   @if (loadingForm()) {
@@ -17,6 +23,7 @@
           <div class="form-row">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Nome evento *</mat-label>
+              <mat-icon matPrefix>celebration</mat-icon>
               <input matInput formControlName="nome" placeholder="es. Matrimonio Rossi" />
               @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
                 <mat-error>Campo obbligatorio</mat-error>
@@ -27,6 +34,7 @@
           <div class="form-row two-col">
             <mat-form-field appearance="outline">
               <mat-label>Tipo evento *</mat-label>
+              <mat-icon matPrefix>category</mat-icon>
               <mat-select formControlName="tipo">
                 @for (t of tipiEvento(); track t.codice) {
                   <mat-option [value]="t.codice">{{ t.descrizione }}</mat-option>
@@ -46,6 +54,7 @@
           <div class="form-row two-col">
             <mat-form-field appearance="outline">
               <mat-label>Data evento *</mat-label>
+              <mat-icon matPrefix>event</mat-icon>
               <input matInput [matDatepicker]="pickerEvento" formControlName="dataEvento" />
               <mat-datepicker-toggle matSuffix [for]="pickerEvento" />
               <mat-datepicker #pickerEvento />
@@ -70,12 +79,12 @@
             />
           </div>
 
-          <mat-divider style="margin: 12px 0" />
-          <p class="section-label">Dati contatto</p>
+          <p class="dform__section"><mat-icon>contacts</mat-icon> Dati contatto</p>
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Nome contatto *</mat-label>
+              <mat-icon matPrefix>person</mat-icon>
               <input matInput formControlName="contattoNome" appInputFilter="letters-only" />
               @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
                 <mat-error>Campo obbligatorio</mat-error>
@@ -89,6 +98,7 @@
           <div class="form-row two-col">
             <mat-form-field appearance="outline">
               <mat-label>Telefono</mat-label>
+              <mat-icon matPrefix>call</mat-icon>
               <input matInput formControlName="contattoTelefono" type="tel" appInputFilter="phone" />
               @if (form.controls.contattoTelefono.hasError('pattern') && form.controls.contattoTelefono.touched) {
                 <mat-error>Formato non valido (es. +39 02 1234567)</mat-error>
@@ -97,6 +107,7 @@
 
             <mat-form-field appearance="outline">
               <mat-label>Email</mat-label>
+              <mat-icon matPrefix>mail</mat-icon>
               <input matInput formControlName="contattoEmail" type="email" />
               @if (form.controls.contattoEmail.hasError('email') && form.controls.contattoEmail.touched) {
                 <mat-error>Email non valida</mat-error>
@@ -104,8 +115,7 @@
             </mat-form-field>
           </div>
 
-          <mat-divider style="margin: 12px 0" />
-          <p class="section-label">Partecipanti</p>
+          <p class="dform__section"><mat-icon>groups</mat-icon> Partecipanti</p>
 
           <div class="form-row two-col">
             <mat-form-field appearance="outline">
@@ -183,7 +193,7 @@
 
           <!-- Header con contatore -->
           <div class="personale-step-header">
-            <span style="font-size:14px;color:#374151">Seleziona i dipendenti che lavoreranno all'evento</span>
+            <span style="font-size:.88rem;color:var(--text-sub)">Seleziona i dipendenti che lavoreranno all'evento</span>
             @if (contaSelezionati() > 0) {
               <span class="personale-count-chip">
                 <mat-icon style="font-size:14px;width:14px;height:14px">check_circle</mat-icon>
@@ -207,7 +217,7 @@
           <!-- Lista gruppi per mansione -->
           @if (personaleAttivi().length === 0) {
             <div class="empty-personale">
-              <mat-icon style="font-size:40px;width:40px;height:40px;color:#d1d5db">people_outline</mat-icon>
+              <mat-icon style="font-size:40px;width:40px;height:40px;color:var(--border)">people_outline</mat-icon>
               <p>Nessun dipendente attivo trovato</p>
             </div>
           } @else {
@@ -216,7 +226,7 @@
                 <!-- Header gruppo (toggle expand) -->
                 <div class="mansione-header" (click)="toggleGruppoExpanded(gruppo.mansione)">
                   <span class="mansione-label">
-                    <mat-icon style="font-size:16px;width:16px;height:16px;color:#6b7280">work_outline</mat-icon>
+                    <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--text-sub)">work_outline</mat-icon>
                     {{ gruppo.mansione }}
                     <span class="mansione-badge" [class.selected]="contaSelezionatiGruppo(gruppo.persone) > 0">
                       @if (contaSelezionatiGruppo(gruppo.persone) > 0) {
@@ -324,10 +334,10 @@
                 </button>
               </div>
               @if (menuFileIsWord()) {
-                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;border:1.5px dashed #cbd5e1;border-radius:12px;background:#f8fafc;color:#6b7280;text-align:center">
-                  <mat-icon style="font-size:40px;width:40px;height:40px;color:#3b82f6">description</mat-icon>
-                  <p style="margin:0;font-size:14px;font-weight:600;color:#374151">Anteprima non disponibile</p>
-                  <p style="margin:0;font-size:12.5px">Il file è un documento Word e verrà caricato correttamente.<br>Per visualizzarlo sarà necessario scaricarlo.</p>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;border:1.5px dashed var(--border);border-radius:12px;background:var(--surface);color:var(--text-sub);text-align:center">
+                  <mat-icon style="font-size:40px;width:40px;height:40px;color:var(--primary)">description</mat-icon>
+                  <p style="margin:0;font-size:.88rem;font-weight:600;color:var(--text-main)">Anteprima non disponibile</p>
+                  <p style="margin:0;font-size:.78rem">Il file è un documento Word e verrà caricato correttamente.<br>Per visualizzarlo sarà necessario scaricarlo.</p>
                 </div>
               } @else {
                 @if (menuPreviewUrl(); as preview) {

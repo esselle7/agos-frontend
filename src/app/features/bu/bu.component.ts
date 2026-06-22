@@ -32,8 +32,8 @@ import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
 const DONUT_COLORS = [
-  '#2D6A4F', '#40916C', '#74C69D', '#95D5B2', '#1B4332',
-  '#C0540A', '#E65100', '#F4A261', '#E76F51', '#264653',
+  '#1F5C43', '#40916C', '#74C69D', '#95D5B2', '#1B4332',
+  '#B5894B', '#E65100', '#F4A261', '#E76F51', '#264653',
 ];
 
 @Component({

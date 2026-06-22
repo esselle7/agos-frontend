@@ -1,5 +1,5 @@
 $sidenav-width-open:      240px;
-$sidenav-width-collapsed:  64px;
+$sidenav-width-collapsed:  68px;
 $topbar-height:            64px;
 
 // ── Container ────────────────────────────────────────────────────────────────
@@ -9,116 +9,393 @@ $topbar-height:            64px;
   overflow: hidden;
 }
 
-// ── Sidenav ──────────────────────────────────────────────────────────────────
+// ── Side rail ────────────────────────────────────────────────────────────────
 
 .sidenav {
   width: $sidenav-width-open;
   background: var(--card);
   border-right: 1px solid var(--border);
-  transition: width 0.25s ease;
-  overflow: hidden;
+  transition: width 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: visible;          // lascia uscire il flyout impostazioni
 
-  &.sidenav--collapsed {
-    width: $sidenav-width-collapsed;
-  }
+  &.sidenav--collapsed { width: $sidenav-width-collapsed; }
 }
 
-.sidenav-brand {
+// Il contenitore interno del drawer di Material taglia l'overflow: lo rendo visibile
+// così il flyout "Impostazioni" può uscire dal rail (lo scroll della nav è interno a .rail-nav).
+::ng-deep .sidenav.mat-drawer .mat-drawer-inner-container { overflow: visible; }
+
+.rail {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.rail-brand {
   display: flex;
   align-items: center;
   gap: 10px;
   height: $topbar-height;
-  padding: 0 16px;
+  min-height: $topbar-height;
+  padding: 0 18px;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.brand-leaf {
-  font-size: 24px;
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
 .brand-text {
   font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   color: var(--primary);
   font-weight: 700;
+  letter-spacing: 0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-// ── Nav list ─────────────────────────────────────────────────────────────────
+// ── Navigation ───────────────────────────────────────────────────────────────
 
-.nav-list {
-  padding: 4px 0;
+.rail-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0 12px;
+
+  // scrollbar discreta
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 }
 
-.nav-section-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+.nav-section { padding: 2px 0; }
+
+.nav-section__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
   color: var(--text-sub);
-  padding: 12px 16px 4px;
+  opacity: 0.72;
+  padding: 14px 20px 5px;
   margin: 0;
   white-space: nowrap;
-  overflow: hidden;
 }
 
-.nav-item {
+.nav-link {
   position: relative;
-  border-radius: var(--radius-sm);
-  margin: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 42px;
+  margin: 2px 10px;
+  padding: 0 12px;
+  border-radius: 10px;
   color: var(--text-sub);
+  font-size: 0.9rem;
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.12s ease;
 
-  mat-icon {
+  &__icon {
+    flex-shrink: 0;
     color: var(--text-sub);
-    transition: color 0.15s;
+    transition: color 0.16s ease, transform 0.18s ease;
   }
+
+  &__label { overflow: hidden; text-overflow: ellipsis; }
 
   &:hover {
     background: color-mix(in srgb, var(--primary) 8%, transparent);
     color: var(--primary);
-
-    mat-icon {
-      color: var(--primary);
-    }
+    .nav-link__icon { color: var(--primary); transform: translateX(1px); }
   }
 
-  &.nav-active {
-    background: color-mix(in srgb, var(--primary) 14%, transparent);
+  &.is-active {
+    background: var(--tint-primary-strong);
     color: var(--primary-d);
-    font-weight: 600;
+    font-weight: 650;
+    .nav-link__icon { color: var(--primary); }
 
-    // Left accent indicator anchored inside the rounded pill.
+    // accento sinistro ancorato nella pillola — in ottone, tocco del colore d'accento
     &::before {
       content: '';
       position: absolute;
-      left: 4px;
+      left: 3px;
       top: 50%;
       transform: translateY(-50%);
       width: 3px;
       height: 18px;
       border-radius: 999px;
-      background: var(--primary);
+      background: var(--accent);
     }
+  }
 
-    mat-icon {
-      color: var(--primary);
-    }
+  &--sub {
+    height: 38px;
+    margin-left: 22px;
+    font-size: 0.86rem;
   }
 }
 
-.bu-item {
-  .bu-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: inline-block;
+// ── Dettaglio BU (richiudibile) ──────────────────────────────────────────────
+
+.bu { margin-top: 4px; }
+
+.bu__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 20px);
+  height: 38px;
+  margin: 2px 10px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background 0.16s ease, color 0.16s ease;
+
+  &:hover { background: color-mix(in srgb, var(--primary) 7%, transparent); color: var(--primary); }
+  &--open { color: var(--primary); }
+}
+
+.bu__lead { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; opacity: 0.85; }
+.bu__title { flex: 1; text-align: left; text-transform: uppercase; }
+
+.bu__count {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary-d);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bu__chev {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bu__toggle--open .bu__chev { transform: rotate(180deg); }
+
+// pannello collassabile senza numeri magici (grid 0fr → 1fr)
+.bu__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  &--open { grid-template-rows: 1fr; }
+}
+.bu__panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.bu__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 12%, transparent);
+}
+
+// ── Footer del rail: impostazioni + profilo ──────────────────────────────────
+
+.rail-foot {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+// Impostazioni: flyout che appare al passaggio del mouse e resta finché il
+// puntatore è sul pulsante o sulle opzioni (il menu è figlio → :hover non si rompe).
+.settings { position: relative; }
+
+.settings__trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background 0.16s ease, color 0.16s ease;
+
+  &:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); color: var(--primary); }
+}
+
+.settings__gear {
+  flex-shrink: 0;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.settings:hover .settings__gear { transform: rotate(90deg); color: var(--primary); }
+
+.settings__menu {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% - 8px);      // sovrapposizione di 8px = nessun varco per il mouse
+  z-index: 60;
+  width: 210px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  opacity: 0;
+  transform: translateX(8px) scale(0.96);
+  filter: blur(6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+}
+.settings:hover .settings__menu {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+}
+
+.settings__opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.14s ease, color 0.14s ease;
+
+  mat-icon { font-size: 19px; width: 19px; height: 19px; color: var(--text-sub); }
+
+  // micro-stagger all'apertura
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.22s ease, transform 0.22s ease, background 0.14s ease;
+  &:nth-child(1) { transition-delay: 0.04s; }
+  &:nth-child(2) { transition-delay: 0.09s; }
+  &:nth-child(3) { transition-delay: 0.13s; }
+
+  &:hover {
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
+    color: var(--primary-d);
+    mat-icon { color: var(--primary); }
   }
+
+  &--danger:hover {
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    color: var(--danger);
+    mat-icon { color: var(--danger); }
+  }
+}
+.settings:hover .settings__opt { opacity: 1; transform: none; }
+
+// Profilo Google (ultima voce)
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.profile__avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-d));
+  color: var(--on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.profile__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.profile__name {
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile__email {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile__google {
+  flex-shrink: 0;
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+// ── Stato compresso (rail stretto) ───────────────────────────────────────────
+
+.sidenav--collapsed {
+  .nav-link,
+  .settings__trigger { justify-content: center; gap: 0; padding: 0; }
+  .nav-link { margin: 2px 12px; }
+  .rail-brand { justify-content: center; padding: 0; }
+  .profile { justify-content: center; padding: 8px 4px; }
+  .rail-foot { align-items: center; }
 }
 
 // ── Topbar ───────────────────────────────────────────────────────────────────
@@ -137,79 +414,10 @@ $topbar-height:            64px;
   z-index: 100;
 }
 
-.topbar-spacer {
-  flex: 1;
-}
-
-.hamburger-btn {
-  color: var(--text-sub);
-  flex-shrink: 0;
-}
-
-.period-placeholder {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--text-sub);
-  font-size: 0.875rem;
-  cursor: default;
-}
-
-.period-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.badge-btn {
-  color: var(--text-sub);
-}
-
-// ── Avatar ───────────────────────────────────────────────────────────────────
-
-.avatar-btn {
-  padding: 0;
-  margin-left: 8px;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.user-menu-header {
-  display: flex;
-  flex-direction: column;
-  padding: 12px 16px 8px;
-
-  strong {
-    font-size: 0.875rem;
-    color: var(--text-main);
-  }
-}
-
-.user-email {
-  font-size: 0.75rem;
-  color: var(--text-sub);
-  margin-top: 2px;
-}
+.topbar-spacer { flex: 1; }
+.hamburger-btn { color: var(--text-sub); flex-shrink: 0; }
+.topbar-actions { display: flex; align-items: center; gap: 4px; }
+.badge-btn { color: var(--text-sub); }
 
 // ── Main content ─────────────────────────────────────────────────────────────
 
@@ -224,4 +432,17 @@ $topbar-height:            64px;
   flex: 1;
   overflow-y: auto;
   padding: 0;
+}
+
+// ── Motion ridotta ───────────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .sidenav,
+  .bu__chev,
+  .bu__panel,
+  .settings__menu,
+  .settings__gear,
+  .settings__opt,
+  .nav-link,
+  .nav-link__icon { transition: none !important; }
 }

@@ -35,6 +35,7 @@ import { CassaMovimentoDTO, CreateCassaMovimentoRequest } from '../../core/model
 import { ContoBancarioDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { BuSelectorComponent } from '../../shared/components/bu-selector/bu-selector.component';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 
 export interface CassaEditDialogData {
   movimento: CassaMovimentoDTO;
@@ -60,6 +61,7 @@ export interface CassaEditDialogData {
     MatAutocompleteModule,
     CurrencyInputComponent,
     BuSelectorComponent,
+    CogePickerComponent,
     InputFilterDirective,
     DateMaskDirective,
   ],
@@ -146,6 +148,11 @@ export class CassaEditDialogComponent implements OnInit, OnDestroy {
   clearCoge(): void {
     this.form.controls.contoCoge.setValue(null);
     this.cogeSearch.setValue('');
+  }
+
+  /** Scelta COGE dal picker → scrive l'id nel control (identico al vecchio autocomplete). */
+  setCoge(conto: PianoContiCogeDTO | null): void {
+    this.form.controls.contoCoge.setValue(conto?.id ?? null);
   }
 
   submit(): void {

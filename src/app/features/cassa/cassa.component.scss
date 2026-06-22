@@ -14,7 +14,7 @@
 
   &__saldo-label {
     font-size: 0.9rem;
-    color: var(--text-sub, #6B7280);
+    color: var(--text-sub);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 8px;
@@ -26,13 +26,13 @@
     line-height: 1;
     margin-bottom: 8px;
 
-    &.positive { color: var(--success, #2E7D32); }
-    &.negative { color: var(--danger, #C62828); }
+    &.positive { color: var(--success); }
+    &.negative { color: var(--danger); }
   }
 
   &__saldo-date {
     font-size: 0.8rem;
-    color: var(--text-sub, #6B7280);
+    color: var(--text-sub);
   }
 
   &__section-title {
@@ -79,7 +79,7 @@
     cursor: default;
     transition: background 0.15s;
 
-    &:hover { background: rgba(45, 106, 79, 0.04); }
+    &:hover { background: rgba(var(--primary-rgb), 0.04); }
   }
 
   &__info-card {
@@ -87,10 +87,10 @@
     align-items: center;
     gap: 12px;
     padding: 16px;
-    background: var(--info-bg, #EFF6FF);
-    border-left: 4px solid var(--info, #1565C0);
+    background: var(--info-bg, rgba(var(--info-rgb), 0.08));
+    border-left: 4px solid var(--info);
 
-    p { margin: 0; font-size: 0.875rem; color: var(--text-sub, #374151); }
+    p { margin: 0; font-size: 0.875rem; color: var(--text-sub); }
   }
 }
 
@@ -143,7 +143,7 @@
 
 .importo-cell {
   font-weight: 600;
-  color: #E65100;
+  color: var(--warning);
   text-align: right;
 }
 
@@ -153,6 +153,6 @@
 }
 
 .info-icon {
-  color: #1565C0;
+  color: var(--info);
   flex-shrink: 0;
 }

@@ -74,7 +74,7 @@ export class ImportStoricoComponent implements OnInit {
   }
 
   statoColor(s: string): string {
-    return ({ COMPLETATO: '#2E7D32', COMPLETATO_CON_AMBIGUITA: '#E65100', ERRORE: '#C62828', IN_CORSO: '#1565C0' } as Record<string, string>)[s] ?? '#6B7280';
+    return ({ COMPLETATO: '#2E7D32', COMPLETATO_CON_AMBIGUITA: '#E65100', ERRORE: '#C62828', IN_CORSO: '#2C6E8F' } as Record<string, string>)[s] ?? '#6B7280';
   }
   statoLabel(s: string): string {
     return ({ COMPLETATO: 'Completato', COMPLETATO_CON_AMBIGUITA: 'Con ambiguità', ERRORE: 'Errore', IN_CORSO: 'In corso' } as Record<string, string>)[s] ?? s;

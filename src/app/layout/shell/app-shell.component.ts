@@ -10,44 +10,71 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { ScadenzeImminentiDTO } from '../../core/models/dashboard.models';
 import { API_PATHS } from '../../core/constants/api-paths';
 import { environment } from '../../../environments/environment';
 
 const SIDENAV_KEY = 'agos_sidenav_open';
+const BU_KEY = 'agos_bu_expanded';
 
 interface NavItem {
   label: string;
   icon: string;
-  route?: string;
+  route: string;
   adminOnly: boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',        icon: 'dashboard',              route: '/dashboard',         adminOnly: false },
-  { label: 'Movimenti',        icon: 'swap_horiz',             route: '/movimenti',         adminOnly: true  },
-  { label: 'Import & Smistamento', icon: 'inbox',              route: '/import',            adminOnly: true  },
-  { label: 'Spese Ricorrenti', icon: 'repeat',                 route: '/spese-ricorrenti',  adminOnly: true  },
-  { label: 'Keyword',          icon: 'sell',                   route: '/keyword',           adminOnly: true  },
-  { label: 'Cassa',            icon: 'account_balance_wallet', route: '/cassa',             adminOnly: true  },
-  { label: 'Forecasting',      icon: 'trending_up',            route: '/forecasting',       adminOnly: true  },
-];
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
 
-const NAV_ITEMS_BOTTOM: NavItem[] = [
-  { label: 'Anagrafica',   icon: 'people',     route: '/anagrafica', adminOnly: true  },
-  { label: 'Reporting',    icon: 'bar_chart',  route: '/reporting',  adminOnly: true  },
-  { label: 'Eventi',       icon: 'event',      route: '/eventi',     adminOnly: false },
+/**
+ * Navigazione raggruppata per area di lavoro (rotte invariate: nessun link rotto).
+ * Le etichette sono in sentence case e i nomi resi più parlanti ("Previsioni" al posto
+ * di "Forecasting"); le icone scelte tra quelle del font Material Icons classico in uso.
+ */
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: 'Panoramica',
+    items: [
+      { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', adminOnly: false },
+    ],
+  },
+  {
+    label: 'Contabilità',
+    items: [
+      { label: 'Movimenti',           icon: 'receipt_long',            route: '/movimenti',        adminOnly: true },
+      { label: 'Import & smistamento', icon: 'move_to_inbox',           route: '/import',           adminOnly: true },
+      // Cassa temporaneamente disabilitata (nascosta da nav + rotte); codice mantenuto.
+      // { label: 'Cassa',               icon: 'account_balance_wallet',  route: '/cassa',            adminOnly: true },
+      { label: 'Spese ricorrenti',    icon: 'event_repeat',            route: '/spese-ricorrenti', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Gestione',
+    items: [
+      { label: 'Eventi',     icon: 'celebration', route: '/eventi',     adminOnly: false },
+      { label: 'Anagrafica', icon: 'groups',      route: '/anagrafica', adminOnly: true },
+      { label: 'Keyword',    icon: 'label',       route: '/keyword',    adminOnly: true },
+    ],
+  },
+  {
+    label: 'Analisi',
+    items: [
+      { label: 'Reporting',  icon: 'assessment',  route: '/reporting',   adminOnly: true },
+      { label: 'Previsioni', icon: 'query_stats', route: '/forecasting', adminOnly: true },
+    ],
+  },
 ];
 
 @Component({
@@ -58,12 +85,9 @@ const NAV_ITEMS_BOTTOM: NavItem[] = [
     RouterModule,
     MatSidenavModule,
     MatToolbarModule,
-    MatListModule,
     MatIconModule,
     MatButtonModule,
-    MatMenuModule,
     MatBadgeModule,
-    MatDividerModule,
     MatTooltipModule,
   ],
   templateUrl: './app-shell.component.html',
@@ -73,33 +97,46 @@ export class AppShellComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly buService = inject(BuService);
   private readonly http = inject(HttpClient);
+  private readonly themeService = inject(ThemeService);
 
   readonly user = this.authService.user;
   readonly isAdmin = this.authService.isAdmin;
+  readonly isDarkTheme = this.themeService.theme;
 
   readonly sidenavOpen = signal<boolean>(
     sessionStorage.getItem(SIDENAV_KEY) !== 'false'
   );
 
+  /** "Dettaglio BU": chiuso di default per non occupare spazio verticale (stato ricordato). */
+  readonly buExpanded = signal<boolean>(
+    sessionStorage.getItem(BU_KEY) === 'true'
+  );
+
   readonly businessUnits = signal<BusinessUnitDTO[]>([]);
   readonly scadenzeCount = signal<number>(0);
 
-  readonly visibleNavItems = computed(() =>
-    NAV_ITEMS.filter(item => !item.adminOnly || this.isAdmin())
+  readonly visibleSections = computed<NavSection[]>(() =>
+    NAV_SECTIONS
+      .map(s => ({ ...s, items: s.items.filter(i => !i.adminOnly || this.isAdmin()) }))
+      .filter(s => s.items.length > 0)
   );
-  readonly visibleNavItemsBottom = computed(() =>
-    NAV_ITEMS_BOTTOM.filter(item => !item.adminOnly || this.isAdmin())
+
+  /** Iniziale per l'avatar del profilo (fallback '?' se il nome non è disponibile). */
+  readonly userInitial = computed(() =>
+    this.user()?.nome?.trim().charAt(0).toUpperCase() || '?'
+  );
+
+  readonly roleLabel = computed(() =>
+    this.isAdmin() ? 'Amministratore' : 'Dipendente'
   );
 
   constructor() {
-    effect(() => {
-      sessionStorage.setItem(SIDENAV_KEY, String(this.sidenavOpen()));
-    });
+    effect(() => sessionStorage.setItem(SIDENAV_KEY, String(this.sidenavOpen())));
+    effect(() => sessionStorage.setItem(BU_KEY, String(this.buExpanded())));
   }
 
   ngOnInit(): void {
     this.buService.getAll().subscribe(units => this.businessUnits.set(units));
-
     if (this.isAdmin()) {
       this.loadScadenze();
     }
@@ -107,6 +144,14 @@ export class AppShellComponent implements OnInit {
 
   toggleSidenav(): void {
     this.sidenavOpen.update(v => !v);
+  }
+
+  toggleBu(): void {
+    this.buExpanded.update(v => !v);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggle();
   }
 
   logout(): void {

@@ -84,12 +84,11 @@
               @for (b of data.bu; track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Conto COGE</mat-label>
-            <mat-select [(ngModel)]="cogeCodice">
-              @for (c of data.coge; track c.id) { <mat-option [value]="c.codice">{{ c.codice }} — {{ c.nome }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
+          <app-coge-picker
+            label="Conto COGE"
+            [value]="selectedCogeId"
+            (cogeChange)="setCoge($event)"
+          ></app-coge-picker>
           @if (isIdentita()) {
             <mat-form-field appearance="outline">
               <mat-label>Fornitore (facoltativo)</mat-label>

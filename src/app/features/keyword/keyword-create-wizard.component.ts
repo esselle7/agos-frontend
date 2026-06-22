@@ -15,6 +15,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MovimentiService } from '../../core/services/movimenti.service';
 import { KeywordFirmaDTO } from '../../core/models/movimenti.models';
 import { PianoContiCogeDTO, BusinessUnitDTO, FornitoreSummaryDTO } from '../../core/models/anagrafica.models';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 import { KeywordKind, keywordVisual, tipoMovLabel } from './keyword-visual';
 
 interface WizardData {
@@ -45,6 +46,7 @@ interface KindOption {
     FormsModule, MatDialogModule, MatStepperModule, MatButtonModule, MatIconModule,
     MatChipsModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatProgressSpinnerModule, MatTooltipModule,
+    CogePickerComponent,
   ],
   templateUrl: './keyword-create-wizard.component.html',
   styleUrls: ['./keyword-create-wizard.component.scss'],
@@ -144,6 +146,14 @@ export class KeywordCreateWizardComponent {
     if (!codice) return '—';
     const c = this.data.coge.find(x => x.codice === codice);
     return c ? `${c.codice} ${c.nome}` : codice;
+  }
+  /** Id del conto attualmente scelto (il modello qui è il CODICE) per il picker. */
+  get selectedCogeId(): number | null {
+    return this.data.coge.find(x => x.codice === this.cogeCodice)?.id ?? null;
+  }
+  /** Scelta dal picker → qui il modello resta il CODICE (identico al vecchio select). */
+  setCoge(conto: PianoContiCogeDTO | null): void {
+    this.cogeCodice = conto?.codice ?? null;
   }
   fornitoreNome(id: string | null): string {
     return id ? (this.data.fornitori.find(f => f.id === id)?.ragioneSociale ?? '—') : '—';

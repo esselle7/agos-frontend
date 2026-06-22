@@ -250,7 +250,7 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      REGISTRATO:   '#1565C0',
+      REGISTRATO:   '#2C6E8F',
       DA_LIQUIDARE: '#F57C00',
       ANNULLATO:    '#C62828',
     };

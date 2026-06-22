@@ -63,16 +63,13 @@ export interface PersonaleFormDialogData {
   styles: [`
     .full { width: 100%; }
     .retribuzione-block {
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-    .retribuzione-label {
-      font-size: 12px; font-weight: 700; color: #6b7280;
-      text-transform: uppercase; letter-spacing: .5px;
+      gap: 10px;
+      background: var(--surface);
     }
     .retribuzione-toggle { width: 100%; }
     .retribuzione-toggle .mat-button-toggle { flex: 1; }
@@ -80,12 +77,20 @@ export interface PersonaleFormDialogData {
       font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;
     }
     .retribuzione-hint {
-      display: flex; align-items: center; gap: 6px;
-      margin: 0; font-size: 12px; color: #6b7280;
-      background: #f6f7f9; border-radius: 8px; padding: 6px 10px;
+      display: flex; align-items: center; gap: 7px;
+      margin: 0; font-size: .78rem; color: var(--text-sub);
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
     }
-    .retribuzione-hint.oraria { background: #eef4fb; color: #1d4ed8; }
-    .retribuzione-hint mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .retribuzione-hint.oraria {
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+      color: var(--primary-d);
+    }
+    .retribuzione-hint mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
+    .retribuzione-hint strong { color: var(--text-main); }
+    .personale-form__new-opt { display: flex; align-items: center; gap: 6px; color: var(--primary-d); }
+    .personale-form__new-opt mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .personale-form__active { margin-top: 4px; }
   `],
 })
 export class PersonaleFormDialogComponent implements OnInit, OnDestroy {

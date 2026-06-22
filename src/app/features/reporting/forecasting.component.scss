@@ -69,10 +69,10 @@
   border-radius: 999px;
   letter-spacing: 0.02em;
 
-  &--asis     { background: rgba(55,71,79,0.10);   color: #37474F; }
-  &--forecast { background: rgba(230,81,0,0.12);   color: #E65100; }
-  &--eco      { background: rgba(21,101,192,0.12); color: #1565C0; }
-  &--fin      { background: rgba(191,54,12,0.12);  color: #BF360C; }
+  &--asis     { background: rgba(55,71,79,0.10);   color: var(--text-sub); }
+  &--forecast { background: rgba(230,81,0,0.12);   color: var(--warning); }
+  &--eco      { background: rgba(21,101,192,0.12); color: var(--info); }
+  &--fin      { background: rgba(191,54,12,0.12);  color: var(--warning); }
 }
 
 .fc-count-badge {
@@ -86,7 +86,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   background: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 // ── KPI grid ────────────────────────────────────────────────────────────────
@@ -120,8 +120,8 @@
     color: var(--text-sub);
   }
 
-  &--crediti { border-left: 3px solid #2E7D32; }
-  &--debiti  { border-left: 3px solid #C62828; }
+  &--crediti { border-left: 3px solid var(--success); }
+  &--debiti  { border-left: 3px solid var(--danger); }
 }
 
 // ── Grafico ─────────────────────────────────────────────────────────────────
@@ -141,7 +141,7 @@
   gap: 8px;
   margin-top: 14px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.03);
+  background: color-mix(in srgb, var(--text-main) 3%, transparent);
   border-radius: var(--radius-sm, 6px);
   font-size: 0.78rem;
   color: var(--text-sub);
@@ -171,8 +171,8 @@
 .fc-riepilogo {
   padding: 20px;
 
-  &--eco { border-top: 3px solid #1565C0; }
-  &--fin { border-top: 3px solid #BF360C; }
+  &--eco { border-top: 3px solid var(--info); }
+  &--fin { border-top: 3px solid var(--warning); }
 
   &__header {
     display: flex;
@@ -256,7 +256,7 @@
 
 .fc-filtro--active {
   background: var(--primary) !important;
-  color: #fff !important;
+  color: var(--on-accent) !important;
   border-color: var(--primary) !important;
 }
 

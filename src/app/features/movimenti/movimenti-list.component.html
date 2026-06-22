@@ -3,10 +3,13 @@
   <!-- Header -->
   <div class="mov-list__header">
     <div class="mov-list__title">
-      <h2>Movimenti</h2>
-      @if (result()?.totalElements != null) {
-        <span class="mov-list__count text-sub">{{ result()!.totalElements }} totali</span>
-      }
+      <span class="page-eyebrow">Contabilità</span>
+      <div class="mov-list__title-row">
+        <h2>Movimenti</h2>
+        @if (result()?.totalElements != null) {
+          <span class="mov-list__count text-sub">{{ result()!.totalElements }} totali</span>
+        }
+      </div>
     </div>
     <div class="mov-list__actions">
       <button mat-stroked-button (click)="esportaCsv()">

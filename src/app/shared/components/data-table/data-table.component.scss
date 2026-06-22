@@ -36,7 +36,7 @@
     transition: background 0.12s ease;
 
     &:hover {
-      background: rgba(45, 106, 79, 0.04);
+      background: rgba(var(--primary-rgb), 0.04);
     }
   }
 }

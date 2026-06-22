@@ -28,6 +28,7 @@ import { FornitoriService } from '../../../core/services/fornitori.service';
 import { LookupService } from '../../../core/services/lookup.service';
 import { FornitoreDTO, CreateFornitoreRequest, PianoContiCogeDTO } from '../../../core/models/anagrafica.models';
 import { BuSelectorComponent } from '../../../shared/components/bu-selector/bu-selector.component';
+import { CogePickerComponent } from '../../../shared/components/coge-picker/coge-picker.component';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 
 export interface FornitoreFormDialogData {
@@ -48,6 +49,7 @@ export interface FornitoreFormDialogData {
     MatProgressSpinnerModule,
     MatAutocompleteModule,
     BuSelectorComponent,
+    CogePickerComponent,
     SkeletonLoaderComponent,
     InputFilterDirective,
   ],
@@ -131,6 +133,11 @@ export class FornitoreFormDialogComponent implements OnInit, OnDestroy {
     const conto = event.option.value as PianoContiCogeDTO;
     this.form.controls.cogeDefaultId.setValue(conto.id);
     this.cogeSearch.setValue(`${conto.nome} (${conto.codice})`, { emitEvent: false });
+  }
+
+  /** Scelta COGE default dal picker → scrive l'id nel control (identico al vecchio autocomplete). */
+  setCoge(conto: PianoContiCogeDTO | null): void {
+    this.form.controls.cogeDefaultId.setValue(conto?.id ?? null);
   }
 
   clearCoge(): void {

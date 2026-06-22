@@ -1,6 +1,10 @@
 # Documentazione Movimenti — Agostinelli Gestionale
 
-> Versione: V29+ | Ultimo aggiornamento: 2026-05-20
+> Schema DB consolidato `V1`–`V10` | Ultimo aggiornamento: 2026-06-22
+>
+> Nota: questo documento è **logicamente allineato al codice**. I riferimenti a numeri di migration
+> storici (V20, V29…) sono stati rimossi: tutte le strutture descritte (mastri COGE 10–70, modello a
+> 3 date, viste materializzate del P&L e del cash flow) vivono ora nello schema consolidato `V1`–`V10`.
 
 ---
 
@@ -141,12 +145,12 @@ Il conto COGE (`conto_coge_id`) determina **come ogni movimento viene classifica
     50.01.002  Lavapavimenti
     50.01.003  Arredi e attrezzature
 
-60  ONERI FINANZIARI (ONERE_FINANZIARIO)   ← introdotto in V29
+60  ONERI FINANZIARI (ONERE_FINANZIARIO)
     60.01.001  Interessi mutuo ipotecario
     60.01.002  Interessi Regione
     60.01.003  Interessi ISMEA
 
-70  IMPOSTE E TRIBUTI (IMPOSTA)             ← introdotto in V29
+70  IMPOSTE E TRIBUTI (IMPOSTA)
     70.01.001  IRAP
     70.02.001  IRPEF / IRES
 ```
@@ -347,7 +351,7 @@ importo:               importo del pagamento
 dataMovimento:         evento.dataEvento   ← COMPETENZA = data dell'evento
 dataFinanziaria:       request.data()      ← LIQUIDAZIONE = data del pagamento fisico
 dataLiquidita:         request.data()
-stato:                 REGISTRATO (o ATTIVO nei sistemi pre-V20)
+stato:                 REGISTRATO  (ATTIVO è un alias legacy ancora presente tra i lk_stati_movimento)
 fonte:                 MANUALE
 eventoId:              evento.id
 tipoEventoMovimento:   CAPARRA | ACCONTO | SALDO | PENALE

@@ -86,148 +86,116 @@ interface PersonaleGruppo {
   ],
   templateUrl: './evento-form-dialog.component.html',
   styles: [`
+    /* Amber semantico SOLO per gli allergeni (caution), il resto segue l'identità verde. */
     .allergie-section { width: 100%; }
-    .allergie-label { font-size: 13px; color: #6b7280; margin: 0 0 8px; font-weight: 600; }
-    .allergie-comuni-grid {
-      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
-    }
+    .allergie-label { font-size: .78rem; color: var(--text-sub); margin: 0 0 8px; font-weight: 600; }
+    .allergie-comuni-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .allergia-toggle {
-      padding: 4px 12px; border-radius: 16px; border: 1.5px solid #e5e7eb;
-      background: #f9fafb; font-size: 13px; cursor: pointer; font-family: inherit;
-      color: #374151; transition: all .15s ease; line-height: 1.4;
+      padding: 4px 12px; border-radius: 16px; border: 1.5px solid var(--border);
+      background: var(--surface); font-size: .8rem; cursor: pointer; font-family: inherit;
+      color: var(--text-sub); transition: all .15s ease; line-height: 1.4;
     }
-    .allergia-toggle:hover { border-color: #f57c00; color: #f57c00; }
-    .allergia-toggle.active {
-      background: #fff3e0; border-color: #f57c00; color: #e65100; font-weight: 600;
-    }
+    .allergia-toggle:hover { border-color: #d97706; color: #b45309; }
+    .allergia-toggle.active { background: #fff7ed; border-color: #d97706; color: #b45309; font-weight: 600; }
     .allergie-custom-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .allergia-custom-chip {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 3px 10px; border-radius: 14px;
-      background: #fce4ec; border: 1px solid #f48fb1; color: #c62828;
-      font-size: 12px; font-weight: 600;
+      background: #fff7ed; border: 1px solid #fcd9a8; color: #b45309;
+      font-size: .74rem; font-weight: 600;
     }
     .allergia-custom-chip button {
       background: none; border: none; cursor: pointer; padding: 0; line-height: 1;
-      color: #c62828; font-size: 16px; display: flex; align-items: center;
+      color: #b45309; font-size: 16px; display: flex; align-items: center;
     }
     .allergie-input-row { display: flex; align-items: center; gap: 8px; }
     .bu-display {
       display: flex; align-items: center; gap: 8px; padding: 10px 14px;
-      border-radius: 8px; background: #f3f4f6; border: 1px solid #e5e7eb;
-      font-size: 14px; color: #374151;
+      border-radius: 10px; background: color-mix(in srgb, var(--primary) 6%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
+      font-size: .88rem; color: var(--text-main);
     }
-    .bu-display mat-icon { font-size: 18px; width: 18px; height: 18px; color: #9ca3af; }
+    .bu-display mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary); }
     .bu-name { font-weight: 600; }
 
     /* ── Step 2: Personale ─────────────────────────────────── */
     .personale-step { display: flex; flex-direction: column; gap: 12px; }
-    .personale-step-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 4px;
-    }
+    .personale-step-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
     .personale-count-chip {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 2px 10px; border-radius: 12px;
-      background: #e8f5e9; color: #2e7d32; font-size: 12px; font-weight: 600;
+      background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary-d);
+      font-size: .74rem; font-weight: 600;
     }
     .mansione-gruppo { margin-bottom: 4px; }
     .mansione-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 12px; border-radius: 8px 8px 0 0;
-      background: #f3f4f6; border: 1px solid #e5e7eb; border-bottom: none;
+      padding: 8px 12px; border-radius: 10px 10px 0 0;
+      background: var(--surface); border: 1px solid var(--border); border-bottom: none;
       cursor: pointer; user-select: none;
     }
-    .mansione-header:hover { background: #e9ecef; }
-    .mansione-label {
-      font-size: 13px; font-weight: 700; color: #374151;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .mansione-badge {
-      font-size: 11px; background: #d1d5db; color: #374151;
-      padding: 1px 7px; border-radius: 10px;
-    }
-    .mansione-badge.selected { background: #bbf7d0; color: #166534; }
-    .mansione-toggle { color: #9ca3af; font-size: 18px; }
+    .mansione-header:hover { background: color-mix(in srgb, var(--primary) 5%, transparent); }
+    .mansione-label { font-size: .82rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
+    .mansione-label mat-icon { color: var(--text-sub); }
+    .mansione-badge { font-size: .68rem; background: var(--border); color: var(--text-sub); padding: 1px 7px; border-radius: 10px; }
+    .mansione-badge.selected { background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary-d); }
+    .mansione-toggle { color: var(--text-sub); font-size: 18px; }
     .persone-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
-      padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;
-      background: #fff;
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 0 0 10px 10px; background: var(--card);
     }
     .persona-card {
       display: flex; align-items: center; gap: 8px;
-      padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e5e7eb;
-      background: #f9fafb; cursor: pointer; transition: all .15s ease;
+      padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border);
+      background: var(--surface); cursor: pointer; transition: all .15s ease;
     }
-    .persona-card:hover { border-color: #1976d2; background: #e3f2fd; }
-    .persona-card.selected { border-color: #1976d2; background: #e3f2fd; }
+    .persona-card:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+    .persona-card.selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 9%, transparent); }
     .persona-avatar {
       width: 32px; height: 32px; border-radius: 50%;
-      background: #1976d2; color: #fff; font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      background: var(--primary); color: #fff; font-size: .74rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .persona-avatar.selected { background: #0d47a1; }
+    .persona-avatar.selected { background: var(--primary-d); }
     .persona-info { min-width: 0; }
-    .persona-nome {
-      font-size: 13px; font-weight: 600; color: #111827;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .persona-check {
-      margin-left: auto; flex-shrink: 0;
-    }
-    .empty-personale {
-      text-align: center; padding: 32px 16px; color: #9ca3af;
-      font-size: 14px;
-    }
-    .selezionati-chips {
-      display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0;
-    }
+    .persona-nome { font-size: .82rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .persona-check { margin-left: auto; flex-shrink: 0; }
+    .empty-personale { text-align: center; padding: 32px 16px; color: var(--text-sub); font-size: .88rem; }
+    .selezionati-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
     .selezionato-chip {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 4px 10px; border-radius: 14px;
-      background: #e8f5e9; border: 1px solid #a5d6a7; color: #1b5e20;
-      font-size: 12px; font-weight: 600;
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent); color: var(--primary-d);
+      font-size: .74rem; font-weight: 600;
     }
-    .selezionato-chip button {
-      background: none; border: none; cursor: pointer; padding: 0;
-      color: #2e7d32; font-size: 14px; display: flex; align-items: center;
-    }
+    .selezionato-chip button { background: none; border: none; cursor: pointer; padding: 0; color: var(--primary-d); font-size: 14px; display: flex; align-items: center; }
 
-    /* ── Step 3: Menu PDF ──────────────────────────────────── */
+    /* ── Step 3: Menu ──────────────────────────────────────── */
     .menu-step { display: flex; flex-direction: column; gap: 16px; }
     .menu-dropzone {
-      border: 2px dashed #cbd5e1; border-radius: 12px;
+      border: 2px dashed var(--border); border-radius: 14px;
       padding: 32px 24px; text-align: center; cursor: pointer;
-      background: #f9fafb; transition: all .15s ease; color: #6b7280;
+      background: var(--surface); transition: all .15s ease; color: var(--text-sub);
     }
-    .menu-dropzone:hover { border-color: #f57c00; background: #fff7ed; color: #e65100; }
-    .menu-dropzone.dragover { border-color: #f57c00; background: #fff3e0; color: #e65100; }
-    .menu-dropzone mat-icon {
-      font-size: 44px; width: 44px; height: 44px; color: #f57c00; margin-bottom: 4px;
+    .menu-dropzone:hover, .menu-dropzone.dragover {
+      border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); color: var(--primary-d);
     }
-    .menu-dropzone-title { font-size: 15px; font-weight: 600; color: #374151; margin: 8px 0 4px; }
-    .menu-dropzone-sub { font-size: 12.5px; color: #9ca3af; margin: 0; }
+    .menu-dropzone mat-icon { font-size: 44px; width: 44px; height: 44px; color: var(--primary); margin-bottom: 4px; }
+    .menu-dropzone-title { font-size: .94rem; font-weight: 600; color: var(--text-main); margin: 8px 0 4px; }
+    .menu-dropzone-sub { font-size: .78rem; color: var(--text-sub); margin: 0; }
     .menu-file-card {
       display: flex; align-items: center; gap: 12px;
-      padding: 12px 14px; border-radius: 10px;
-      background: #fff3e0; border: 1px solid #ffcc80;
+      padding: 12px 14px; border-radius: 12px;
+      background: color-mix(in srgb, var(--primary) 6%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
     }
-    .menu-file-card mat-icon.pdf-ico { color: #d32f2f; font-size: 28px; width: 28px; height: 28px; }
+    .menu-file-card mat-icon.pdf-ico { color: #c0392b; font-size: 28px; width: 28px; height: 28px; }
     .menu-file-meta { min-width: 0; flex: 1; }
-    .menu-file-name {
-      font-size: 14px; font-weight: 600; color: #111827;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .menu-file-size { font-size: 12px; color: #6b7280; }
-    .menu-preview {
-      width: 100%; height: 280px; border: 1px solid #e5e7eb; border-radius: 8px;
-    }
-    .menu-skip-link {
-      background: none; border: none; cursor: pointer; color: #9ca3af;
-      font-size: 13px; font-family: inherit; text-decoration: underline; padding: 0;
-    }
-    .menu-skip-link:hover { color: #6b7280; }
+    .menu-file-name { font-size: .88rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .menu-file-size { font-size: .74rem; color: var(--text-sub); }
+    .menu-preview { width: 100%; height: 280px; border: 1px solid var(--border); border-radius: 10px; }
+    .menu-skip-link { background: none; border: none; cursor: pointer; color: var(--text-sub); font-size: .82rem; font-family: inherit; text-decoration: underline; padding: 0; }
+    .menu-skip-link:hover { color: var(--text-main); }
   `],
 })
 export class EventoFormDialogComponent implements OnInit, OnDestroy {

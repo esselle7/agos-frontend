@@ -23,6 +23,7 @@ import { forkJoin } from 'rxjs';
 import { MovimentiService } from '../../core/services/movimenti.service';
 import { ContiService } from '../../core/services/conti.service';
 import { LookupService } from '../../core/services/lookup.service';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 import { FornitoriService } from '../../core/services/fornitori.service';
 import { EventiService } from '../../core/services/eventi.service';
 import { BuService } from '../../core/services/bu.service';
@@ -68,6 +69,7 @@ interface RigaForm {
     MatProgressSpinnerModule,
     MatChipsModule,
     MatTooltipModule,
+    CogePickerComponent,
   ],
   templateUrl: './ambiguita-review-dialog.component.html',
   styleUrls: ['./ambiguita-review-dialog.component.scss'],
@@ -129,6 +131,13 @@ export class AmbiguitaReviewDialogComponent implements OnInit {
 
   formFor(id: string): FormGroup<RigaForm> {
     return this.forms.get(id)!;
+  }
+
+  /** Scelta COGE dal nuovo picker → scrive l'id nel control (identico al vecchio select). */
+  setCoge(id: string, conto: PianoContiCogeDTO | null): void {
+    const c = this.forms.get(id)!.controls.cogeId;
+    c.setValue(conto?.id ?? null);
+    c.markAsTouched();
   }
 
   rawEntries(raw: Record<string, string>): { k: string; v: string }[] {

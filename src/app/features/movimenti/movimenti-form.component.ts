@@ -9,7 +9,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
-import { Location } from '@angular/common';
+import { Location, DatePipe } from '@angular/common';
 import {
   ReactiveFormsModule,
   FormControl,
@@ -52,6 +52,7 @@ import { BuSelectorComponent } from '../../shared/components/bu-selector/bu-sele
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 import { MovimentoCreateRequest, MovimentoDTO, TipoMovimento } from '../../core/models/movimenti.models';
 import {
   ContoBancarioDTO, CategoriaNode, FornitoreSummaryDTO,
@@ -106,9 +107,11 @@ interface PreviewImpatto {
     BuSelectorComponent,
     CurrencyInputComponent,
     EuroPipe,
+    DatePipe,
     SkeletonLoaderComponent,
     InputFilterDirective,
     DateMaskDirective,
+    CogePickerComponent,
   ],
   templateUrl: './movimenti-form.component.html',
   styleUrls: ['./movimenti-form.component.scss'],
@@ -621,6 +624,58 @@ export class MovimentiFormComponent implements OnInit, OnDestroy {
     this.form.controls.contoCoge.setValue('', { emitEvent: false });
     this.cogeSearch.setValue('');
     this.filteredGruppiCoge = this.gruppiCoge;
+  }
+
+  /** Scelta COGE dal nuovo picker → scrive l'id (string) nel control, come il vecchio autocomplete. */
+  setCoge(conto: PianoContiCogeDTO | null): void {
+    this.form.controls.contoCoge.setValue(conto ? String(conto.id) : '', { emitEvent: false });
+    this.cogeSearch.setValue(conto ? `${conto.nome} (${conto.codice})` : '', { emitEvent: false });
+    this.form.controls.contoCoge.markAsTouched();
+    this.cdr.markForCheck();
+  }
+
+  // ── Wizard di creazione (solo UI: stessa form, stessi validator, stesso submit) ──────
+  readonly step = signal(1);
+  readonly steps = ['Tipo', 'Dati economici', 'Conto & fornitore', 'Incasso & dettagli', 'Revisione'];
+
+  /** Control da validare per poter avanzare da uno step (gli stessi del form, niente nuovi). */
+  private stepControls(s: number): AbstractControl[] {
+    const f = this.form.controls;
+    switch (s) {
+      case 1: return [f.tipo];
+      case 2: return [f.importo, f.dataMovimento, f.descrizione, f.businessUnitId];
+      case 3: return [f.contoCoge];
+      case 4: return [f.contoBancarioId, f.metodoPagamentoId, f.dataLiquidita, f.dataFinanziaria];
+      default: return [];
+    }
+  }
+  canAdvance(s: number): boolean { return this.stepControls(s).every(c => c.valid); }
+  private markStep(s: number): void { this.stepControls(s).forEach(c => c.markAsTouched()); this.cdr.markForCheck(); }
+
+  next(): void {
+    if (!this.canAdvance(this.step())) { this.markStep(this.step()); return; }
+    this.step.update(s => Math.min(s + 1, this.steps.length));
+    this.cdr.markForCheck();
+  }
+  prev(): void { this.step.update(s => Math.max(s - 1, 1)); this.cdr.markForCheck(); }
+  goToStep(n: number): void {
+    if (n <= this.step()) { this.step.set(n); this.cdr.markForCheck(); return; }
+    for (let s = this.step(); s < n; s++) {
+      if (!this.canAdvance(s)) { this.markStep(s); this.step.set(s); this.cdr.markForCheck(); return; }
+    }
+    this.step.set(n); this.cdr.markForCheck();
+  }
+
+  // ── Etichette per lo step di revisione (risolte dai lookup già caricati) ─────────────
+  get reviewCoge(): string { return this.cogeDisplayLabel(this.form.controls.contoCoge.value) || '—'; }
+  get reviewFornitore(): string { return this.fornitoreSearch.value || '—'; }
+  get reviewConto(): string {
+    const id = this.form.controls.contoBancarioId.value;
+    return this.conti().find(c => c.id === id)?.nome ?? '—';
+  }
+  get reviewMetodo(): string {
+    const id = this.form.controls.metodoPagamentoId.value;
+    return this.metodiPagamento().find(m => m.id === id)?.descrizione ?? '—';
   }
 
   // ── Submit ──────────────────────────────────────────────────────────────────

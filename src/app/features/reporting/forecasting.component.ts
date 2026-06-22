@@ -44,7 +44,7 @@ const CATEGORIA_LABEL: Record<string, string> = {
 };
 
 const CATEGORIA_COLOR: Record<string, string> = {
-  MOVIMENTO:       '#1565C0',
+  MOVIMENTO:       '#2C6E8F',
   EVENTO:          '#E65100',
   RATA_RICORRENTE: '#6A1B9A',
   STIPENDIO:       '#2E7D32',
@@ -105,7 +105,7 @@ export class ForecastingComponent implements OnInit {
         {
           label: 'Saldo Liquidità Proiettato',
           data: tl.map(t => t.saldoLiquiditaFine),
-          borderColor: '#1565C0',
+          borderColor: '#2C6E8F',
           backgroundColor: 'rgba(21,101,192,0.10)',
           fill: true,
           tension: 0.3,
@@ -206,7 +206,7 @@ export class ForecastingComponent implements OnInit {
   }
 
   vistaColor(v: string): string {
-    return v === 'ENTRAMBE' ? '#37474F' : v === 'ECONOMICA' ? '#1565C0' : '#BF360C';
+    return v === 'ENTRAMBE' ? '#37474F' : v === 'ECONOMICA' ? '#2C6E8F' : '#BF360C';
   }
 
   ebitdaClass(v: number): string { return v >= 0 ? 'text-success' : 'text-danger'; }

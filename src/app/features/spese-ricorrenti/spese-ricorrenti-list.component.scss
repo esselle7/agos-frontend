@@ -84,8 +84,8 @@
 
     &-label { font-size: 0.72rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: .03em; }
     &-value { font-weight: 600; font-size: 0.9rem; color: var(--text-main);
-      &--paid    { color: #2e7d32; }
-      &--residuo { color: #e65100; }
+      &--paid    { color: var(--success); }
+      &--residuo { color: var(--warning); }
     }
   }
 
@@ -110,9 +110,9 @@
   font-size: 0.7rem; font-weight: 600; padding: 2px 8px;
   border-radius: 999px; white-space: nowrap;
 
-  &--green { background: rgba(46,125,50,.12); color: #2e7d32; }
-  &--blue  { background: rgba(21,101,192,.12); color: #1565c0; }
-  &--red   { background: rgba(198,40,40,.12);  color: #c62828; }
+  &--green { background: rgba(46,125,50,.12); color: var(--success); }
+  &--blue  { background: rgba(21,101,192,.12); color: var(--info); }
+  &--red   { background: rgba(198,40,40,.12);  color: var(--danger); }
 }
 
 .icon-xs { font-size: 14px; width: 14px; height: 14px; }

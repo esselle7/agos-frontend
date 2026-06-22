@@ -59,7 +59,7 @@ const PAGAMENTO_ICONE: Record<TipoPagamentoEvento, string> = {
 
 const PAGAMENTO_COLORS: Record<TipoPagamentoEvento, string> = {
   CAPARRA:  '#f57c00',
-  ACCONTO:  '#1976d2',
+  ACCONTO:  '#2C6E8F',
   SALDO:    '#388e3c',
   PENALE:   '#c62828',
   RIMBORSO: '#6d4c41',
