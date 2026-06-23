@@ -288,3 +288,12 @@
 
   mat-icon { color: var(--danger); }
 }
+
+// ── Layer STIMATO (ricavi cash) ──────────────────────────────────────────────
+
+.text-info { color: var(--info); }
+
+.fc-riepilogo__row--stima {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+}

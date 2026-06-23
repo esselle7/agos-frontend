@@ -28,9 +28,17 @@
         <mat-button-toggle [value]="h.value">{{ h.label }}</mat-button-toggle>
       }
     </mat-button-toggle-group>
+    <button mat-stroked-button
+            class="fc-stima-toggle"
+            [class.fc-filtro--active]="includiStime()"
+            (click)="includiStime.set(!includiStime())"
+            matTooltip="Include la stima dei ricavi cash ricorrenti (cassa ristorante, spaccio) — media per giorno della settimana, ultime 8 sett., fino a +90 gg">
+      <mat-icon>{{ includiStime() ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+      Includi stime
+    </button>
     <span class="fc-horizon-note">
       <mat-icon>info_outline</mat-icon>
-      Previsione da domani · Dati stimati, non certificati
+      Previsione da domani · CERTO = contrattualizzato (eventi, rate, stipendi); STIMA = ricavi cash su base storica
     </span>
   </div>
 
@@ -124,8 +132,9 @@
         </div>
         <div class="fc-chart-note">
           <mat-icon>info</mat-icon>
-          La linea tratteggiata (EBITDA Periodo, scala destra) mostra l'utile operativo previsto per ciascun bucket.
-          Il saldo liquidità (area blu, scala sinistra) include incassi e pagamenti stimati.
+          L'area blu è il saldo liquidità sul solo <strong>certo</strong> (eventi, rate, stipendi, movimenti).
+          La linea arancione tratteggiata, se attiva, aggiunge i <strong>ricavi cash stimati</strong> (combinato).
+          La tratteggiata verde (EBITDA Periodo, scala destra) è l'utile operativo per bucket.
         </div>
       </div>
     </section>
@@ -146,9 +155,19 @@
           </div>
           <div class="fc-riepilogo__rows">
             <div class="fc-riepilogo__row">
-              <span>Ricavi previsti</span>
+              <span>Ricavi previsti (certo)</span>
               <span class="text-success">{{ economico!.ricaviPrevisti | euro }}</span>
             </div>
+            @if (includiStime() && stimaTotale() > 0) {
+              <div class="fc-riepilogo__row fc-riepilogo__row--stima">
+                <span>+ di cui stimato (ricavi cash)</span>
+                <span class="text-info">{{ stimaTotale() | euro }}</span>
+              </div>
+              <div class="fc-riepilogo__row fc-riepilogo__row--total">
+                <span>Ricavi combinati</span>
+                <span class="text-success">{{ economico!.ricaviPrevisti + stimaTotale() | euro }}</span>
+              </div>
+            }
             <div class="fc-riepilogo__row">
               <span>Costi previsti</span>
               <span class="text-danger">{{ economico!.costiPrevisti | euro }}</span>
@@ -191,9 +210,15 @@
               </span>
             </div>
             <div class="fc-riepilogo__row">
-              <span>+ Incassi attesi</span>
+              <span>+ Incassi attesi (certo)</span>
               <span class="text-success">{{ finanziario!.incassiPrevisti | euro }}</span>
             </div>
+            @if (includiStime() && stimaTotale() > 0) {
+              <div class="fc-riepilogo__row fc-riepilogo__row--stima">
+                <span>+ di cui stimato (ricavi cash)</span>
+                <span class="text-info">{{ stimaTotale() | euro }}</span>
+              </div>
+            }
             <div class="fc-riepilogo__row">
               <span>− Uscite attese</span>
               <span class="text-danger">{{ finanziario!.uscitePreviste | euro }}</span>
@@ -205,6 +230,15 @@
                 {{ finanziario!.saldoFinale | euro }}
               </span>
             </div>
+            @if (includiStime() && stimaTotale() > 0) {
+              <div class="fc-riepilogo__row fc-riepilogo__row--total">
+                <span>Saldo finale + stime</span>
+                <span [class.text-success]="(finanziario!.saldoFinale + stimaTotale()) >= 0"
+                      [class.text-danger]="(finanziario!.saldoFinale + stimaTotale()) < 0">
+                  {{ finanziario!.saldoFinale + stimaTotale() | euro }}
+                </span>
+              </div>
+            }
           </div>
         </div>
 
@@ -338,11 +372,11 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="vista">
-              <th mat-header-cell *matHeaderCellDef>Vista</th>
+            <ng-container matColumnDef="affidabilita">
+              <th mat-header-cell *matHeaderCellDef>Affidabilità</th>
               <td mat-cell *matCellDef="let r">
-                <span class="fc-vista-chip" [style.color]="vistaColor(r.vista)">
-                  {{ vistaLabel(r.vista) }}
+                <span class="fc-vista-chip" [style.color]="affidabilitaColor(r.affidabilita)">
+                  {{ affidabilitaLabel(r.affidabilita) }}
                 </span>
               </td>
             </ng-container>

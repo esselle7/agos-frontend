@@ -105,6 +105,7 @@ export interface RiepilogoCategoriaDTO {
 export type ForecastingHorizon = '30' | '60' | '90' | '180' | 'FINE_ANNO';
 export type ForecastingCategoria = 'MOVIMENTO' | 'EVENTO' | 'RATA_RICORRENTE' | 'RATA_RICORRENTE_CAPITALE' | 'RATA_RICORRENTE_INTERESSI' | 'STIPENDIO';
 export type ForecastingVista = 'ECONOMICA' | 'FINANZIARIA' | 'ENTRAMBE';
+export type ForecastingAffidabilita = 'CERTO' | 'STIMATO';
 
 export interface ForecastingAsIsDTO {
   saldoLiquidita: number;
@@ -122,6 +123,7 @@ export interface ForecastingDettaglioDTO {
   importoEntrata: number;
   importoUscita: number;
   vista: ForecastingVista;
+  affidabilita: ForecastingAffidabilita;
 }
 
 export interface ForecastingTimelineDTO {
@@ -132,6 +134,7 @@ export interface ForecastingTimelineDTO {
   uscitePreviste: number;
   ebitdaPeriodo: number;
   saldoLiquiditaFine: number;
+  entrateStimate: number;
 }
 
 export interface ForecastingEconomicoDTO {
