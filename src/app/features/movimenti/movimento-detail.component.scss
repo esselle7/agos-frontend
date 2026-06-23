@@ -132,3 +132,6 @@
     mat-icon { color: var(--danger) !important; }
   }
 }
+
+/* Stato scadenza in ritardo (Feature 1) */
+.mov-detail__ritardo { color: var(--danger); font-weight: 700; }

@@ -270,6 +270,25 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
     return s.countEntrate + s.countUscite;
   }
 
+  /** Etichetta compatta del ritardo/scadenza per un movimento Da Liquidare. */
+  ritardoLabel(giorni: number): string {
+    if (giorni < 0) return `+${-giorni}gg di ritardo`;
+    if (giorni === 0) return 'scade oggi';
+    return `tra ${giorni}gg`;
+  }
+
+  /** Spiegazione estesa: distingue uscita (pago io) da entrata (mi pagano). */
+  ritardoTooltip(row: { giorniAllaScadenza: number | null; tipo: string }): string {
+    const g = row.giorniAllaScadenza ?? 0;
+    if (g < 0) {
+      return row.tipo === 'USCITA'
+        ? `Sei in ritardo di ${-g} giorni sul pagamento`
+        : `Sei in attesa del pagamento da ${-g} giorni`;
+    }
+    if (g === 0) return 'Scade oggi';
+    return `Scade tra ${g} giorni`;
+  }
+
   fonteColor(fonte: string | null): string {
     const map: Record<string, string> = {
       MANUALE:    '#6B7280',

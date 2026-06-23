@@ -248,3 +248,22 @@
     strong { font-size: 0.95rem; }
   }
 }
+
+/* Indicatore di ritardo/scadenza accanto allo stato Da Liquidare (Feature 1) */
+.mov-list__ritardo {
+  display: inline-block;
+  margin-left: .4rem;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .08rem .4rem;
+  border-radius: 999px;
+  color: var(--text-sub);
+  background: var(--surface-sunken, rgba(0,0,0,.05));
+  white-space: nowrap;
+  vertical-align: middle;
+
+  &.late {
+    color: var(--danger);
+    background: var(--tint-danger, rgba(220,38,38,.12));
+  }
+}

@@ -32,6 +32,12 @@ export interface MovimentoDTO {
   allegatoPath: string | null;
   createdAt: string;
   createdBy: string;
+  /**
+   * Feature 1 — campo derivato (solo DA_LIQUIDARE non liquidi): giorni alla scadenza
+   * (dataLiquidita − oggi). > 0 = mancano N giorni; 0 = scade oggi; < 0 = in ritardo di |N|
+   * giorni (USCITA: ritardo sul pagamento; ENTRATA: ritardo nel pagarti). null se non pertinente.
+   */
+  giorniAllaScadenza: number | null;
 }
 
 export interface MovimentoCreateRequest {
@@ -143,6 +149,9 @@ export interface EtlImportResponse {
   /** Avvisi non bloccanti: scontrini Billy non agganciati. messaggio prefissato da
    *  EVENTO_ATTESO: (incasso-evento) o SPACCIO_DA_VERIFICARE: (spaccio non riconciliato). */
   avvisi?: EtlRowError[];
+  /** Feature 2 — righe banca intercettate che combaciano con un movimento DA_LIQUIDARE
+   *  esistente (non persistite come nuovi movimenti; da risolvere nello smistamento). */
+  matchingDifferiti?: number;
 }
 
 export interface ImportLogDTO {
@@ -405,5 +414,44 @@ export interface RicorrenteParcheggiataDTO {
 export interface RisolviRicorrenteRequest {
   azione: 'COLLEGA' | 'IGNORA';
   recurringPlanId: string | null;
+  nota: string | null;
+}
+
+/**
+ * Feature 2 — Matching differiti: riga banca intercettata dall'import che combacia (importo al
+ * centesimo + descrizione) con un movimento MANUALE già presente in stato DA_LIQUIDARE. Espone
+ * entrambi i lati del match (movimento esistente + riga banca) per la riconciliazione manuale.
+ */
+export interface MatchingDifferitoDTO {
+  id: string;
+  importLogId: string;
+  // Lato movimento Da Liquidare esistente
+  movimentoId: string;
+  movimentoTipo: TipoMovimento;
+  movimentoDataMovimento: string | null;
+  movimentoDataLiquidita: string | null;
+  movimentoImporto: number;
+  movimentoDescrizione: string | null;
+  movimentoStato: string;
+  movimentoFonte: string | null;
+  // Lato riga banca intercettata
+  fonte: string;             // IMPORT_BANCA | IMPORT_BILLY
+  rigaNumero: number | null;
+  dataBanca: string | null;
+  importo: number;
+  descrizione: string | null;
+  contoBancarioId: number | null;
+  // Stato risoluzione
+  stato: string;             // DA_RICONCILIARE | COLLEGATO | IGNORATO
+  note: string | null;
+  risoltoAt: string | null;
+  risoltoBy: string | null;
+  createdAt: string | null;
+}
+
+export interface RisolviMatchingDifferitoRequest {
+  azione: 'COLLEGA' | 'IGNORA';
+  /** opzionale per COLLEGA: override del metodo di pagamento da usare in liquidazione. */
+  metodoPagamentoId: number | null;
   nota: string | null;
 }

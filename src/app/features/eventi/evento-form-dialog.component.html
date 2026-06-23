@@ -60,6 +60,8 @@
               <mat-datepicker #pickerEvento />
               @if (form.controls.dataEvento.hasError('required') && form.controls.dataEvento.touched) {
                 <mat-error>Campo obbligatorio</mat-error>
+              } @else {
+                <mat-hint>Data di competenza del ricavo: l'evento pesa nel conto economico di questo mese, anche se caparra e saldo arrivano prima o dopo</mat-hint>
               }
             </mat-form-field>
 

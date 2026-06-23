@@ -37,6 +37,7 @@ import {
   EventoBreveDTO,
   MotivoMatchDTO,
   RicorrenteParcheggiataDTO,
+  MatchingDifferitoDTO,
 } from '../../core/models/movimenti.models';
 import { SpeseRicorrentiService } from '../../core/services/spese-ricorrenti.service';
 import { PlanSummaryDTO } from '../spese-ricorrenti/spese-ricorrenti.models';
@@ -101,7 +102,7 @@ export class ImportTriageDialogComponent implements OnInit {
   /** Sezione attiva (da rotta :sezione) → indice del tab (header nascosti, guida la nav laterale). */
   sezione = signal<string>('catalogare');
   private readonly tabIndex: Record<string, number> = {
-    catalogare: 0, eventi: 1, duplicati: 2, ricorrenti: 3, riba: 4,
+    catalogare: 0, eventi: 1, duplicati: 2, ricorrenti: 3, riba: 4, 'matching-differiti': 5,
   };
   selectedIndex = computed(() => this.tabIndex[this.sezione()] ?? 0);
 
@@ -115,6 +116,7 @@ export class ImportTriageDialogComponent implements OnInit {
   coppie = signal<CoppiaSospettaDTO[]>([]);
   ricorrenti = signal<RicorrenteParcheggiataDTO[]>([]);
   riba = signal<TransitorioDTO[]>([]);
+  matchingDiff = signal<MatchingDifferitoDTO[]>([]);
   piani = signal<PlanSummaryDTO[]>([]);
 
   /** selezione del piano per ogni ricorrente (id ricorrente → id piano). */
@@ -189,6 +191,9 @@ export class ImportTriageDialogComponent implements OnInit {
         break;
       case 'duplicati':
         this.movimentiService.getAnalisiDuplicati().subscribe({ next: a => { this.coppie.set(a.coppie); this.counts.setDuplicati(a.coppie.length); done(); }, error: fail });
+        break;
+      case 'matching-differiti':
+        this.movimentiService.getMatchingDifferiti('DA_RICONCILIARE', 0, 2000).subscribe({ next: r => { this.matchingDiff.set(r.content); done(); }, error: fail });
         break;
       default: done();
     }
@@ -335,6 +340,38 @@ export class ImportTriageDialogComponent implements OnInit {
         this.modificato = true;
         this.refreshKpi();
         this.snackBar.open(okMsg, 'OK', { duration: 2500 });
+      },
+      error: err => this.fail(err),
+    });
+  }
+
+  // ── Matching differiti (Feature 2): import banche ↔ movimenti Da Liquidare ────
+
+  /** COLLEGA: la riga banca È il movimento Da Liquidare già a libro → lo liquida (niente doppione). */
+  collegaMatching(m: MatchingDifferitoDTO): void {
+    this.saving.set(m.id);
+    this.movimentiService.risolviMatchingDifferito(m.id, { azione: 'COLLEGA', metodoPagamentoId: null, nota: null }).subscribe({
+      next: () => {
+        this.saving.set(null);
+        this.matchingDiff.update(rs => rs.filter(x => x.id !== m.id));
+        this.modificato = true;
+        this.refreshKpi();
+        this.snackBar.open('Movimento esistente liquidato (nessun doppione creato)', 'OK', { duration: 3000 });
+      },
+      error: err => this.fail(err),
+    });
+  }
+
+  /** IGNORA: falso positivo → la riga banca diventa un nuovo movimento; l'originale resta aperto. */
+  ignoraMatching(m: MatchingDifferitoDTO): void {
+    this.saving.set(m.id);
+    this.movimentiService.risolviMatchingDifferito(m.id, { azione: 'IGNORA', metodoPagamentoId: null, nota: null }).subscribe({
+      next: () => {
+        this.saving.set(null);
+        this.matchingDiff.update(rs => rs.filter(x => x.id !== m.id));
+        this.modificato = true;
+        this.refreshKpi();
+        this.snackBar.open('Riga importata come nuovo movimento separato', 'OK', { duration: 3000 });
       },
       error: err => this.fail(err),
     });

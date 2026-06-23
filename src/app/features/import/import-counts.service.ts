@@ -10,6 +10,7 @@ export interface ImportCounts {
   ricorrenti: number;
   eventi: number;
   duplicati: number;
+  matchingDifferiti: number;
 }
 
 /**
@@ -22,7 +23,7 @@ export class ImportCountsService {
   private readonly movimenti = inject(MovimentiService);
 
   readonly kpi = signal<ImportKpiDTO | null>(null);
-  readonly counts = signal<ImportCounts>({ catalogare: 0, riba: 0, ricorrenti: 0, eventi: 0, duplicati: 0 });
+  readonly counts = signal<ImportCounts>({ catalogare: 0, riba: 0, ricorrenti: 0, eventi: 0, duplicati: 0, matchingDifferiti: 0 });
   readonly loading = signal(false);
 
   reload(): void {
@@ -35,6 +36,7 @@ export class ImportCountsService {
       riba: this.movimenti.getRibaTransitori(0, 1),
       ricorrenti: this.movimenti.getRicorrenti('DA_RICONCILIARE', 0, 1),
       eventi: this.movimenti.getEventiParcheggiati('DA_RICONCILIARE', 0, 1),
+      matchingDifferiti: this.movimenti.getMatchingDifferiti('DA_RICONCILIARE', 0, 1),
     }).subscribe({
       next: r => {
         this.kpi.set(r.kpi);
@@ -44,6 +46,7 @@ export class ImportCountsService {
           riba: r.riba.totalElements,
           ricorrenti: r.ricorrenti.totalElements,
           eventi: r.eventi.totalElements,
+          matchingDifferiti: r.matchingDifferiti.totalElements,
         }));
         this.loading.set(false);
       },

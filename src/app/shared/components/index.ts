@@ -10,3 +10,5 @@ export { CurrencyInputComponent } from './currency-input/currency-input.componen
 export { BuSelectorComponent } from './bu-selector/bu-selector.component';
 export { DataTableComponent } from './data-table/data-table.component';
 export type { ColumnDef } from './data-table/data-table.component';
+export { HelpNoteComponent } from './help-note/help-note.component';
+export type { HelpNoteTone } from './help-note/help-note.component';

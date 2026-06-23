@@ -31,6 +31,8 @@ interface NavItem {
   icon: string;
   route: string;
   adminOnly: boolean;
+  /** Contatore opzionale stile "notifica non letta" (es. scadenze scadute). */
+  badge?: () => number;
 }
 
 interface NavSection {
@@ -47,7 +49,8 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Panoramica',
     items: [
-      { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', adminOnly: false },
+      { label: 'Dashboard',   icon: 'dashboard',     route: '/dashboard',   adminOnly: false },
+      { label: 'Scadenzario', icon: 'event_upcoming', route: '/scadenzario', adminOnly: true },
     ],
   },
   {
@@ -117,7 +120,13 @@ export class AppShellComponent implements OnInit {
 
   readonly visibleSections = computed<NavSection[]>(() =>
     NAV_SECTIONS
-      .map(s => ({ ...s, items: s.items.filter(i => !i.adminOnly || this.isAdmin()) }))
+      .map(s => ({
+        ...s,
+        items: s.items
+          .filter(i => !i.adminOnly || this.isAdmin())
+          // Aggancia il contatore "scaduti" alla voce Scadenzario (badge stile notifica).
+          .map(i => i.route === '/scadenzario' ? { ...i, badge: () => this.scadenzeCount() } : i),
+      }))
       .filter(s => s.items.length > 0)
   );
 
@@ -142,6 +151,12 @@ export class AppShellComponent implements OnInit {
     }
   }
 
+  /** Tooltip della voce (barra compressa): aggiunge il conteggio scaduti se presente. */
+  navTooltip(item: NavItem): string {
+    const n = item.badge?.() ?? 0;
+    return n > 0 ? `${item.label} · ${n} scadute` : item.label;
+  }
+
   toggleSidenav(): void {
     this.sidenavOpen.update(v => !v);
   }
@@ -158,16 +173,27 @@ export class AppShellComponent implements OnInit {
     this.authService.logout();
   }
 
+  /**
+   * Conta le scadenze GIÀ SCADUTE (non semplicemente urgenti): è il numero mostrato come
+   * "notifica non letta" accanto a Scadenzario. Usa un periodo ampio (YTD) per non perdere
+   * scaduti fuori dal mese corrente. Scaduto = scadenza passata e ancora non saldato/incassato.
+   */
   private loadScadenze(): void {
+    const oggi = new Date().toISOString().slice(0, 10);
     this.http
       .get<ScadenzeImminentiDTO>(
         environment.apiBaseUrl + API_PATHS.DASHBOARD.SCADENZE_IMMINENTI,
-        { params: { period: 'MTD' } }
+        { params: { period: 'YTD' } }
       )
       .subscribe({
         next: data => {
-          const all = [...data.eventi, ...data.rateRicorrenti];
-          this.scadenzeCount.set(all.filter(s => s.urgenza === 'ALTA').length);
+          const movScaduti = [
+            ...(data.usciteDaLiquidare ?? []),
+            ...(data.entrateDaRicevere ?? []),
+          ].filter(m => m.ggAllaScadenza < 0).length;
+          const eventiRateScaduti = [...data.eventi, ...data.rateRicorrenti]
+            .filter(s => s.stato !== 'PAID' && s.dataScadenza < oggi).length;
+          this.scadenzeCount.set(movScaduti + eventiRateScaduti);
         },
         error: () => {},
       });

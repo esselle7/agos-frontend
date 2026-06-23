@@ -204,6 +204,10 @@
             <th mat-header-cell *matHeaderCellDef>Stato</th>
             <td mat-cell *matCellDef="let row">
               <agos-badge [text]="row.stato" [color]="statoColor(row.stato)"></agos-badge>
+              @if (row.stato === 'DA_LIQUIDARE' && row.giorniAllaScadenza != null) {
+                <span class="mov-list__ritardo" [class.late]="row.giorniAllaScadenza < 0"
+                      [matTooltip]="ritardoTooltip(row)">{{ ritardoLabel(row.giorniAllaScadenza) }}</span>
+              }
             </td>
           </ng-container>
 

@@ -53,6 +53,11 @@ export const API_PATHS = {
     IMPORT_TRANSITORI_RIBA:      '/api/movimenti/import/transitori/riba',
     IMPORT_QUADRATURA:           '/api/movimenti/import/quadratura',
     IMPORT_ANALISI_DUPLICATI:    '/api/movimenti/import/eventi/analisi-duplicati',
+    // Feature 1 — movimenti DA_LIQUIDARE scaduti (in ritardo)
+    DA_LIQUIDARE_RITARDO:        '/api/movimenti/da-liquidare-in-ritardo',
+    // Feature 2 — matching differiti (riconciliazione import banche ↔ movimenti Da Liquidare)
+    IMPORT_MATCHING_DIFFERITI:        '/api/movimenti/import/matching-differiti',
+    IMPORT_MATCHING_DIFFERITO_RISOLVI:(id: string) => `/api/movimenti/import/matching-differiti/${id}/risolvi`,
     // Gestione Keyword (§4.8)
     KEYWORD:              '/api/movimenti/keyword',
     KEYWORD_ANTEPRIMA:    '/api/movimenti/keyword/anteprima',

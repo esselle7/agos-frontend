@@ -25,6 +25,8 @@ import {
   RicorrenteParcheggiataDTO,
   RisolviRicorrenteRequest,
   QuadraturaPeriodoDTO,
+  MatchingDifferitoDTO,
+  RisolviMatchingDifferitoRequest,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -256,6 +258,30 @@ export class MovimentiService {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<PagedResponse<TransitorioDTO>>(
       environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORI_RIBA, { params });
+  }
+
+  // ── Feature 1: movimenti DA_LIQUIDARE scaduti (in ritardo) ──────────────────
+
+  /** Movimenti Da Liquidare con scadenza superata (in ritardo). tipo opzionale ENTRATA/USCITA. */
+  getDaLiquidareInRitardo(tipo?: 'ENTRATA' | 'USCITA', page = 0, size = 50, sort?: string): Observable<PagedResponse<MovimentoDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (tipo) params = params.set('tipo', tipo);
+    if (sort) params = params.set('sort', sort);
+    return this.http.get<PagedResponse<MovimentoDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.DA_LIQUIDARE_RITARDO, { params });
+  }
+
+  // ── Feature 2: matching differiti (import banche ↔ movimenti Da Liquidare) ───
+
+  getMatchingDifferiti(stato = 'DA_RICONCILIARE', page = 0, size = 2000): Observable<PagedResponse<MatchingDifferitoDTO>> {
+    const params = new HttpParams().set('stato', stato).set('page', page).set('size', size);
+    return this.http.get<PagedResponse<MatchingDifferitoDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_MATCHING_DIFFERITI, { params });
+  }
+
+  risolviMatchingDifferito(id: string, req: RisolviMatchingDifferitoRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_MATCHING_DIFFERITO_RISOLVI(id), req);
   }
 
   /**

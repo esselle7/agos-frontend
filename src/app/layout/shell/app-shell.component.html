@@ -27,13 +27,25 @@
               <a
                 [routerLink]="item.route"
                 routerLinkActive="is-active"
-                [matTooltip]="!sidenavOpen() ? item.label : ''"
+                [matTooltip]="!sidenavOpen() ? navTooltip(item) : ''"
                 matTooltipPosition="right"
                 class="nav-link"
+                [class.nav-link--alert]="item.badge && item.badge() > 0"
               >
-                <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
+                <span class="nav-link__icon-wrap">
+                  <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
+                  @if (item.badge && item.badge() > 0 && !sidenavOpen()) {
+                    <span class="nav-link__dot" aria-hidden="true"></span>
+                  }
+                </span>
                 @if (sidenavOpen()) {
                   <span class="nav-link__label">{{ item.label }}</span>
+                  @if (item.badge && item.badge() > 0) {
+                    <span class="nav-link__badge"
+                          [attr.aria-label]="item.badge() + ' scadute da gestire'">
+                      +{{ item.badge() }}
+                    </span>
+                  }
                 }
               </a>
             }
@@ -147,8 +159,8 @@
           <button
             mat-icon-button
             class="badge-btn"
-            matTooltip="Scadenze imminenti ad alta urgenza"
-            [routerLink]="['/dashboard']"
+            [matTooltip]="scadenzeCount() + ' scadenze già scadute — apri lo Scadenzario'"
+            [routerLink]="['/scadenzario']"
           >
             <mat-icon
               [matBadge]="scadenzeCount()"

@@ -125,6 +125,15 @@
         </div>
 
       </div>
+
+      @if (authService.isAdmin() && ev.stato !== 'ANNULLATO') {
+        <agos-help-note tono="info" [collapsed]="true" titolo="Come avanza un evento">
+          <p>L'evento nasce <strong>Preventivato</strong>. Lo confermi quando il cliente
+            accetta — di solito all'arrivo della caparra o di un acconto. Quando registri il
+            pagamento di <strong>SALDO</strong> e il residuo arriva a zero, passa da solo a
+            <strong>Saldato</strong>.</p>
+        </agos-help-note>
+      }
     </div>
 
     <!-- ====== MENU PDF ====== -->
@@ -197,6 +206,15 @@
     @if (authService.isAdmin()) {
     <div class="section financial-card">
       <h2 class="section-title">Riepilogo Finanziario</h2>
+
+      <agos-help-note tono="info" [collapsed]="true" titolo="Come si calcola il profitto">
+        <p><strong>Incassato</strong> e <strong>Residuo</strong> riguardano la cassa (quanto è
+          già entrato e quanto manca al preventivo). Il <strong>Profitto</strong> è invece il
+          margine dell'evento: ricavo meno i <strong>costi diretti</strong> (DJ, torta, affitto
+          sala, catering…), cioè le spese specifiche di questo evento che ne erodono il guadagno.</p>
+        <p>Ricorda: il ricavo è di competenza alla data dell'evento, anche se l'incasso avviene
+          in momenti diversi.</p>
+      </agos-help-note>
 
       <div class="preventivo-row">
         <span class="preventivo-label">Preventivo totale</span>

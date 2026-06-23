@@ -33,6 +33,17 @@
 
   @if (data(); as d) {
 
+    <agos-help-note tono="info" [collapsed]="true"
+      titolo="Come leggere questo conto economico">
+      <p>Questo è il conto economico <strong>per competenza</strong>: ricavi e costi
+        compaiono nel mese in cui <em>maturano</em>, non quando i soldi entrano o escono.
+        Un evento di agosto è ricavo di agosto anche se la caparra è stata incassata a marzo —
+        per i movimenti di cassa veri guarda il <strong>Cash Flow</strong>.</p>
+      <p>Non entrano qui i <strong>giroconti</strong> tra i tuoi conti né la
+        <strong>quota capitale</strong> delle rate dei finanziamenti (è rimborso di debito,
+        non un costo): di una rata pesa solo la quota interessi, sotto l'EBIT.</p>
+    </agos-help-note>
+
     <!-- ══════════════════════════════════════════════════════
          TABELLA COMPARATIVA BU
          ══════════════════════════════════════════════════════ -->

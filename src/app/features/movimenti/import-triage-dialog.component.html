@@ -350,6 +350,56 @@
           }
         }
       </mat-tab>
+
+      <!-- ════════ MATCHING DIFFERITI (import banche ↔ movimenti Da Liquidare) ════════ -->
+      <mat-tab label="Già a libro ({{ matchingDiff().length }})">
+        @if (sezioneLoading() === 'matching-differiti') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (!matchingDiff().length) {
+          <div class="triage__empty"><mat-icon>join_inner</mat-icon><p>Nessuna riga banca da riconciliare con movimenti già a libro.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Queste righe importate dalla banca <strong>combaciano</strong> (stesso importo e descrizione) con un
+            movimento <strong>«Da liquidare»</strong> che hai già inserito a mano. Per non registrarlo due volte,
+            scegli: <strong>Collega</strong> se è lo stesso pagamento (liquida quello esistente), oppure
+            <strong>Ignora</strong> se è un movimento diverso (verrà creato a parte).
+          </p>
+          @for (m of matchingDiff(); track m.id) {
+            <div class="triage__ric">
+              <div class="triage__match">
+                <!-- Lato movimento già a libro -->
+                <div class="triage__match-side">
+                  <span class="triage__match-tag">Già a libro · Da liquidare</span>
+                  <span class="triage__amount" [class.out]="m.movimentoTipo === 'USCITA'" [class.in]="m.movimentoTipo === 'ENTRATA'">
+                    {{ m.movimentoTipo === 'USCITA' ? '− ' : '+ ' }}€ {{ m.movimentoImporto }}
+                  </span>
+                  <p class="triage__desc">{{ m.movimentoDescrizione }}</p>
+                  <span class="triage__date">Scadenza: {{ m.movimentoDataLiquidita || '—' }}</span>
+                </div>
+                <mat-icon class="triage__match-eq">drag_handle</mat-icon>
+                <!-- Lato riga banca importata -->
+                <div class="triage__match-side">
+                  <span class="triage__match-tag">Dalla banca · {{ m.fonte === 'IMPORT_BILLY' ? 'Billy' : 'Estratto conto' }}</span>
+                  <span class="triage__amount" [class.out]="m.movimentoTipo === 'USCITA'" [class.in]="m.movimentoTipo === 'ENTRATA'">
+                    {{ m.movimentoTipo === 'USCITA' ? '− ' : '+ ' }}€ {{ m.importo }}
+                  </span>
+                  <p class="triage__desc">{{ m.descrizione }}</p>
+                  <span class="triage__date">Pagamento: {{ m.dataBanca || '—' }}</span>
+                </div>
+              </div>
+              <div class="triage__ric-actions">
+                <button mat-flat-button color="primary" [disabled]="saving() === m.id" (click)="collegaMatching(m)">
+                  @if (saving() === m.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>link</mat-icon> }
+                  Collega (è lo stesso)
+                </button>
+                <button mat-stroked-button [disabled]="saving() === m.id" (click)="ignoraMatching(m)">
+                  <mat-icon>call_split</mat-icon> Ignora (è diverso)
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </mat-tab>
     </mat-tab-group>
   }
 

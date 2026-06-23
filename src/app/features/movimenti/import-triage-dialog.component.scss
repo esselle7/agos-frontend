@@ -323,6 +323,18 @@
 .triage__ric-actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: .4rem; }
 .triage__ric-plan { flex: 1 1 320px; min-width: 240px; }
 
+/* Matching differiti: confronto a due lati (movimento già a libro ↔ riga banca) */
+.triage__match { display: flex; align-items: stretch; gap: .75rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.triage__match-side {
+  flex: 1 1 280px; min-width: 240px; display: flex; flex-direction: column; gap: .25rem;
+  border: 1px solid var(--border-soft); border-radius: 10px; padding: .6rem .8rem; background: var(--surface);
+}
+.triage__match-tag {
+  font-size: .68rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  color: var(--text-sub);
+}
+.triage__match-eq { align-self: center; color: var(--text-sub); }
+
 /* Versione PAGINA: le sezioni sono guidate dalla nav laterale dello shell → niente header tab */
 .triage--page { padding: 0; }
 .triage--page .triage__tabs ::ng-deep .mat-mdc-tab-header { display: none; }

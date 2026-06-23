@@ -99,6 +99,7 @@ interface Categoria {
               @for (cat of categorie(); track cat.id) {
                 <button class="cp__cat" type="button"
                         [class.cp__cat--on]="cat.id === catSelId()"
+                        [title]="cat.descrizione + ' (' + cat.codice + ')'"
                         (click)="catSelId.set(cat.id)">
                   <span class="cp__cat-dot" [style.background]="color(cat.tipo)"></span>
                   <span class="cp__cat-main">
@@ -156,10 +157,12 @@ interface Categoria {
     .cp__chip:hover { background: color-mix(in srgb, var(--primary) 7%, transparent); }
     .cp__chip--on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
     .cp__chip-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .cp__body { flex: 1; min-height: 280px; overflow: hidden; border-top: 1px solid var(--border); }
-    .cp__panes { display: grid; grid-template-columns: 1fr 1fr; height: 100%; min-height: 320px; }
-    .cp__cats { overflow-y: auto; border-right: 1px solid var(--border); padding: 6px; }
-    .cp__leaves, .cp__results { overflow-y: auto; padding: 6px; }
+    .cp__body { flex: 1 1 auto; min-height: 320px; overflow: hidden; border-top: 1px solid var(--border); }
+    /* minmax(0,1fr): le colonne possono restringersi → l'ellissi dei nomi lunghi funziona e il layout non spancia */
+    .cp__panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); height: 100%; min-height: 0; }
+    /* min-height:0 sui contenitori scrollabili: senza, crescono col contenuto invece di scorrere */
+    .cp__cats { overflow-y: auto; min-height: 0; border-right: 1px solid var(--border); padding: 6px; }
+    .cp__leaves, .cp__results { overflow-y: auto; min-height: 0; padding: 6px; }
     .cp__results { max-height: 56vh; }
     .cp__cat { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none;
       background: transparent; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; transition: background .12s; }
@@ -169,7 +172,7 @@ interface Categoria {
     .cp__cat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     .cp__cat-name { font-size: .9rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cp__cat-meta { font-size: .72rem; color: var(--text-sub); }
-    .cp__cat-count { font-size: .75rem; font-weight: 700; color: var(--text-sub); background: var(--surface);
+    .cp__cat-count { flex-shrink: 0; font-size: .75rem; font-weight: 700; color: var(--text-sub); background: var(--surface);
       min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; }
     .cp__leaf { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none;
       background: transparent; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; transition: background .12s; }

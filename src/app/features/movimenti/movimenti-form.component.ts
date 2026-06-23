@@ -53,6 +53,7 @@ import { CurrencyInputComponent } from '../../shared/components/currency-input/c
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
+import { HelpNoteComponent } from '../../shared/components/help-note/help-note.component';
 import { MovimentoCreateRequest, MovimentoDTO, TipoMovimento } from '../../core/models/movimenti.models';
 import {
   ContoBancarioDTO, CategoriaNode, FornitoreSummaryDTO,
@@ -112,6 +113,7 @@ interface PreviewImpatto {
     InputFilterDirective,
     DateMaskDirective,
     CogePickerComponent,
+    HelpNoteComponent,
   ],
   templateUrl: './movimenti-form.component.html',
   styleUrls: ['./movimenti-form.component.scss'],

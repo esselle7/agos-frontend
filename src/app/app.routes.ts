@@ -84,6 +84,15 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
+        path: 'scadenzario',
+        loadComponent: () =>
+          import('./features/scadenzario/scadenzario.component').then(
+            m => m.ScadenzarioComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'eventi',
         loadChildren: () =>
           import('./features/eventi/eventi.routes').then(

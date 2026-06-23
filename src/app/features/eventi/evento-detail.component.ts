@@ -32,6 +32,7 @@ import { BusinessUnitDTO } from '../../core/models/anagrafica.models';
 import { DecimalPipe } from '@angular/common';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { HelpNoteComponent } from '../../shared/components/help-note/help-note.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EventoCostiDirettiComponent } from './evento-costi-diretti/evento-costi-diretti.component';
 import { EventoPreventivoMonitoringComponent } from './evento-preventivo-monitoring/evento-preventivo-monitoring.component';
@@ -81,6 +82,7 @@ const STEP_ORDER: StatoEvento[] = ['PREVENTIVATO', 'CONFERMATO', 'SALDATO'];
     DecimalPipe,
     EuroPipe,
     SkeletonLoaderComponent,
+    HelpNoteComponent,
     EventoCostiDirettiComponent,
     EventoPreventivoMonitoringComponent,
   ],

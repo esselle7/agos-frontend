@@ -14,6 +14,14 @@
       <span class="cf-badge cf-badge--fin">Finanziario (Cassa)</span>
     </h3>
 
+    <agos-help-note tono="info" [collapsed]="true"
+      titolo="Perché differisce dal conto economico?">
+      <p>Qui conta <strong>quando i soldi entrano o escono davvero</strong> dal conto
+        (la data finanziaria), non quando il ricavo o il costo matura. Lo stesso mese può
+        avere un utile a conto economico ma cassa negativa, o viceversa: un evento di agosto
+        incassato in caparra a marzo è cassa a marzo ma ricavo ad agosto nel P&amp;L.</p>
+    </agos-help-note>
+
     <div class="cf-controls">
       <agos-date-range-picker
         [period]="selectedPeriod()"

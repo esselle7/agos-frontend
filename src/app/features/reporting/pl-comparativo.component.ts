@@ -26,6 +26,7 @@ import {
   PeriodChangeEvent,
 } from '../../shared/components/date-range-picker/date-range-picker.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { HelpNoteComponent } from '../../shared/components/help-note/help-note.component';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
 @Component({
@@ -38,6 +39,7 @@ import { EuroPipe } from '../../shared/pipes/euro.pipe';
     MatTableModule,
     DateRangePickerComponent,
     SkeletonLoaderComponent,
+    HelpNoteComponent,
     EuroPipe,
   ],
   templateUrl: './pl-comparativo.component.html',

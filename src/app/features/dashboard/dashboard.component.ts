@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartData, ChartOptions } from 'chart.js';
@@ -38,7 +39,6 @@ import {
 import { StatCardComponent } from '../../shared/components/stat-card/stat-card.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
-import { EuroPipe } from '../../shared/pipes/euro.pipe';
 import { DateRangePickerComponent, PeriodChangeEvent } from '../../shared/components/date-range-picker/date-range-picker.component';
 
 const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
@@ -53,11 +53,11 @@ const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott
     MatDividerModule,
     MatProgressSpinnerModule,
     MatMenuModule,
+    MatTooltipModule,
     BaseChartDirective,
     StatCardComponent,
     SkeletonLoaderComponent,
     EmptyStateComponent,
-    EuroPipe,
     DateRangePickerComponent,
   ],
   templateUrl: './dashboard.component.html',
@@ -293,7 +293,7 @@ export class DashboardComponent implements OnInit {
             .pipe(catchError(() => { this.fatturatoError = true; return of([]); })),
           scadenze: this.dashboardSvc
             .getScadenzeImminenti(period, from ?? undefined, to ?? undefined)
-            .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [], usciteDaLiquidare: [] }); })),
+            .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [], usciteDaLiquidare: [], entrateDaRicevere: [] }); })),
         })
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(res => {
@@ -346,7 +346,7 @@ export class DashboardComponent implements OnInit {
         .pipe(catchError(() => { this.fatturatoError = true; return of([]); })),
       scadenze: this.dashboardSvc
         .getScadenzeImminenti(period, from ?? undefined, to ?? undefined)
-        .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [], usciteDaLiquidare: [] }); })),
+        .pipe(catchError(() => { this.scadenzeError = true; return of<ScadenzeImminentiDTO>({ eventi: [], rateRicorrenti: [], usciteDaLiquidare: [], entrateDaRicevere: [] }); })),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {

@@ -111,7 +111,38 @@ $topbar-height:            64px;
     transition: color 0.16s ease, transform 0.18s ease;
   }
 
-  &__label { overflow: hidden; text-overflow: ellipsis; }
+  &__label { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
+  // wrapper icona: ancora il puntino-notifica quando la barra è compressa
+  &__icon-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+
+  // puntino rosso d'allerta sull'icona (barra compressa)
+  &__dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: 2px solid var(--surface);
+  }
+
+  // badge "+n" stile messaggio non letto (barra estesa)
+  &__badge {
+    flex-shrink: 0;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--danger);
+    color: var(--on-accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
 
   &:hover {
     background: color-mix(in srgb, var(--primary) 8%, transparent);

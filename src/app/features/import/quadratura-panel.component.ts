@@ -7,6 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MovimentiService } from '../../core/services/movimenti.service';
 import { QuadraturaPeriodoDTO } from '../../core/models/movimenti.models';
+import { HelpNoteComponent } from '../../shared/components/help-note/help-note.component';
 
 /**
  * Pannello di quadratura di periodo POS (PROMPT-RICONCILIAZIONE-PERIODO §5). Sostituisce la
@@ -22,6 +23,7 @@ import { QuadraturaPeriodoDTO } from '../../core/models/movimenti.models';
   imports: [
     CurrencyPipe, DatePipe,
     MatIconModule, MatProgressSpinnerModule, MatTableModule, MatTooltipModule,
+    HelpNoteComponent,
   ],
   template: `
     <div class="q">
@@ -33,6 +35,16 @@ import { QuadraturaPeriodoDTO } from '../../core/models/movimenti.models';
           <p>Nessuna quadratura disponibile. Esegui un import congiunto (Billy + BPM + CA).</p>
         </div>
       } @else {
+        <agos-help-note tono="info" [collapsed]="true" titolo="A cosa serve questa pagina">
+          <p>Gli incassi con carta (POS) arrivano in banca <strong>a gruppi e con qualche
+            giorno di ritardo</strong>, mentre Billy registra ogni singola vendita. Qui si
+            controlla solo che, nel periodo, il totale delle vendite Billy e il totale dei POS
+            accreditati in banca <strong>tornino</strong>.</p>
+          <p>È una verifica informativa: i ricavi sono già contabilizzati da Billy, qui non c'è
+            nulla da catalogare. Piccole differenze (il "residuo core") sono normali e sono
+            spiegate per causa più sotto.</p>
+        </agos-help-note>
+
         <header class="q__head">
           <div>
             <h2>Quadratura di periodo {{ q()!.anno }}</h2>
@@ -126,32 +138,32 @@ import { QuadraturaPeriodoDTO } from '../../core/models/movimenti.models';
   `,
   styles: [`
     .q { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-    .q__center, .q__empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px; color: #6b7280; }
+    .q__center, .q__empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px; color: var(--text-sub); }
     .q__empty mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: .4; }
     .q__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
     .q__head h2 { margin: 0; font-size: 1.25rem; }
-    .q__sub { margin: 4px 0 0; color: #6b7280; font-size: .85rem; max-width: 60ch; }
-    .q__residuo { display: flex; flex-direction: column; align-items: flex-end; padding: 8px 14px; border-radius: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; }
-    .q__residuo--warn { background: #fffbeb; border-color: #fde68a; }
-    .q__residuo-l { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+    .q__sub { margin: 4px 0 0; color: var(--text-sub); font-size: .85rem; max-width: 60ch; }
+    .q__residuo { display: flex; flex-direction: column; align-items: flex-end; padding: 8px 14px; border-radius: var(--radius-md); background: var(--tint-success); border: 1px solid var(--success); }
+    .q__residuo--warn { background: var(--tint-warning); border-color: var(--warning); }
+    .q__residuo-l { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-sub); }
     .q__residuo-v { font-size: 1.3rem; font-weight: 700; }
     .q__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .q__card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; background: #fff; }
+    .q__card { border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 14px 16px; background: var(--card); }
     .q__card h3 { margin: 0 0 10px; font-size: .95rem; }
-    .q__hint { font-weight: 400; color: #9ca3af; font-size: .8rem; }
+    .q__hint { font-weight: 400; color: var(--text-faint); font-size: .8rem; }
     .q__row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: .9rem; }
-    .q__row--minus { color: #b45309; }
-    .q__row--tot { border-top: 1px solid #e5e7eb; margin-top: 4px; padding-top: 8px; font-size: 1rem; }
+    .q__row--minus { color: var(--warning); }
+    .q__row--tot { border-top: 1px solid var(--border-soft); margin-top: 4px; padding-top: 8px; font-size: 1rem; }
     .q__tbl { width: 100%; border-collapse: collapse; font-size: .88rem; }
-    .q__tbl th { text-align: left; color: #6b7280; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
-    .q__tbl td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; }
-    .q__delta { color: #6b7280; }
-    .q__rif { font-family: monospace; font-size: .8rem; color: #6b7280; }
-    .q__card--note ul { margin: 0; padding-left: 18px; color: #4b5563; font-size: .86rem; display: flex; flex-direction: column; gap: 4px; }
-    .q__card--appr { background: #fffbeb; border-color: #fde68a; }
-    .q__card--appr h3 { display: flex; align-items: center; gap: 6px; color: #92400e; }
+    .q__tbl th { text-align: left; color: var(--text-sub); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border-soft); }
+    .q__tbl td { padding: 6px 8px; border-bottom: 1px solid var(--border-soft); }
+    .q__delta { color: var(--text-sub); }
+    .q__rif { font-family: monospace; font-size: .8rem; color: var(--text-sub); }
+    .q__card--note ul { margin: 0; padding-left: 18px; color: var(--text-sub); font-size: .86rem; display: flex; flex-direction: column; gap: 4px; }
+    .q__card--appr { background: var(--tint-warning); border-color: var(--warning); }
+    .q__card--appr h3 { display: flex; align-items: center; gap: 6px; color: var(--warning); }
     .q__appr-ico { font-size: 18px; width: 18px; height: 18px; }
-    .q__card--appr ul { margin: 0; padding-left: 18px; color: #78350f; font-size: .86rem; display: flex; flex-direction: column; gap: 6px; }
+    .q__card--appr ul { margin: 0; padding-left: 18px; color: var(--text-sub); font-size: .86rem; display: flex; flex-direction: column; gap: 6px; }
   `],
 })
 export class QuadraturaPanelComponent implements OnInit {

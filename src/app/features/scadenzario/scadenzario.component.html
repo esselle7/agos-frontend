@@ -1,0 +1,179 @@
+<div class="scad">
+
+  <!-- ── Intestazione + selettore periodo ─────────────────────────────────── -->
+  <header class="scad__head">
+    <div class="scad__title">
+      <span class="page-eyebrow">Panoramica</span>
+      <h1>Scadenzario</h1>
+      <p class="text-sub">Tutto ciò che scade nel periodo: eventi, rate, fatture da pagare e incassi da ricevere.</p>
+    </div>
+
+    <div class="scad__periodo" role="group" aria-label="Periodo">
+      @for (p of periodi; track p.val) {
+        <button type="button" class="scad__period-btn"
+                [class.is-active]="periodo() === p.val"
+                [attr.aria-pressed]="periodo() === p.val"
+                (click)="cambiaPeriodo(p.val)">{{ p.label }}</button>
+      }
+    </div>
+  </header>
+
+  <agos-help-note tono="info" [collapsed]="true" titolo="Come leggere lo Scadenzario">
+    Una voce nasce quando il costo o il ricavo è già <strong>registrato</strong> ma il denaro non è
+    ancora passato in banca. La <strong>data di scadenza</strong> è quando ti aspetti il pagamento o
+    l'incasso. Le <strong>fatture da pagare</strong> sono uscite non ancora liquidate; gli
+    <strong>incassi da ricevere</strong> sono entrate ancora da incassare. Quando la data passa senza
+    che il movimento sia chiuso, la voce diventa <strong>scaduta</strong> e te la segnaliamo in rosso.
+  </agos-help-note>
+
+  @if (loading()) {
+    <div class="scad__loading"><mat-spinner diameter="36" /></div>
+  } @else if (errore()) {
+    <div class="scad__empty scad__empty--err">
+      <mat-icon>cloud_off</mat-icon>
+      <p>Non riesco a caricare lo scadenzario. Riprova tra poco.</p>
+      <button mat-stroked-button (click)="cambiaPeriodo(periodo())">Riprova</button>
+    </div>
+  } @else {
+
+    <!-- ── Banner scaduti (elemento firma) ──────────────────────────────────── -->
+    @if (scaduti().length) {
+      <div class="scad__alert" role="alert">
+        <span class="scad__alert-pill">+{{ scaduti().length }}</span>
+        <mat-icon class="scad__alert-ic" aria-hidden="true">notification_important</mat-icon>
+        <div class="scad__alert-body">
+          <strong>{{ scaduti().length }}
+            {{ scaduti().length === 1 ? 'scadenza è già passata' : 'scadenze sono già passate' }}</strong>
+          <span class="scad__alert-detail">
+            @for (s of scadutiPerTipo(); track s.tipo) {
+              <span class="scad__alert-chip">{{ s.n }} {{ meta[s.tipo].label.toLowerCase() }}</span>
+            }
+          </span>
+        </div>
+        <span class="scad__alert-hint">Le trovi in cima a ogni elenco, evidenziate in rosso.</span>
+      </div>
+    }
+
+    <!-- ── KPI ──────────────────────────────────────────────────────────────── -->
+    <section class="scad__kpi" aria-label="Riepilogo">
+      <div class="scad__kpi-card is-uscita">
+        <span class="scad__kpi-ic"><mat-icon>trending_down</mat-icon></span>
+        <span class="scad__kpi-val">{{ totaleDaPagare() | euro }}</span>
+        <span class="scad__kpi-lbl">Da pagare nel periodo</span>
+      </div>
+      <div class="scad__kpi-card is-entrata">
+        <span class="scad__kpi-ic"><mat-icon>trending_up</mat-icon></span>
+        <span class="scad__kpi-val">{{ totaleDaRicevere() | euro }}</span>
+        <span class="scad__kpi-lbl">Da ricevere nel periodo</span>
+      </div>
+      <div class="scad__kpi-card is-evento">
+        <span class="scad__kpi-ic"><mat-icon>celebration</mat-icon></span>
+        <span class="scad__kpi-val">{{ nEventi() }}</span>
+        <span class="scad__kpi-lbl">Eventi in arrivo</span>
+      </div>
+      <div class="scad__kpi-card" [class.is-late]="scaduti().length" [class.is-ok]="!scaduti().length">
+        <span class="scad__kpi-ic">
+          <mat-icon>{{ scaduti().length ? 'running_with_errors' : 'task_alt' }}</mat-icon>
+        </span>
+        <span class="scad__kpi-val">{{ scaduti().length }}</span>
+        <span class="scad__kpi-lbl">{{ scaduti().length ? 'Voci scadute' : 'Nulla in ritardo' }}</span>
+      </div>
+    </section>
+
+    <!-- ── Toggle Liste / Calendario ────────────────────────────────────────── -->
+    <div class="scad__vista">
+      <mat-button-toggle-group [value]="vista()" (change)="vista.set($event.value)" aria-label="Vista">
+        <mat-button-toggle value="liste"><mat-icon>view_agenda</mat-icon> Elenchi</mat-button-toggle>
+        <mat-button-toggle value="calendario"><mat-icon>calendar_month</mat-icon> Calendario</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <!-- ════════════════ VISTA ELENCHI ════════════════ -->
+    @if (vista() === 'liste') {
+      <section class="scad__grid">
+        @for (col of colonne(); track col.tipo) {
+          <article class="scad__col" [class]="meta[col.tipo].cls">
+            <header class="scad__col-head">
+              <span class="scad__col-ic"><mat-icon>{{ meta[col.tipo].icon }}</mat-icon></span>
+              <span class="scad__col-title">{{ meta[col.tipo].label }}</span>
+              @if (col.scaduti) {
+                <span class="scad__col-late" matTooltip="Scadute">{{ col.scaduti }} in ritardo</span>
+              }
+              <span class="scad__col-tot">{{ col.totale | euro }}</span>
+            </header>
+
+            @if (!col.voci.length) {
+              <p class="scad__col-empty">Niente nel periodo.</p>
+            } @else {
+              <ul class="scad__list">
+                @for (v of col.voci; track v.id) {
+                  <li class="scad__item" [class.is-paid]="v.saldato" [class.is-late]="v.scaduto && !v.saldato">
+                    <div class="scad__item-main">
+                      <span class="scad__item-desc" [title]="v.descrizione">{{ v.descrizione }}</span>
+                      <span class="scad__item-amount">{{ segno(v.tipo) }} {{ v.importo | euro }}</span>
+                    </div>
+                    <div class="scad__item-meta">
+                      <span class="scad__chip" [class]="statoCls(v)">
+                        @if (v.scaduto && !v.saldato) { <mat-icon aria-hidden="true">priority_high</mat-icon> }
+                        {{ statoLabel(v) }}
+                      </span>
+                      <span class="scad__item-date">{{ formatGiorno(v.data) }}</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </article>
+        }
+      </section>
+    } @else {
+
+      <!-- ════════════════ VISTA CALENDARIO ════════════════ -->
+      <section class="scad__cal">
+        <div class="scad__cal-bar">
+          <div class="scad__cal-nav">
+            <button mat-icon-button (click)="mesePrec()" aria-label="Mese precedente"><mat-icon>chevron_left</mat-icon></button>
+            <span class="scad__cal-month">{{ etichettaMese() }}</span>
+            <button mat-icon-button (click)="meseSucc()" aria-label="Mese successivo"><mat-icon>chevron_right</mat-icon></button>
+            <button mat-stroked-button class="scad__cal-today" (click)="meseOggi()">Oggi</button>
+          </div>
+          <div class="scad__cal-filters" role="group" aria-label="Filtra per natura">
+            @for (t of tipiCal; track t) {
+              <button type="button" class="scad__filter" [class]="meta[t].cls"
+                      [class.is-off]="!filtri()[t]" [attr.aria-pressed]="filtri()[t]"
+                      (click)="toggleFiltro(t)">
+                <span class="scad__filter-dot"></span>
+                <mat-icon>{{ meta[t].icon }}</mat-icon>
+                <span class="scad__filter-lbl">{{ meta[t].label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="scad__cal-grid" role="grid">
+          @for (d of ['Lun','Mar','Mer','Gio','Ven','Sab','Dom']; track d) {
+            <div class="scad__cal-dow" role="columnheader">{{ d }}</div>
+          }
+          @for (week of settimane(); track $index) {
+            @for (day of week; track day.data) {
+              <div class="scad__cal-cell" role="gridcell"
+                   [class.is-out]="!day.nelMese" [class.is-today]="day.oggi">
+                <span class="scad__cal-num">{{ day.giorno }}</span>
+                <div class="scad__cal-items">
+                  @for (v of day.voci; track v.id) {
+                    <span class="scad__cal-pill" [class]="meta[v.tipo].cls"
+                          [class.is-late]="v.scaduto && !v.saldato"
+                          [matTooltip]="meta[v.tipo].label + ' · ' + v.descrizione + ' · ' + (v.importo | euro)">
+                      <span class="scad__cal-pill-dot"></span>
+                      <span class="scad__cal-pill-txt">{{ v.descrizione }}</span>
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.help-note {
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  line-height: 1.5;
+
+  // Tono → colore icona/accento. Default: info.
+  --hn-accent: var(--info);
+  --hn-tint: var(--tint-info);
+
+  &--tip {
+    --hn-accent: var(--success, var(--info));
+    --hn-tint: var(--tint-success, var(--tint-info));
+  }
+
+  &--warn {
+    --hn-accent: var(--warning);
+    --hn-tint: var(--tint-warning);
+  }
+}
+
+.help-note__icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--hn-accent);
+  margin-top: 1px;
+}
+
+.help-note__body {
+  color: var(--text-sub);
+
+  ::ng-deep p {
+    margin: 0 0 6px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ::ng-deep strong {
+    color: var(--text-main);
+    font-weight: 600;
+  }
+}
+
+// ---- Variante statica (sempre visibile) ----
+.help-note--static {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-soft);
+}
+
+.help-note--info.help-note--static {
+  background: var(--tint-info);
+  border-color: transparent;
+}
+
+.help-note--warn.help-note--static {
+  background: var(--tint-warning);
+  border-color: transparent;
+}
+
+// ---- Variante collassabile ----
+.help-note--open {
+  background: var(--surface-sunken);
+}
+
+.help-note__trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--hn-accent);
+  font: inherit;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  text-align: left;
+
+  &:hover {
+    background: var(--hn-tint);
+  }
+}
+
+.help-note__title {
+  flex: 1 1 auto;
+}
+
+.help-note__chevron {
+  flex: 0 0 auto;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-faint);
+}
+
+.help-note--open .help-note__body {
+  padding: 0 12px 10px 36px;
+}

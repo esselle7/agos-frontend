@@ -43,6 +43,7 @@ export class ImportShellComponent implements OnInit {
     { label: 'Effetti / RiBa',icon: 'receipt_long', link: 'smistamento/riba',       badge: () => this.c().riba },
     { label: 'Ricorrenti',    icon: 'event_repeat', link: 'smistamento/ricorrenti', badge: () => this.c().ricorrenti },
     { label: 'Eventi',        icon: 'celebration',  link: 'smistamento/eventi',     badge: () => this.c().eventi },
+    { label: 'Già a libro',   icon: 'join_inner',   link: 'smistamento/matching-differiti', badge: () => this.c().matchingDifferiti },
     { label: 'Duplicati',     icon: 'content_copy', link: 'smistamento/duplicati',  badge: () => this.c().duplicati },
   ];
 

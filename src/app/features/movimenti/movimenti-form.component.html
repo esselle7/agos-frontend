@@ -246,6 +246,17 @@
           @if (form.controls.contoCoge.touched && form.controls.contoCoge.hasError('required')) {
             <span class="mov-form__standalone-error">Conto CoGe obbligatorio</span>
           }
+
+          <agos-help-note tono="info" [collapsed]="true"
+            titolo="Che effetto ha il conto che scelgo?">
+            <p>Il conto decide come pesa il movimento. Un conto di <strong>ricavo</strong> o di
+              <strong>costo operativo</strong> entra nell'EBITDA (il margine della gestione
+              corrente). Gli <strong>interessi</strong> pesano più in basso, sotto l'EBIT.</p>
+            <p>Un <strong>investimento</strong> (CAPEX, es. acquisto di un'attrezzatura) e il
+              rimborso di un <strong>debito</strong> non sono costi del periodo: muovono la cassa
+              ma <strong>restano fuori dal conto economico</strong> — l'attrezzatura entra a P&amp;L
+              poco per volta come ammortamento.</p>
+          </agos-help-note>
         </div>
 
         <mat-form-field appearance="outline" class="mov-form__field--full">
