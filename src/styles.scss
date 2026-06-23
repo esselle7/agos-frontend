@@ -591,6 +591,13 @@ html[data-theme="dark"] .skeleton-line {
   justify-content: flex-end;
 }
 
+// Dialog "scelta conto" e form piano dei conti: superficie più arrotondata e ben rifinita.
+.coge-picker-panel .mat-mdc-dialog-surface,
+.pc-dialog-panel .mat-mdc-dialog-surface {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
 // Icon-only buttons sit on a consistent 36px square hit area.
 .icon-btn-sm.mat-mdc-icon-button {
   width: 36px;

@@ -15,7 +15,6 @@ import type { ChartData, ChartOptions } from 'chart.js';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 
 import { BuService } from '../../core/services/bu.service';
@@ -58,7 +57,6 @@ export class BuComponent implements OnInit {
   private readonly buSvc = inject(BuService);
   private readonly reportingSvc = inject(ReportingService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly snackBar = inject(MatSnackBar);
   private readonly pollStop$ = new Subject<void>();
   private readonly cancelPl$ = new Subject<void>();
 
@@ -70,7 +68,6 @@ export class BuComponent implements OnInit {
   readonly plLoading = signal(false);
   readonly jobId = signal<string | null>(null);
   readonly plError = signal<string | null>(null);
-  readonly downloading = signal(false);
 
   readonly ricaviColumns = ['categoria', 'codiceCoge', 'importo', 'pct'];
   readonly costiColumns = ['categoria', 'codiceCoge', 'importo', 'pct'];
@@ -187,25 +184,6 @@ export class BuComponent implements OnInit {
         this.jobId.set(null);
       }
     });
-  }
-
-  exportPl(): void {
-    const id = this.buId();
-    if (!id) return;
-    const { from, to } = this.period();
-    this.downloading.set(true);
-    this.reportingSvc.exportPlBu(id, from, to)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: blob => {
-          this.reportingSvc.downloadBlob(blob, `pl-bu${id}-${from}_${to}.xlsx`);
-          this.downloading.set(false);
-        },
-        error: () => {
-          this.snackBar.open('Errore durante il download', 'OK', { duration: 3000 });
-          this.downloading.set(false);
-        },
-      });
   }
 
   sortedRicavi(): VoceDTO[] {

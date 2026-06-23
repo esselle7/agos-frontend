@@ -142,11 +142,13 @@ interface Categoria {
     </div>
   `,
   styles: [`
-    .cp { width: min(760px, 92vw); display: flex; flex-direction: column; max-height: 80vh; }
+    /* Altezza DEFINITA (non solo max-height): senza, i pannelli interni con height:100% non hanno
+       un'altezza concreta su cui calcolare lo scroll → la lista sinistra cresceva e veniva tagliata. */
+    .cp { width: min(760px, 92vw); display: flex; flex-direction: column; height: min(80vh, 560px); }
     .cp__head { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 4px 8px; }
     .cp__head h2 { margin: 0; font-size: 1.1rem; }
-    .cp__search { display: flex; align-items: center; gap: 8px; margin: 4px 8px 10px; padding: 8px 12px;
-      border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    .cp__search { display: flex; align-items: center; gap: 8px; margin: 4px 10px 10px; padding: 9px 14px;
+      border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
     .cp__search mat-icon { color: var(--text-sub); }
     .cp__search input { flex: 1; border: none; background: transparent; outline: none; font: inherit; color: var(--text-main); }
     .cp__recents { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 8px 10px; }
@@ -157,7 +159,7 @@ interface Categoria {
     .cp__chip:hover { background: color-mix(in srgb, var(--primary) 7%, transparent); }
     .cp__chip--on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
     .cp__chip-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .cp__body { flex: 1 1 auto; min-height: 320px; overflow: hidden; border-top: 1px solid var(--border); }
+    .cp__body { flex: 1 1 auto; min-height: 0; overflow: hidden; border-top: 1px solid var(--border); }
     /* minmax(0,1fr): le colonne possono restringersi → l'ellissi dei nomi lunghi funziona e il layout non spancia */
     .cp__panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); height: 100%; min-height: 0; }
     /* min-height:0 sui contenitori scrollabili: senza, crescono col contenuto invece di scorrere */
@@ -165,7 +167,7 @@ interface Categoria {
     .cp__leaves, .cp__results { overflow-y: auto; min-height: 0; padding: 6px; }
     .cp__results { max-height: 56vh; }
     .cp__cat { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none;
-      background: transparent; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; transition: background .12s; }
+      background: transparent; border-radius: 12px; cursor: pointer; text-align: left; font: inherit; transition: background .12s; }
     .cp__cat:hover { background: color-mix(in srgb, var(--primary) 6%, transparent); }
     .cp__cat--on { background: color-mix(in srgb, var(--primary) 12%, transparent); }
     .cp__cat-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
@@ -175,7 +177,7 @@ interface Categoria {
     .cp__cat-count { flex-shrink: 0; font-size: .75rem; font-weight: 700; color: var(--text-sub); background: var(--surface);
       min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; }
     .cp__leaf { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none;
-      background: transparent; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; transition: background .12s; }
+      background: transparent; border-radius: 12px; cursor: pointer; text-align: left; font: inherit; transition: background .12s; }
     .cp__leaf:hover { background: color-mix(in srgb, var(--primary) 6%, transparent); }
     .cp__leaf--on { background: color-mix(in srgb, var(--primary) 14%, transparent); }
     .cp__radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: border-color .12s; }

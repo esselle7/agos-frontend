@@ -77,16 +77,76 @@ $topbar-height:            64px;
 
 .nav-section { padding: 2px 0; }
 
+// Header di sezione = toggle accordion (recupera spazio verticale).
+.nav-section__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 20px);
+  height: 34px;
+  margin: 6px 10px 2px;
+  padding: 0 12px 0 10px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font: inherit;
+  transition: background 0.16s ease, color 0.16s ease;
+
+  &:hover { background: color-mix(in srgb, var(--primary) 7%, transparent); color: var(--primary); }
+  &:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  &--open { color: var(--text-main); }
+}
+
 .nav-section__label {
+  flex: 1;
+  text-align: left;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.10em;
   text-transform: uppercase;
-  color: var(--text-sub);
-  opacity: 0.72;
-  padding: 14px 20px 5px;
-  margin: 0;
   white-space: nowrap;
+}
+
+.nav-section__count {
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary-d);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+// Il contatore appare quando la sezione è CHIUSA (quante voci nasconde) o in hover.
+.nav-section__toggle:not(.nav-section__toggle--open) .nav-section__count,
+.nav-section__toggle:hover .nav-section__count { opacity: 1; }
+
+.nav-section__chev {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-section__toggle--open .nav-section__chev { transform: rotate(180deg); }
+
+// Pannello collassabile senza numeri magici (grid 0fr → 1fr).
+.nav-section__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  &--open { grid-template-rows: 1fr; }
+}
+.nav-section__panel-inner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .nav-link {
@@ -471,6 +531,8 @@ $topbar-height:            64px;
   .sidenav,
   .bu__chev,
   .bu__panel,
+  .nav-section__chev,
+  .nav-section__panel,
   .settings__menu,
   .settings__gear,
   .settings__opt,

@@ -71,42 +71,4 @@ export class ReportingService {
     );
   }
 
-  exportMovimenti(from: string, to: string, format: 'csv' | 'xlsx'): Observable<Blob> {
-    const params = new HttpParams().set('from', from).set('to', to).set('format', format);
-    return this.http.get(environment.apiBaseUrl + API_PATHS.REPORTING.EXPORT_MOVIMENTI, {
-      params,
-      responseType: 'blob',
-    });
-  }
-
-  exportCommercialista(mese: number, anno: number): Observable<Blob> {
-    const params = new HttpParams().set('mese', mese).set('anno', anno);
-    return this.http.get(environment.apiBaseUrl + API_PATHS.REPORTING.EXPORT_COMMERCIALISTA, {
-      params,
-      responseType: 'blob',
-    });
-  }
-
-  exportPlBu(buId: number, from: string, to: string): Observable<Blob> {
-    const params = new HttpParams()
-      .set('buId', buId)
-      .set('from', from)
-      .set('to', to)
-      .set('format', 'xlsx');
-    return this.http.get(environment.apiBaseUrl + API_PATHS.REPORTING.EXPORT_PL_BU, {
-      params,
-      responseType: 'blob',
-    });
-  }
-
-  downloadBlob(blob: Blob, filename: string): void {
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(objectUrl);
-  }
 }

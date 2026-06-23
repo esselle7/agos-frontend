@@ -75,6 +75,15 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
+        path: 'piano-conti',
+        loadComponent: () =>
+          import('./features/piano-conti/piano-conti.component').then(
+            m => m.PianoContiComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'forecasting',
         loadComponent: () =>
           import('./features/reporting/forecasting.component').then(
@@ -88,6 +97,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/scadenzario/scadenzario.component').then(
             m => m.ScadenzarioComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'export',
+        loadComponent: () =>
+          import('./features/export/export.component').then(
+            m => m.ExportComponent
           ),
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

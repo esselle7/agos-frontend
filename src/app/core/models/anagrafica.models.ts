@@ -74,13 +74,22 @@ export interface CreateCategoriaRequest {
   ordinamento: number;
 }
 
+export type TipoCoge = 'RICAVO' | 'COSTO' | 'ATTIVITA' | 'PASSIVITA' | 'ONERE_FINANZIARIO' | 'IMPOSTA';
+
 export interface PianoContiCogeDTO {
   id: number;
   codice: string;
   nome: string;
-  tipo: 'RICAVO' | 'COSTO' | 'ATTIVITA' | 'PASSIVITA' | 'ONERE_FINANZIARIO';
+  tipo: TipoCoge;
   parentId: number | null;
   livello: number;
+}
+
+export interface PianoContiCogeUpsertRequest {
+  codice: string;
+  descrizione: string;
+  tipo: TipoCoge;
+  parentId: number | null;
 }
 
 export interface MetodoPagamentoDTO {

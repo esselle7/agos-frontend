@@ -18,36 +18,59 @@
 
       <!-- Navigation (scrollable) -->
       <nav class="rail-nav">
+        <!-- Voci di una sezione: stesso markup sia espanso che compresso (no duplicazione) -->
+        <ng-template #navItems let-items>
+          @for (item of items; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="is-active"
+              [matTooltip]="!sidenavOpen() ? navTooltip(item) : ''"
+              matTooltipPosition="right"
+              class="nav-link"
+              [class.nav-link--alert]="item.badge && item.badge() > 0"
+            >
+              <span class="nav-link__icon-wrap">
+                <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
+                @if (item.badge && item.badge() > 0 && !sidenavOpen()) {
+                  <span class="nav-link__dot" aria-hidden="true"></span>
+                }
+              </span>
+              @if (sidenavOpen()) {
+                <span class="nav-link__label">{{ item.label }}</span>
+                @if (item.badge && item.badge() > 0) {
+                  <span class="nav-link__badge"
+                        [attr.aria-label]="item.badge() + ' scadute da gestire'">
+                    +{{ item.badge() }}
+                  </span>
+                }
+              }
+            </a>
+          }
+        </ng-template>
+
         @for (section of visibleSections(); track section.label) {
           <div class="nav-section">
             @if (sidenavOpen()) {
-              <p class="nav-section__label">{{ section.label }}</p>
-            }
-            @for (item of section.items; track item.route) {
-              <a
-                [routerLink]="item.route"
-                routerLinkActive="is-active"
-                [matTooltip]="!sidenavOpen() ? navTooltip(item) : ''"
-                matTooltipPosition="right"
-                class="nav-link"
-                [class.nav-link--alert]="item.badge && item.badge() > 0"
+              <button
+                type="button"
+                class="nav-section__toggle"
+                [class.nav-section__toggle--open]="isSectionOpen(section.label)"
+                (click)="toggleSection(section.label)"
+                [attr.aria-expanded]="isSectionOpen(section.label)"
               >
-                <span class="nav-link__icon-wrap">
-                  <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
-                  @if (item.badge && item.badge() > 0 && !sidenavOpen()) {
-                    <span class="nav-link__dot" aria-hidden="true"></span>
-                  }
-                </span>
-                @if (sidenavOpen()) {
-                  <span class="nav-link__label">{{ item.label }}</span>
-                  @if (item.badge && item.badge() > 0) {
-                    <span class="nav-link__badge"
-                          [attr.aria-label]="item.badge() + ' scadute da gestire'">
-                      +{{ item.badge() }}
-                    </span>
-                  }
-                }
-              </a>
+                <span class="nav-section__label">{{ section.label }}</span>
+                <span class="nav-section__count">{{ section.items.length }}</span>
+                <mat-icon class="nav-section__chev">expand_more</mat-icon>
+              </button>
+              <div class="nav-section__panel" [class.nav-section__panel--open]="isSectionOpen(section.label)">
+                <div class="nav-section__panel-inner">
+                  <ng-container [ngTemplateOutlet]="navItems"
+                                [ngTemplateOutletContext]="{ $implicit: section.items }" />
+                </div>
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="navItems"
+                            [ngTemplateOutletContext]="{ $implicit: section.items }" />
             }
           </div>
         }

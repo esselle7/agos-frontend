@@ -27,7 +27,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { MovimentiService, MovimentiFilter } from '../../core/services/movimenti.service';
 import { ContiService } from '../../core/services/conti.service';
-import { ReportingService } from '../../core/services/reporting.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
 import { MovimentoDTO, MovimentiSommarioDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
@@ -70,7 +69,6 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 })
 export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly movimentiService = inject(MovimentiService);
-  private readonly reportingService = inject(ReportingService);
   private readonly buService = inject(BuService);
   private readonly contiService = inject(ContiService);
   readonly authService = inject(AuthService);
@@ -183,17 +181,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   onRowClick(row: MovimentoDTO): void {
     this.router.navigate(['/movimenti', row.id]);
-  }
-
-  esportaCsv(): void {
-    const from = this.fromControl.value;
-    const to = this.toControl.value;
-    const today = new Date();
-    const fromStr = from ? this.toIso(from) : this.toIso(new Date(today.getFullYear(), today.getMonth(), 1));
-    const toStr = to ? this.toIso(to) : this.toIso(today);
-    this.reportingService.exportMovimenti(fromStr, toStr, 'csv').subscribe(blob => {
-      this.reportingService.downloadBlob(blob, `movimenti-${fromStr}.csv`);
-    });
   }
 
   liquidaMovimento(mov: MovimentoDTO, contoBancarioId: number, event?: Event): void {

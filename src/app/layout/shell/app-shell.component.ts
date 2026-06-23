@@ -1,12 +1,15 @@
 import {
   Component,
   OnInit,
+  DestroyRef,
   inject,
   signal,
   computed,
   effect,
 } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -25,6 +28,7 @@ import { environment } from '../../../environments/environment';
 
 const SIDENAV_KEY = 'agos_sidenav_open';
 const BU_KEY = 'agos_bu_expanded';
+const NAV_OPEN_KEY = 'agos_nav_open_sections';
 
 interface NavItem {
   label: string;
@@ -66,9 +70,10 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Gestione',
     items: [
-      { label: 'Eventi',     icon: 'celebration', route: '/eventi',     adminOnly: false },
-      { label: 'Anagrafica', icon: 'groups',      route: '/anagrafica', adminOnly: true },
-      { label: 'Keyword',    icon: 'label',       route: '/keyword',    adminOnly: true },
+      { label: 'Eventi',          icon: 'celebration',  route: '/eventi',      adminOnly: false },
+      { label: 'Anagrafica',      icon: 'groups',       route: '/anagrafica',  adminOnly: true },
+      { label: 'Keyword',         icon: 'label',        route: '/keyword',     adminOnly: true },
+      { label: 'Piano dei conti', icon: 'account_tree', route: '/piano-conti', adminOnly: true },
     ],
   },
   {
@@ -76,6 +81,12 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Reporting',  icon: 'assessment',  route: '/reporting',   adminOnly: true },
       { label: 'Previsioni', icon: 'query_stats', route: '/forecasting', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Export',
+    items: [
+      { label: 'Esporta dati', icon: 'ios_share', route: '/export', adminOnly: true },
     ],
   },
 ];
@@ -101,6 +112,8 @@ export class AppShellComponent implements OnInit {
   private readonly buService = inject(BuService);
   private readonly http = inject(HttpClient);
   private readonly themeService = inject(ThemeService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly user = this.authService.user;
   readonly isAdmin = this.authService.isAdmin;
@@ -114,6 +127,13 @@ export class AppShellComponent implements OnInit {
   readonly buExpanded = signal<boolean>(
     sessionStorage.getItem(BU_KEY) === 'true'
   );
+
+  /**
+   * Sezioni della navbar aperte (accordion). Default: solo quella della rotta attiva, per
+   * recuperare spazio verticale. Lo stato dell'utente persiste (localStorage) e la sezione
+   * della pagina corrente viene comunque sempre riaperta a ogni navigazione.
+   */
+  readonly openSections = signal<Set<string>>(this.initOpenSections());
 
   readonly businessUnits = signal<BusinessUnitDTO[]>([]);
   readonly scadenzeCount = signal<number>(0);
@@ -142,6 +162,17 @@ export class AppShellComponent implements OnInit {
   constructor() {
     effect(() => sessionStorage.setItem(SIDENAV_KEY, String(this.sidenavOpen())));
     effect(() => sessionStorage.setItem(BU_KEY, String(this.buExpanded())));
+    effect(() =>
+      localStorage.setItem(NAV_OPEN_KEY, JSON.stringify([...this.openSections()]))
+    );
+
+    // La sezione della pagina corrente resta sempre visibile: la riapre a ogni navigazione.
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
+      .subscribe(e => {
+        const label = this.sectionForUrl((e as NavigationEnd).urlAfterRedirects);
+        if (label) this.openSections.update(s => new Set(s).add(label));
+      });
   }
 
   ngOnInit(): void {
@@ -149,6 +180,45 @@ export class AppShellComponent implements OnInit {
     if (this.isAdmin()) {
       this.loadScadenze();
     }
+  }
+
+  // ── Sezioni navbar collassabili ─────────────────────────────────────────────
+
+  private initOpenSections(): Set<string> {
+    const saved = localStorage.getItem(NAV_OPEN_KEY);
+    if (saved) {
+      try {
+        const arr = JSON.parse(saved);
+        if (Array.isArray(arr)) return new Set<string>(arr);
+      } catch { /* stato corrotto → fallback sotto */ }
+    }
+    const active = this.sectionForUrl(window.location.pathname);
+    return new Set<string>([active ?? NAV_SECTIONS[0].label]);
+  }
+
+  /** Etichetta della sezione che contiene la rotta data (match più specifico). */
+  private sectionForUrl(url: string): string | null {
+    let best: { label: string; len: number } | null = null;
+    for (const s of NAV_SECTIONS) {
+      for (const it of s.items) {
+        if (url === it.route || url.startsWith(it.route + '/')) {
+          if (!best || it.route.length > best.len) best = { label: s.label, len: it.route.length };
+        }
+      }
+    }
+    return best?.label ?? null;
+  }
+
+  isSectionOpen(label: string): boolean {
+    return this.openSections().has(label);
+  }
+
+  toggleSection(label: string): void {
+    this.openSections.update(s => {
+      const next = new Set(s);
+      if (next.has(label)) next.delete(label); else next.add(label);
+      return next;
+    });
   }
 
   /** Tooltip della voce (barra compressa): aggiunge il conteggio scaduti se presente. */

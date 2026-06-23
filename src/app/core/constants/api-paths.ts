@@ -93,8 +93,5 @@ export const API_PATHS = {
     CASHFLOW_STORICO:      '/api/reporting/cashflow/storico',
     CASHFLOW_FORECAST:     '/api/reporting/cashflow/forecast',
     FORECASTING:           '/api/reporting/forecasting',
-    EXPORT_MOVIMENTI:      '/api/reporting/export/movimenti',
-    EXPORT_COMMERCIALISTA: '/api/reporting/export/commercialista',
-    EXPORT_PL_BU:          '/api/reporting/export/pl-bu',
   },
 } as const;
