@@ -22,7 +22,6 @@ import { SlicePipe } from '@angular/common';
 import { EventiService } from '../../core/services/eventi.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { EventoCalendarioDTO, StatoEvento } from '../../core/models/eventi.models';
-import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
 export interface CalDay {
   date: Date;
@@ -48,7 +47,6 @@ const DOW = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
     MatIconModule,
     MatTooltipModule,
     SlicePipe,
-    EuroPipe,
   ],
   templateUrl: './eventi-calendario.component.html',
   styleUrls: ['./eventi-calendario.component.scss'],

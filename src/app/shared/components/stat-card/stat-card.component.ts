@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { EuroPipe } from '../../pipes/euro.pipe';
 
 type CardColor = 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'info' | 'accent';
 
@@ -19,7 +18,7 @@ const COLOR_VAR: Record<CardColor, string> = {
 @Component({
   selector: 'agos-stat-card',
   standalone: true,
-  imports: [MatIconModule, EuroPipe],
+  imports: [MatIconModule],
   templateUrl: './stat-card.component.html',
   styleUrls: ['./stat-card.component.scss'],
 })
