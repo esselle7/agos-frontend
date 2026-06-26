@@ -69,6 +69,16 @@
       <mat-icon>account_balance</mat-icon>
       <h4>Situazione Finanziaria</h4>
       <span class="section-note text-sub">saldi reali al momento</span>
+      <button type="button" class="senza-banca-btn"
+              [class.senza-banca-btn--alert]="senzaBancaCount() > 0"
+              (click)="apriSenzaBanca()"
+              [matTooltip]="senzaBancaCount() > 0
+                ? senzaBancaCount() + ' movimenti non ancora assegnati a un conto'
+                : 'Nessun movimento senza conto'">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <span>Senza banca</span>
+        @if (senzaBancaCount() > 0) { <span class="senza-banca-btn__badge">{{ senzaBancaCount() }}</span> }
+      </button>
     </div>
 
     <div class="kpi-grid kpi-grid--4">

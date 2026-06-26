@@ -67,6 +67,7 @@ export const API_PATHS = {
     NON_RICONCILIATI: '/api/movimenti/riconciliazione/non-riconciliati',
     MATCH_AUTO:       '/api/movimenti/riconciliazione/match-automatico',
     LIQUIDA:          (id: string) => `/api/movimenti/${id}/liquida`,
+    SENZA_BANCA:      '/api/movimenti/senza-banca',
   },
   DASHBOARD: {
     KPI:                '/api/dashboard/kpi',

@@ -28,7 +28,7 @@ import {
   MatchingDifferitoDTO,
   RisolviMatchingDifferitoRequest,
 } from '../models/movimenti.models';
-import { PagedResponse } from '../models/shared.models';
+import { PagedResponse, MovimentoDTOShared } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
 import { environment } from '../../../environments/environment';
 
@@ -94,6 +94,21 @@ export class MovimentiService {
   getById(id: string): Observable<MovimentoDTO> {
     return this.http.get<MovimentoDTO>(
       `${environment.apiBaseUrl}${API_PATHS.MOVIMENTI.BASE}/${id}`
+    );
+  }
+
+  /** Movimenti attivi non ancora attribuiti a un conto/cassa (da catalogare a mano). */
+  getSenzaBanca(): Observable<MovimentoDTOShared[]> {
+    return this.http.get<MovimentoDTOShared[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.SENZA_BANCA
+    );
+  }
+
+  /** Attribuisce un movimento a un conto/cassa (PATCH-semantics: tocca solo conto_bancario_id). */
+  assegnaConto(id: string, contoBancarioId: number): Observable<MovimentoDTO> {
+    return this.http.put<MovimentoDTO>(
+      `${environment.apiBaseUrl}${API_PATHS.MOVIMENTI.BASE}/${id}`,
+      { contoBancarioId }
     );
   }
 

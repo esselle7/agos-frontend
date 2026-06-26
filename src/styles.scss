@@ -593,7 +593,8 @@ html[data-theme="dark"] .skeleton-line {
 
 // Dialog "scelta conto" e form piano dei conti: superficie più arrotondata e ben rifinita.
 .coge-picker-panel .mat-mdc-dialog-surface,
-.pc-dialog-panel .mat-mdc-dialog-surface {
+.pc-dialog-panel .mat-mdc-dialog-surface,
+.agos-dialog .mat-mdc-dialog-surface {
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
