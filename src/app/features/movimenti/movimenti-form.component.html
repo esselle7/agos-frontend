@@ -1,4 +1,4 @@
-<div class="mov-form">
+<div class="mov-form" [class.mov-form--wizard]="!isEditMode">
 
   <!-- Page header -->
   <div class="mov-form__header">
@@ -15,7 +15,49 @@
   } @else {
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mov-form__body">
 
-      <!-- ══════════════════ BLOCCO 0 — TIPO FLUSSO ══════════════════════════ -->
+      <!-- ══════════ BARRA WIZARD: step + impatto in tempo reale (solo creazione) ══════════ -->
+      @if (!isEditMode) {
+        <div class="mov-wiz__bar">
+          <ol class="mov-wiz__steps">
+            @for (s of steps; track s; let i = $index) {
+              <li class="mov-wiz__step"
+                  [class.is-active]="step() === i + 1"
+                  [class.is-done]="step() > i + 1"
+                  (click)="goToStep(i + 1)">
+                <span class="mov-wiz__step-n">
+                  @if (step() > i + 1) { <mat-icon>check</mat-icon> } @else { {{ i + 1 }} }
+                </span>
+                <span class="mov-wiz__step-label">{{ s }}</span>
+              </li>
+            }
+          </ol>
+
+          <div class="mov-wiz__impact">
+            <span class="mov-wiz__impact-cell"
+                  [class.pos]="preview().economico > 0" [class.neg]="preview().economico < 0">
+              <mat-icon>trending_up</mat-icon>
+              <span class="mov-wiz__impact-lbl">Economico</span>
+              <b>@if (preview().economico === 0) { — } @else { {{ preview().economico | euro }} }</b>
+            </span>
+            <span class="mov-wiz__impact-cell"
+                  [class.pos]="preview().finanziario > 0" [class.neg]="preview().finanziario < 0">
+              <mat-icon>account_balance</mat-icon>
+              <span class="mov-wiz__impact-lbl">Cassa oggi</span>
+              <b>@if (preview().finanziario === 0) { 0 € } @else { {{ preview().finanziario | euro }} }</b>
+            </span>
+            @if (preview().previsto !== 0) {
+              <span class="mov-wiz__impact-cell prev">
+                <mat-icon>schedule</mat-icon>
+                <span class="mov-wiz__impact-lbl">Previsto</span>
+                <b>{{ preview().previsto | euro }}@if (preview().giorni !== null) { · {{ preview().giorni }}gg }</b>
+              </span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ══════════════════ STEP 1 — TIPO DI MOVIMENTO ══════════════════════ -->
+      @if (isEditMode || step() === 1) {
       <div class="card mov-form__section">
         <h4 class="mov-form__section-title">Tipo di movimento</h4>
 
@@ -56,7 +98,6 @@
             </button>
           </div>
         } @else {
-          <!-- Edit mode: il tipo flusso è bloccato, mostrato come badge read-only. -->
           <div class="mov-form__flusso-locked">
             <mat-icon class="mov-form__flusso-icon">{{ flussoMeta().icon }}</mat-icon>
             <div class="mov-form__flusso-locked-text">
@@ -71,9 +112,28 @@
             Puoi modificare tutti gli altri dati. Per cambiare il tipo, annulla e ricrea il movimento.
           </p>
         }
-      </div>
 
-      <!-- ══════════════════ SEZIONE A — DATI ECONOMICI ══════════════════════ -->
+        <!-- Direzione (Entrata / Uscita) -->
+        <div class="mov-form__tipo-row"
+             [class.mov-form__tipo-row--entrata]="tipoValue === 'ENTRATA'"
+             [class.mov-form__tipo-row--uscita]="tipoValue === 'USCITA'">
+          <label class="mov-form__tipo-label">Direzione</label>
+          <mat-button-toggle-group formControlName="tipo" class="mov-form__tipo-toggle">
+            <mat-button-toggle value="ENTRATA">
+              <mat-icon>arrow_downward</mat-icon>
+              {{ tipoFlusso() === 'soloFinanziario' ? 'Entrata' : 'Ricavo / Entrata' }}
+            </mat-button-toggle>
+            <mat-button-toggle value="USCITA">
+              <mat-icon>arrow_upward</mat-icon>
+              {{ tipoFlusso() === 'soloFinanziario' ? 'Uscita' : 'Costo / Uscita' }}
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+      </div>
+      }
+
+      <!-- ══════════════════ STEP 2 — DATI ECONOMICI ══════════════════════ -->
+      @if (isEditMode || step() === 2) {
       <div class="card mov-form__section">
         <div class="mov-form__section-header">
           <h4 class="mov-form__section-title">
@@ -92,25 +152,7 @@
           }
         </div>
 
-        <!-- Entrata / Uscita -->
-        <div class="mov-form__tipo-row"
-             [class.mov-form__tipo-row--entrata]="tipoValue === 'ENTRATA'"
-             [class.mov-form__tipo-row--uscita]="tipoValue === 'USCITA'">
-          <label class="mov-form__tipo-label">Direzione</label>
-          <mat-button-toggle-group formControlName="tipo" class="mov-form__tipo-toggle">
-            <mat-button-toggle value="ENTRATA">
-              <mat-icon>arrow_downward</mat-icon>
-              {{ tipoFlusso() === 'soloFinanziario' ? 'Entrata' : 'Ricavo / Entrata' }}
-            </mat-button-toggle>
-            <mat-button-toggle value="USCITA">
-              <mat-icon>arrow_upward</mat-icon>
-              {{ tipoFlusso() === 'soloFinanziario' ? 'Uscita' : 'Costo / Uscita' }}
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-
         <div class="mov-form__row">
-          <!-- Importo -->
           <div class="mov-form__field--lg">
             <agos-currency-input formControlName="importo" label="Importo *" [required]="true"></agos-currency-input>
             @if (form.controls.importo.touched && form.controls.importo.hasError('required')) {
@@ -121,7 +163,6 @@
             }
           </div>
 
-          <!-- Data (label dinamica in base al tipo flusso) -->
           <mat-form-field appearance="outline" class="mov-form__field--md">
             <mat-label>{{ labelDataMovimento() }}</mat-label>
             <input matInput [matDatepicker]="pickerData" formControlName="dataMovimento">
@@ -138,16 +179,17 @@
           </mat-form-field>
         </div>
 
-        <!-- Descrizione -->
         <mat-form-field appearance="outline" class="mov-form__field--full">
           <mat-label>Descrizione *</mat-label>
-          <input matInput formControlName="descrizione" placeholder="es. Pranzo domenicale - coperto 45 persone">
+          <input matInput formControlName="descrizione" placeholder="es. Pranzo domenicale - coperto 45 persone" appInputFilter="safe-text">
           @if (form.controls.descrizione.hasError('required')) {
             <mat-error>Descrizione obbligatoria</mat-error>
           }
+          @if (form.controls.descrizione.hasError('pattern') && form.controls.descrizione.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+          }
         </mat-form-field>
 
-        <!-- BU -->
         <div class="mov-form__field--full">
           <agos-bu-selector formControlName="businessUnitId" label="Business Unit *" [required]="true"></agos-bu-selector>
           @if (form.controls.businessUnitId.touched && form.controls.businessUnitId.hasError('required')) {
@@ -155,7 +197,6 @@
           }
         </div>
 
-        <!-- Categoria (2 livelli) -->
         <div class="mov-form__row">
           <mat-form-field appearance="outline" class="mov-form__field--md">
             <mat-label>Categoria</mat-label>
@@ -184,68 +225,62 @@
             </mat-form-field>
           }
         </div>
-
-        <!-- CoGe + Fornitore -->
-        <div class="mov-form__row">
-          <mat-form-field appearance="outline" class="mov-form__field--lg">
-            <mat-label>Conto CoGe *</mat-label>
-            <mat-icon matPrefix class="mov-form__coge-icon">account_tree</mat-icon>
-            <input matInput
-                   [formControl]="cogeSearch"
-                   [matAutocomplete]="autoCoge"
-                   placeholder="Cerca per nome o codice..."
-                   matTooltip="Economico = quando nasce il ricavo/costo nel piano dei conti"
-                   matTooltipPosition="above">
-            <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
-              @for (gruppo of filteredGruppiCoge; track gruppo.nomeGruppo) {
-                <mat-optgroup [label]="gruppo.nomeGruppo">
-                  @for (conto of gruppo.conti; track conto.id) {
-                    <mat-option [value]="conto">
-                      <span class="coge-option">
-                        <span class="coge-option__nome" [style.padding-left.px]="(conto.livello - 1) * 12">
-                          {{ conto.nome }}
-                        </span>
-                        <span class="coge-option__codice">{{ conto.codice }}</span>
-                      </span>
-                    </mat-option>
-                  }
-                </mat-optgroup>
-              }
-            </mat-autocomplete>
-            @if (form.controls.contoCoge.value) {
-              <button matSuffix mat-icon-button type="button" (click)="clearCoge()" matTooltip="Rimuovi">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-            @if (form.controls.contoCoge.touched && form.controls.contoCoge.hasError('required')) {
-              <mat-error>Conto CoGe obbligatorio</mat-error>
-            }
-            @if (!form.controls.contoCoge.value && !form.controls.contoCoge.touched) {
-              <mat-hint>Seleziona dal piano dei conti o cerca per nome</mat-hint>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="mov-form__field--md">
-            <mat-label>Fornitore / Controparte</mat-label>
-            <input matInput [formControl]="fornitoreSearch"
-                   [matAutocomplete]="autoFornitore"
-                   placeholder="Cerca per ragione sociale...">
-            <mat-autocomplete #autoFornitore (optionSelected)="onFornitoreSelected($event)">
-              @for (f of filteredFornitori(); track f.id) {
-                <mat-option [value]="f.ragioneSociale">{{ f.ragioneSociale }}</mat-option>
-              }
-            </mat-autocomplete>
-            @if (form.controls.fornitoreId.value) {
-              <button matSuffix mat-icon-button type="button" (click)="clearFornitore()">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-            <mat-hint>Il CoGe del fornitore viene auto-compilato</mat-hint>
-          </mat-form-field>
-        </div>
       </div>
+      }
 
-      <!-- ══════════════════ SEZIONE B — INCASSO / PAGAMENTO ════════════════ -->
+      <!-- ══════════════════ STEP 3 — CONTO COGE + FORNITORE ══════════════════ -->
+      @if (isEditMode || step() === 3) {
+      <div class="card mov-form__section">
+        <h4 class="mov-form__section-title">Conto contabile e controparte</h4>
+        <p class="mov-form__section-desc">
+          Scegli il conto del piano dei conti su cui registrare e, se serve, il fornitore/controparte.
+        </p>
+
+        <div class="mov-form__coge-block">
+          <app-coge-picker
+            label="Conto CoGe" [required]="true"
+            [value]="form.controls.contoCoge.value"
+            [invalid]="form.controls.contoCoge.touched && form.controls.contoCoge.invalid"
+            (cogeChange)="setCoge($event)"
+          ></app-coge-picker>
+          @if (form.controls.contoCoge.touched && form.controls.contoCoge.hasError('required')) {
+            <span class="mov-form__standalone-error">Conto CoGe obbligatorio</span>
+          }
+
+          <agos-help-note tono="info" [collapsed]="true"
+            titolo="Che effetto ha il conto che scelgo?">
+            <p>Il conto decide come pesa il movimento. Un conto di <strong>ricavo</strong> o di
+              <strong>costo operativo</strong> entra nell'EBITDA (il margine della gestione
+              corrente). Gli <strong>interessi</strong> pesano più in basso, sotto l'EBIT.</p>
+            <p>Un <strong>investimento</strong> (CAPEX, es. acquisto di un'attrezzatura) e il
+              rimborso di un <strong>debito</strong> non sono costi del periodo: muovono la cassa
+              ma <strong>restano fuori dal conto economico</strong> — l'attrezzatura entra a P&amp;L
+              poco per volta come ammortamento.</p>
+          </agos-help-note>
+        </div>
+
+        <mat-form-field appearance="outline" class="mov-form__field--full">
+          <mat-label>Fornitore / Controparte</mat-label>
+          <input matInput [formControl]="fornitoreSearch"
+                 [matAutocomplete]="autoFornitore"
+                 placeholder="Cerca per ragione sociale...">
+          <mat-autocomplete #autoFornitore (optionSelected)="onFornitoreSelected($event)">
+            @for (f of filteredFornitori(); track f.id) {
+              <mat-option [value]="f.ragioneSociale">{{ f.ragioneSociale }}</mat-option>
+            }
+          </mat-autocomplete>
+          @if (form.controls.fornitoreId.value) {
+            <button matSuffix mat-icon-button type="button" (click)="clearFornitore()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          <mat-hint>Il CoGe del fornitore viene auto-compilato</mat-hint>
+        </mat-form-field>
+      </div>
+      }
+
+      <!-- ══════════════════ STEP 4 — INCASSO / PAGAMENTO + DETTAGLI ══════════ -->
+      @if (isEditMode || step() === 4) {
       <div class="card mov-form__section">
         <div class="mov-form__section-header">
           <h4 class="mov-form__section-title">
@@ -260,8 +295,6 @@
           </span>
         </div>
 
-        <!-- Stato finanziario: solo per 'differito'. Per 'immediato' è sempre
-             "già incassato"; per 'soloFinanziario' è sempre liquidato. -->
         @if (statoToggleVisible()) {
           <div class="mov-form__stato-row">
             <mat-button-toggle-group
@@ -279,7 +312,6 @@
             </mat-button-toggle-group>
           </div>
         } @else if (tipoFlusso() === 'differito' && isEditMode && wasLiquidato()) {
-          <!-- Movimento differito già liquidato: stato non reversibile. -->
           <div class="mov-form__stato-locked">
             <mat-icon>check_circle</mat-icon>
             <span>
@@ -289,7 +321,6 @@
           </div>
         }
 
-        <!-- Conto + Metodo: visibili solo quando c'è un effettivo movimento di cassa -->
         @if (showContoMetodo()) {
           <div class="mov-form__row">
             <mat-form-field appearance="outline" class="mov-form__field--md">
@@ -318,12 +349,9 @@
           </div>
         }
 
-        <!-- Date finanziarie: solo per flusso differito -->
         @if (tipoFlusso() === 'differito') {
           <div class="mov-form__row">
-
             @if (statoFinanziario() === 'nonIncassato') {
-              <!-- Scadenza finanziaria attesa (DA_LIQUIDARE) -->
               <mat-form-field appearance="outline" class="mov-form__field--md">
                 <mat-label>
                   {{ tipoValue === 'ENTRATA' ? 'Scadenza incasso *' : 'Scadenza pagamento *' }}
@@ -340,7 +368,6 @@
                 }
               </mat-form-field>
             } @else {
-              <!-- Data di liquidazione effettiva (LIQUIDATO) -->
               <mat-form-field appearance="outline" class="mov-form__field--md">
                 <mat-label>
                   {{ tipoValue === 'ENTRATA' ? 'Data incasso effettivo *' : 'Data pagamento effettivo *' }}
@@ -354,7 +381,6 @@
                 }
               </mat-form-field>
             }
-
           </div>
 
           @if (statoFinanziario() === 'nonIncassato') {
@@ -369,60 +395,7 @@
         }
       </div>
 
-      <!-- ══════════════════ SEZIONE C — PREVIEW IMPATTO (solo UI) ══════════ -->
-      <div class="mov-form__preview-card">
-        <h4 class="mov-form__preview-title">
-          <mat-icon>preview</mat-icon>
-          Preview impatto in tempo reale
-        </h4>
-        <div class="mov-form__preview-grid">
-
-          <div class="mov-form__preview-item"
-               [class.mov-form__preview-item--positive]="preview().economico > 0"
-               [class.mov-form__preview-item--negative]="preview().economico < 0"
-               [class.mov-form__preview-item--zero]="preview().economico === 0">
-            <span class="mov-form__preview-label">
-              <mat-icon>trending_up</mat-icon> Impatto economico (EBITDA)
-            </span>
-            <strong class="mov-form__preview-value">
-              @if (preview().economico === 0) { nessuno }
-              @else { {{ preview().economico | euro }} }
-             </strong>
-          </div>
-
-          <div class="mov-form__preview-item"
-               [class.mov-form__preview-item--positive]="preview().finanziario > 0"
-               [class.mov-form__preview-item--negative]="preview().finanziario < 0"
-               [class.mov-form__preview-item--zero]="preview().finanziario === 0">
-            <span class="mov-form__preview-label">
-              <mat-icon>account_balance</mat-icon> Impatto finanziario (cassa oggi)
-            </span>
-            <strong class="mov-form__preview-value">
-              @if (preview().finanziario === 0) { 0€ — non ancora incassato/pagato }
-              @else { {{ preview().finanziario | euro }} }
-            </strong>
-          </div>
-
-          @if (preview().previsto !== 0) {
-            <div class="mov-form__preview-item mov-form__preview-item--previsto">
-              <span class="mov-form__preview-label">
-                <mat-icon>schedule</mat-icon> Previsione futura
-              </span>
-              <strong class="mov-form__preview-value">
-                {{ preview().previsto | euro }}
-                @if (preview().giorni !== null) {
-                  <span class="mov-form__preview-giorni">
-                    tra {{ preview().giorni }} giorni
-                  </span>
-                }
-              </strong>
-            </div>
-          }
-
-        </div>
-      </div>
-
-      <!-- ══════════════════ SEZIONE 3 — EVENTO (solo USCITA) ════════════════ -->
+      <!-- Evento (solo USCITA) -->
       @if (tipoValue === 'USCITA') {
       <div class="card mov-form__section">
         <div class="mov-form__toggle-header">
@@ -452,9 +425,9 @@
           </div>
         }
       </div>
-      } <!-- end @if USCITA -->
+      }
 
-      <!-- ══════════════════ SEZIONE 4 — DETTAGLI AGGIUNTIVI ═══════════════ -->
+      <!-- Dettagli aggiuntivi -->
       <mat-expansion-panel class="mov-form__expansion">
         <mat-expansion-panel-header>
           <mat-panel-title>Dettagli aggiuntivi</mat-panel-title>
@@ -487,13 +460,19 @@
 
         <mat-form-field appearance="outline" class="mov-form__field--full">
           <mat-label>Note</mat-label>
-          <textarea matInput formControlName="note" rows="3" placeholder="Note aggiuntive..."></textarea>
+          <textarea matInput formControlName="note" rows="3" placeholder="Note aggiuntive..." appInputFilter="safe-text"></textarea>
+          @if (form.controls.note.hasError('pattern') && form.controls.note.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+          }
         </mat-form-field>
 
         <div class="mov-form__row">
           <mat-form-field appearance="outline" class="mov-form__field--md">
             <mat-label>Riferimento esterno</mat-label>
-            <input matInput formControlName="riferimentoEsterno" placeholder="es. Fattura n° 2024/123">
+            <input matInput formControlName="riferimentoEsterno" placeholder="es. Fattura n° 2024/123" appInputFilter="safe-text">
+            @if (form.controls.riferimentoEsterno.hasError('pattern') && form.controls.riferimentoEsterno.touched) {
+              <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline" class="mov-form__field--sm">
             <mat-label>Fonte</mat-label>
@@ -505,18 +484,102 @@
           </mat-form-field>
         </div>
       </mat-expansion-panel>
+      }
+
+      <!-- ══════════════════ PREVIEW IMPATTO (solo edit: in creazione c'è la barra) ══════════ -->
+      @if (isEditMode) {
+      <div class="mov-form__preview-card">
+        <h4 class="mov-form__preview-title">
+          <mat-icon>preview</mat-icon>
+          Preview impatto in tempo reale
+        </h4>
+        <div class="mov-form__preview-grid">
+          <div class="mov-form__preview-item"
+               [class.mov-form__preview-item--positive]="preview().economico > 0"
+               [class.mov-form__preview-item--negative]="preview().economico < 0"
+               [class.mov-form__preview-item--zero]="preview().economico === 0">
+            <span class="mov-form__preview-label"><mat-icon>trending_up</mat-icon> Impatto economico (EBITDA)</span>
+            <strong class="mov-form__preview-value">
+              @if (preview().economico === 0) { nessuno } @else { {{ preview().economico | euro }} }
+            </strong>
+          </div>
+          <div class="mov-form__preview-item"
+               [class.mov-form__preview-item--positive]="preview().finanziario > 0"
+               [class.mov-form__preview-item--negative]="preview().finanziario < 0"
+               [class.mov-form__preview-item--zero]="preview().finanziario === 0">
+            <span class="mov-form__preview-label"><mat-icon>account_balance</mat-icon> Impatto finanziario (cassa oggi)</span>
+            <strong class="mov-form__preview-value">
+              @if (preview().finanziario === 0) { 0€ — non ancora incassato/pagato } @else { {{ preview().finanziario | euro }} }
+            </strong>
+          </div>
+          @if (preview().previsto !== 0) {
+            <div class="mov-form__preview-item mov-form__preview-item--previsto">
+              <span class="mov-form__preview-label"><mat-icon>schedule</mat-icon> Previsione futura</span>
+              <strong class="mov-form__preview-value">
+                {{ preview().previsto | euro }}
+                @if (preview().giorni !== null) { <span class="mov-form__preview-giorni">tra {{ preview().giorni }} giorni</span> }
+              </strong>
+            </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- ══════════════════ STEP 5 — REVISIONE (solo creazione) ══════════════ -->
+      @if (!isEditMode && step() === 5) {
+      <div class="card mov-form__section mov-wiz__review">
+        <h4 class="mov-form__section-title">Revisione</h4>
+        <p class="mov-form__section-desc">Controlla i dati prima di salvare. L'impatto è in alto, in tempo reale.</p>
+
+        <dl class="mov-wiz__review-grid">
+          <div><dt>Tipo</dt><dd>{{ flussoMeta().label }} · {{ tipoValue === 'ENTRATA' ? 'Entrata' : 'Uscita' }}</dd></div>
+          <div><dt>Importo</dt><dd><b>{{ form.controls.importo.value | euro }}</b></dd></div>
+          <div><dt>Data</dt><dd>{{ form.controls.dataMovimento.value | date:'dd/MM/yyyy' }}</dd></div>
+          <div class="full"><dt>Descrizione</dt><dd>{{ form.controls.descrizione.value || '—' }}</dd></div>
+          <div class="full"><dt>Conto CoGe</dt><dd>{{ reviewCoge }}</dd></div>
+          <div><dt>Fornitore</dt><dd>{{ reviewFornitore }}</dd></div>
+          @if (showContoMetodo()) {
+            <div><dt>Conto bancario</dt><dd>{{ reviewConto }}</dd></div>
+            <div><dt>Metodo</dt><dd>{{ reviewMetodo }}</dd></div>
+          }
+        </dl>
+      </div>
+      }
 
       <!-- ══════════════════ AZIONI ══════════════════════════════════════════ -->
-      <div class="mov-form__footer">
-        <button mat-stroked-button type="button" (click)="goBack()" [disabled]="submitting()">
-          Annulla
-        </button>
-        <button mat-flat-button color="primary" type="submit" [disabled]="submitting()">
-          @if (submitting()) { <mat-spinner diameter="20"></mat-spinner> }
-          @if (!submitting()) { <mat-icon>save</mat-icon> }
-          {{ submitting() ? '' : 'Salva' }}
-        </button>
-      </div>
+      @if (isEditMode) {
+        <div class="mov-form__footer">
+          <button mat-stroked-button type="button" (click)="goBack()" [disabled]="submitting()">Annulla</button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting()">
+            @if (submitting()) { <mat-spinner diameter="20"></mat-spinner> } @else { <mat-icon>save</mat-icon> }
+            {{ submitting() ? '' : 'Salva' }}
+          </button>
+        </div>
+      } @else {
+        <div class="mov-form__footer mov-wiz__footer">
+          <button mat-stroked-button type="button" (click)="step() === 1 ? goBack() : prev()" [disabled]="submitting()">
+            {{ step() === 1 ? 'Annulla' : 'Indietro' }}
+          </button>
+
+          <span class="mov-wiz__footer-spacer"></span>
+
+          @if (step() >= 3 && step() < 5 && form.valid) {
+            <button mat-stroked-button color="primary" type="submit" [disabled]="submitting()">
+              <mat-icon>save</mat-icon> Salva ora
+            </button>
+          }
+          @if (step() < 5) {
+            <button mat-flat-button color="primary" type="button" (click)="next()">
+              Avanti <mat-icon>arrow_forward</mat-icon>
+            </button>
+          } @else {
+            <button mat-flat-button color="primary" type="submit" [disabled]="submitting()">
+              @if (submitting()) { <mat-spinner diameter="20"></mat-spinner> } @else { <mat-icon>save</mat-icon> }
+              {{ submitting() ? '' : 'Salva movimento' }}
+            </button>
+          }
+        </div>
+      }
 
     </form>
   }

@@ -15,6 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { SpeseRicorrentiService } from '../../core/services/spese-ricorrenti.service';
 import { PlanDetailDTO, InstallmentDTO } from './spese-ricorrenti.models';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
+import { HelpNoteComponent } from '../../shared/components/help-note/help-note.component';
 
 @Component({
   selector: 'app-spese-ricorrenti-detail',
@@ -24,7 +25,7 @@ import { EuroPipe } from '../../shared/pipes/euro.pipe';
     MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatChipsModule,
     MatTooltipModule, MatDialogModule, MatMenuModule, MatDividerModule,
     MatFormFieldModule, MatInputModule,
-    DatePipe, EuroPipe,
+    DatePipe, EuroPipe, HelpNoteComponent,
   ],
   templateUrl: './spese-ricorrenti-detail.component.html',
   styleUrls: ['./spese-ricorrenti-detail.component.scss'],

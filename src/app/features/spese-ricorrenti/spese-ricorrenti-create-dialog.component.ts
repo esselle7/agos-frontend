@@ -2,6 +2,8 @@ import { Component, OnInit, DestroyRef, inject, signal, computed } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { InputFilterDirective } from '../../shared/directives/input-filter.directive';
+import { AppValidators } from '../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,7 +14,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SpeseRicorrentiService } from '../../core/services/spese-ricorrenti.service';
 import { CogeOption, TipoPiano } from './spese-ricorrenti.models';
-import { ContoBancarioDTO } from '../../core/models/anagrafica.models';
+import { ContoBancarioDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 
 export interface RataPreview {
   numero: number;
@@ -53,6 +56,8 @@ export interface FinComputato {
     MatDialogModule, MatButtonModule, MatIconModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatProgressSpinnerModule, MatTooltipModule,
+    InputFilterDirective,
+    CogePickerComponent,
   ],
   templateUrl: './spese-ricorrenti-create-dialog.component.html',
   styleUrls: ['./spese-ricorrenti-create-dialog.component.scss'],
@@ -65,6 +70,9 @@ export class SpeseRicorrentiCreateDialogComponent implements OnInit {
 
   readonly contiCoge          = signal<CogeOption[]>([]);
   readonly contiCogeInteressi = signal<CogeOption[]>([]);
+  // Id ammessi per il picker: stesso identico subset curato dal server (nessuna voce in più).
+  readonly cogeIds          = computed(() => this.contiCoge().map(c => c.id));
+  readonly cogeInteressiIds = computed(() => this.contiCogeInteressi().map(c => c.id));
   readonly contiBancari       = signal<ContoBancarioDTO[]>([]);
   readonly saving             = signal(false);
   readonly loadingLookup      = signal(true);
@@ -136,6 +144,16 @@ export class SpeseRicorrentiCreateDialogComponent implements OnInit {
     { value: 'TRIMESTRALE', label: 'Trimestrale', sub: 'ogni 3 mesi' },
   ];
 
+  /** Scelta COGE dal picker → scrive l'id nel control (identico al vecchio select). */
+  setContoCoge(conto: PianoContiCogeDTO | null): void {
+    const c = this.form.get('contoCoge')!;
+    c.setValue(conto?.id ?? null); c.markAsTouched();
+  }
+  setCogeInteressi(conto: PianoContiCogeDTO | null): void {
+    const c = this.form.get('contoCogeInteressiId')!;
+    c.setValue(conto?.id ?? null); c.markAsTouched();
+  }
+
   ngOnInit(): void {
     const now         = new Date();
     const nextMonth   = now.getMonth() + 1;
@@ -143,20 +161,20 @@ export class SpeseRicorrentiCreateDialogComponent implements OnInit {
     const annoDefault = nextMonth >= 12 ? now.getFullYear() + 1 : now.getFullYear();
 
     this.form = this.fb.group({
-      descrizione:           ['', [Validators.required, Validators.maxLength(255)]],
+      descrizione:           ['', [Validators.required, Validators.maxLength(255), AppValidators.safeText()]],
       contoBancarioId:       [null, Validators.required],
       contoCoge:             [null, Validators.required],
       tipoPiano:             ['FLAT', Validators.required],
       // Importo rata: input per FLAT e DURATA mode, derivato per RATA mode
       importoRata:           [null, [Validators.required, Validators.min(0.01)]],
-      variazionePct:         [0],
+      variazionePct:         [0, [Validators.min(-100), Validators.max(100)]],
       giornoDelMese:         [null, [Validators.required, Validators.min(1), Validators.max(28)]],
       frequenza:             ['MENSILE', Validators.required],
       // Numero rate: input per FLAT e RATA mode, derivato per DURATA mode
       numeroRate:            [null, [Validators.required, Validators.min(1)]],
       meseInizio:            [meseDefault, Validators.required],
       annoInizio:            [annoDefault, Validators.required],
-      note:                  [''],
+      note:                  ['', [AppValidators.safeText()]],
       importoDebitoIniziale: [null],
       tassoInteresseAnnuo:   [null],
       contoCogeInteressiId:  [null],

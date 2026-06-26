@@ -3,12 +3,15 @@
   <!-- ── Header ────────────────────────────────────────────────────── -->
   <div class="dashboard__header">
     <div class="dashboard__title">
-      <h2>Dashboard</h2>
-      @if (kpi()?.aggiornatoAl) {
-        <span class="text-sub update-label">
-          Aggiornato alle {{ formatTimestamp(kpi()!.aggiornatoAl) }}
-        </span>
-      }
+      <span class="dashboard__eyebrow">Panoramica</span>
+      <div class="dashboard__title-row">
+        <h2>Dashboard</h2>
+        @if (kpi()?.aggiornatoAl) {
+          <span class="text-sub update-label">
+            Aggiornato alle {{ formatTimestamp(kpi()!.aggiornatoAl) }}
+          </span>
+        }
+      </div>
     </div>
     <agos-date-range-picker
       [period]="globalPeriod.period()"
@@ -113,6 +116,9 @@
       <mat-icon>trending_up</mat-icon>
       <h4>Performance Economica</h4>
       <span class="section-note text-sub">{{ periodoLabel() || 'valori di competenza nel periodo' }}</span>
+      <mat-icon class="section-help" tabindex="0"
+        matTooltipClass="dash-tooltip"
+        matTooltip="Competenza: ricavi e costi del periodo in cui maturano, anche se non ancora incassati o pagati. Diversa dalla Situazione Finanziaria sopra, che mostra i soldi realmente in cassa. Per questo i due valori possono non coincidere.">help_outline</mat-icon>
     </div>
 
     <div class="kpi-grid kpi-grid--3">
@@ -199,247 +205,6 @@
 
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- AGENDA IMMINENTE                                            -->
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <div class="section-header section-header--agenda">
-      <mat-icon>calendar_month</mat-icon>
-      <h4>Agenda Imminente</h4>
-      <span class="section-note text-sub">prossimi 30 giorni</span>
-    </div>
-
-    @if (scadenzeError) {
-      <agos-empty-state icon="error_outline" title="Dati non disponibili"
-        subtitle="Impossibile caricare le scadenze" />
-    } @else {
-      <div class="agenda-grid">
-
-        <!-- ── Colonna: eventi ──────────────────────────────────── -->
-        <div class="agenda-col card">
-          <div class="agenda-col__header">
-            <mat-icon class="col-icon col-icon--eventi">event</mat-icon>
-            <span class="col-title">Eventi Imminenti</span>
-            @if (scadenzeEventi().length > 0) {
-              <span class="col-count">{{ scadenzeEventi().length }}</span>
-            }
-            <div class="col-pills">
-              @if (eventiByUrgenza().alta > 0) {
-                <span class="urgenza-pill urgenza-pill--alta">
-                  <mat-icon>warning</mat-icon>{{ eventiByUrgenza().alta }} urgenti
-                </span>
-              }
-              @if (eventiByUrgenza().media > 0) {
-                <span class="urgenza-pill urgenza-pill--media">
-                  {{ eventiByUrgenza().media }} in scadenza
-                </span>
-              }
-            </div>
-            <a class="link-all" routerLink="/eventi">
-              Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
-            </a>
-          </div>
-
-          @if (scadenzeEventi().length === 0) {
-            <agos-empty-state icon="event_available" title="Nessun evento imminente"
-              subtitle="nel periodo selezionato" />
-          } @else {
-            <div class="agenda-list">
-              @for (s of scadenzeEventi(); track s.referenceId) {
-                <div class="agenda-item"
-                     [class.agenda-item--paid]="s.stato === 'PAID'"
-                     [class.agenda-item--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
-                     [class.agenda-item--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'">
-                  <div class="agenda-item__date"
-                       [class.date--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
-                       [class.date--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'"
-                       [class.date--paid]="s.stato === 'PAID'">
-                    <span class="date-day">{{ getDayFromDate(s.dataScadenza) }}</span>
-                    <span class="date-month">{{ getMonthFromDate(s.dataScadenza) }}</span>
-                  </div>
-                  <div class="agenda-item__info">
-                    <span class="agenda-item__desc">{{ s.descrizione }}</span>
-                    <span class="agenda-item__when text-sub">{{ formatScadenzaDate(s.dataScadenza) }}</span>
-                  </div>
-                  <div class="agenda-item__right">
-                    @if (s.stato === 'PAID') {
-                      <span class="paid-label">
-                        <mat-icon>check_circle</mat-icon> Saldato
-                      </span>
-                    } @else {
-                      <span class="agenda-item__amount euro">{{ s.importoAtteso | euro }}</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-            @if (totalePendingEventi() > 0) {
-              <div class="agenda-col__total">
-                Totale da saldare: <strong class="euro">{{ totalePendingEventi() | euro }}</strong>
-              </div>
-            }
-          }
-        </div>
-
-        <!-- ── Colonna: pagamenti ricorrenti ────────────────────── -->
-        <div class="agenda-col card">
-          <div class="agenda-col__header">
-            <mat-icon class="col-icon col-icon--rate">repeat</mat-icon>
-            <span class="col-title">Pagamenti Ricorrenti</span>
-            @if (scadenzeRate().length > 0) {
-              <span class="col-count">{{ scadenzeRate().length }}</span>
-            }
-            <div class="col-pills">
-              @if (rateByUrgenza().alta > 0) {
-                <span class="urgenza-pill urgenza-pill--alta">
-                  <mat-icon>warning</mat-icon>{{ rateByUrgenza().alta }} urgenti
-                </span>
-              }
-              @if (rateByUrgenza().media > 0) {
-                <span class="urgenza-pill urgenza-pill--media">
-                  {{ rateByUrgenza().media }} in scadenza
-                </span>
-              }
-            </div>
-            <a class="link-all" routerLink="/spese-ricorrenti">
-              Vedi tutti <mat-icon class="link-icon">arrow_forward</mat-icon>
-            </a>
-          </div>
-
-          @if (scadenzeRate().length === 0) {
-            <agos-empty-state icon="event_available" title="Nessun pagamento imminente"
-              subtitle="nel periodo selezionato" />
-          } @else {
-            <div class="agenda-list">
-              @for (s of scadenzeRate(); track s.referenceId) {
-                <div class="agenda-item"
-                     [class.agenda-item--paid]="s.stato === 'PAID'"
-                     [class.agenda-item--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
-                     [class.agenda-item--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'">
-                  <div class="agenda-item__date"
-                       [class.date--alta]="s.stato !== 'PAID' && s.urgenza === 'ALTA'"
-                       [class.date--media]="s.stato !== 'PAID' && s.urgenza === 'MEDIA'"
-                       [class.date--paid]="s.stato === 'PAID'">
-                    <span class="date-day">{{ getDayFromDate(s.dataScadenza) }}</span>
-                    <span class="date-month">{{ getMonthFromDate(s.dataScadenza) }}</span>
-                  </div>
-                  <div class="agenda-item__info">
-                    <span class="agenda-item__desc">{{ s.descrizione }}</span>
-                    <span class="agenda-item__when text-sub">{{ formatScadenzaDate(s.dataScadenza) }}</span>
-                  </div>
-                  <div class="agenda-item__right">
-                    @if (s.stato === 'PAID') {
-                      <span class="paid-label">
-                        <mat-icon>check_circle</mat-icon> Pagato
-                      </span>
-                    } @else {
-                      <span class="agenda-item__amount euro">{{ s.importoAtteso | euro }}</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-            @if (totalePendingRate() > 0) {
-              <div class="agenda-col__total">
-                Totale da pagare: <strong class="euro">{{ totalePendingRate() | euro }}</strong>
-              </div>
-            }
-          }
-        </div>
-
-      </div>
-
-      <!-- ── Uscite da liquidare (scadenze fornitori) ─────────────────── -->
-      @if (usciteDaLiquidare().length > 0) {
-        <div class="uscite-section">
-          <div class="uscite-header">
-            <div class="uscite-title">
-              <mat-icon>schedule_send</mat-icon>
-              <span>Uscite da liquidare</span>
-              <span class="uscite-count">{{ usciteDaLiquidare().length }}</span>
-            </div>
-            <div class="uscite-meta">
-              @if (usciteScadute().length > 0) {
-                <span class="uscite-badge-scadute">
-                  {{ usciteScadute().length }} scadut{{ usciteScadute().length === 1 ? 'a' : 'e' }}
-                </span>
-              }
-              <span class="uscite-total-label">
-                Totale: <strong class="euro">{{ totaleUsciteDaLiquidare() | euro }}</strong>
-              </span>
-            </div>
-          </div>
-
-          <div class="uscite-scroll">
-            @for (u of usciteDaLiquidare(); track u.id) {
-              <div class="uscita-card"
-                   [class.uscita-card--scaduta]="u.urgenza === 'SCADUTA'"
-                   [class.uscita-card--alta]="u.urgenza === 'ALTA'"
-                   [class.uscita-card--media]="u.urgenza === 'MEDIA'">
-                <div class="uc-urgency-bar"></div>
-                <div class="uc-body">
-                  <div class="uc-top">
-                    <span class="uc-fornitore" [title]="u.fornitoreNome ?? ''">
-                      {{ u.fornitoreNome ?? '—' }}
-                    </span>
-                    <span class="uc-importo">{{ u.importo | euro }}</span>
-                  </div>
-                  <div class="uc-desc" [title]="u.descrizione ?? ''">
-                    {{ u.descrizione ?? (u.categoriaNome ?? u.businessUnitNome) ?? '—' }}
-                  </div>
-                  <div class="uc-bottom">
-                    <span class="uc-scadenza"
-                          [class.uc-scadenza--scaduta]="u.urgenza === 'SCADUTA'"
-                          [class.uc-scadenza--alta]="u.urgenza === 'ALTA'"
-                          [class.uc-scadenza--media]="u.urgenza === 'MEDIA'">
-                      @if (u.urgenza === 'SCADUTA') {
-                        Scaduta {{ -u.ggAllaScadenza }} gg fa
-                      } @else if (u.ggAllaScadenza === 0) {
-                        Scade oggi
-                      } @else {
-                        Tra {{ u.ggAllaScadenza }} gg
-                      }
-                    </span>
-                    <span class="uc-date">{{ formatDate(u.dataLiquidita) }}</span>
-                  </div>
-                  <!-- Liquida con scelta conto -->
-                  @if (liquidandoId() === u.id) {
-                    <button class="uc-liquida-btn uc-liquida-btn--loading" disabled>
-                      <mat-spinner diameter="14"></mat-spinner>
-                      Liquidando…
-                    </button>
-                  } @else {
-                    <button class="uc-liquida-btn"
-                            [matMenuTriggerFor]="liquidaMenu"
-                            [disabled]="liquidandoId() !== null">
-                      <mat-icon>payments</mat-icon>
-                      Liquida
-                      <mat-icon class="uc-liquida-chevron">expand_more</mat-icon>
-                    </button>
-                    <mat-menu #liquidaMenu="matMenu">
-                      @for (c of conti(); track c.id) {
-                        <button mat-menu-item
-                                (click)="liquidaUscita(u.id, c.id)"
-                                [disabled]="c.saldoCalcolato < u.importo"
-                                [class.conto-saldo-ko]="c.saldoCalcolato < u.importo">
-                          <mat-icon [class.icon-danger]="c.saldoCalcolato < u.importo">
-                            {{ c.saldoCalcolato < u.importo ? 'money_off' : contoIcon(c.tipo) }}
-                          </mat-icon>
-                          <span>{{ c.nome }}</span>
-                          @if (c.saldoCalcolato < u.importo) {
-                            <span class="saldo-ko-hint">saldo {{ c.saldoCalcolato | euro }}</span>
-                          }
-                        </button>
-                      }
-                    </mat-menu>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-    }
 
   }
 </div>

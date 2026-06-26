@@ -33,24 +33,24 @@
 
     &:hover:not(&--active) {
       border-color: var(--primary);
-      background: #f0f7f4;
+      background: var(--tint-success);
       box-shadow: var(--shadow-md);
     }
 
     &--active {
       background: var(--primary);
       border-color: var(--primary);
-      box-shadow: 0 3px 10px rgba(45, 106, 79, 0.30);
+      box-shadow: 0 3px 10px rgba(var(--primary-rgb), 0.30);
 
       .drp__btn-abbr,
       .drp__btn-desc,
       .drp__btn-range {
-        color: #fff;
+        color: var(--on-accent);
         opacity: 1;
       }
 
       .drp__btn-icon {
-        color: #fff;
+        color: var(--on-accent);
       }
 
       &:hover {

@@ -1,69 +1,87 @@
-<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Dipendente' : 'Nuovo Dipendente' }}</h2>
+<div class="dform__head">
+  <span class="dform__head-ico"><mat-icon>badge</mat-icon></span>
+  <span class="dform__head-tt">
+    <h2 mat-dialog-title>{{ isEdit() ? 'Modifica dipendente' : 'Nuovo dipendente' }}</h2>
+    <span class="dform__head-sub">Chi lavora in azienda e agli eventi, con il suo costo</span>
+  </span>
+</div>
 
 <mat-dialog-content>
   @if (loadingForm()) {
-    <agos-skeleton-loader type="text" [rows]="5" />
+    <div style="padding: 16px 24px"><agos-skeleton-loader type="text" [rows]="5" /></div>
   } @else {
-    <form [formGroup]="form" class="personale-form">
+    <form [formGroup]="form" class="dform__body personale-form">
 
-      <div class="form-row">
+      <p class="dform__section"><mat-icon>person</mat-icon> Anagrafica</p>
+
+      <div class="dform__row dform__row--2">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Nome *</mat-label>
-          <input matInput formControlName="nome" />
+          <mat-icon matPrefix>person</mat-icon>
+          <input matInput formControlName="nome" appInputFilter="letters-only" />
           @if (form.controls.nome.hasError('required')) {
-            <mat-error>Nome obbligatorio</mat-error>
+            <mat-error>Il nome è obbligatorio</mat-error>
+          }
+          @if (form.controls.nome.hasError('pattern') && form.controls.nome.touched) {
+            <mat-error>Solo lettere, spazi e trattini</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Cognome *</mat-label>
-          <input matInput formControlName="cognome" />
+          <input matInput formControlName="cognome" appInputFilter="letters-only" />
           @if (form.controls.cognome.hasError('required')) {
-            <mat-error>Cognome obbligatorio</mat-error>
+            <mat-error>Il cognome è obbligatorio</mat-error>
+          }
+          @if (form.controls.cognome.hasError('pattern') && form.controls.cognome.touched) {
+            <mat-error>Solo lettere, spazi e trattini</mat-error>
           }
         </mat-form-field>
       </div>
 
-      <!-- Mansione: autocomplete con creazione automatica se non esiste -->
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Mansione</mat-label>
-        <input
-          matInput
-          formControlName="mansione"
-          [matAutocomplete]="autoMansione"
-          placeholder="es. Chef, Cameriere, Hostess…"
-        />
-        <mat-icon matSuffix style="color:#9ca3af; font-size:18px">work_outline</mat-icon>
-        <mat-autocomplete #autoMansione="matAutocomplete">
-          @for (m of mansioniFiltered(); track m.id) {
-            <mat-option [value]="m.nome">{{ m.nome }}</mat-option>
-          }
-          @if (mansioneIsNew()) {
-            <mat-option [value]="form.controls.mansione.value">
-              <span style="display:flex;align-items:center;gap:6px;color:#1976d2">
-                <mat-icon style="font-size:16px;width:16px;height:16px">add_circle</mat-icon>
-                Crea "{{ form.controls.mansione.value }}"
-              </span>
-            </mat-option>
-          }
-        </mat-autocomplete>
-        <mat-hint>Seleziona dalla lista o scrivi una nuova mansione</mat-hint>
-      </mat-form-field>
+      <div class="dform__row dform__row--2">
+        <!-- Mansione: autocomplete con creazione automatica se non esiste -->
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Mansione</mat-label>
+          <mat-icon matPrefix>work_outline</mat-icon>
+          <input
+            matInput
+            formControlName="mansione"
+            [matAutocomplete]="autoMansione"
+            placeholder="es. Chef, Cameriere, Hostess…"
+          />
+          <mat-autocomplete #autoMansione="matAutocomplete">
+            @for (m of mansioniFiltered(); track m.id) {
+              <mat-option [value]="m.nome">{{ m.nome }}</mat-option>
+            }
+            @if (mansioneIsNew()) {
+              <mat-option [value]="form.controls.mansione.value">
+                <span class="personale-form__new-opt">
+                  <mat-icon>add_circle</mat-icon>
+                  Crea «{{ form.controls.mansione.value }}»
+                </span>
+              </mat-option>
+            }
+          </mat-autocomplete>
+          <mat-hint>Scegli dalla lista o scrivine una nuova</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Business Unit</mat-label>
-        <mat-select formControlName="businessUnitId">
-          <mat-option [value]="null">— Nessuna —</mat-option>
-          @for (bu of buList(); track bu.id) {
-            <mat-option [value]="bu.id">{{ bu.nome }}</mat-option>
-          }
-        </mat-select>
-        <mat-hint>Il centro di costo viene assegnato automaticamente</mat-hint>
-      </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Business unit</mat-label>
+          <mat-icon matPrefix>business</mat-icon>
+          <mat-select formControlName="businessUnitId">
+            <mat-option [value]="null">— Nessuna —</mat-option>
+            @for (bu of buList(); track bu.id) {
+              <mat-option [value]="bu.id">{{ bu.nome }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>Il centro di costo è assegnato in automatico</mat-hint>
+        </mat-form-field>
+      </div>
 
-      <!-- Tipologia di retribuzione -->
+      <p class="dform__section"><mat-icon>payments</mat-icon> Retribuzione</p>
+
       <div class="retribuzione-block">
-        <span class="retribuzione-label">Tipo di retribuzione</span>
         <mat-button-toggle-group formControlName="tipoRetribuzione" class="retribuzione-toggle">
           <mat-button-toggle value="MENSILE">
             <mat-icon>calendar_month</mat-icon> Stipendio mensile
@@ -79,9 +97,13 @@
             Stipendio fisso: <strong>non</strong> impatta i costi diretti dei singoli eventi.
           </p>
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full">
-            <mat-label>Costo aziendale mensile (€)</mat-label>
-            <input matInput type="number" formControlName="costoAziendaleMensile" min="0" step="0.01" />
-            <span matTextSuffix>€ / mese</span>
+            <mat-label>Costo aziendale mensile</mat-label>
+            <mat-icon matPrefix>euro</mat-icon>
+            <input matInput type="number" formControlName="costoAziendaleMensile" min="0" step="0.01" appInputFilter="positive-decimal" />
+            <span matTextSuffix>/ mese</span>
+            @if (form.controls.costoAziendaleMensile.hasError('min') && form.controls.costoAziendaleMensile.touched) {
+              <mat-error>Il costo non può essere negativo</mat-error>
+            }
           </mat-form-field>
         } @else {
           <p class="retribuzione-hint oraria">
@@ -89,14 +111,18 @@
             Pagato a ore: allocando ore su un evento si genera un <strong>costo diretto</strong> dell'evento.
           </p>
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full">
-            <mat-label>Paga oraria lorda (€)</mat-label>
-            <input matInput type="number" formControlName="pagaOraria" min="0" step="0.01" />
-            <span matTextSuffix>€ / ora</span>
+            <mat-label>Paga oraria lorda</mat-label>
+            <mat-icon matPrefix>euro</mat-icon>
+            <input matInput type="number" formControlName="pagaOraria" min="0" step="0.01" appInputFilter="positive-decimal" />
+            <span matTextSuffix>/ ora</span>
+            @if (form.controls.pagaOraria.hasError('min') && form.controls.pagaOraria.touched) {
+              <mat-error>La paga non può essere negativa</mat-error>
+            }
           </mat-form-field>
         }
       </div>
 
-      <mat-slide-toggle formControlName="isActive">
+      <mat-slide-toggle formControlName="isActive" class="personale-form__active">
         Dipendente attivo
       </mat-slide-toggle>
 
@@ -104,18 +130,14 @@
   }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions class="dform__actions">
   <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
-  <button
-    mat-flat-button
-    color="primary"
-    (click)="submit()"
-    [disabled]="saving() || loadingForm()"
-  >
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving() || loadingForm()">
     @if (saving()) {
-      <mat-progress-spinner diameter="18" mode="indeterminate" />
+      <mat-progress-spinner diameter="18" mode="indeterminate" style="display:inline-block;margin-right:6px" />
     } @else {
-      {{ isEdit() ? 'Salva' : 'Crea' }}
+      <mat-icon>{{ isEdit() ? 'save' : 'add' }}</mat-icon>
     }
+    {{ isEdit() ? 'Salva modifiche' : 'Crea dipendente' }}
   </button>
 </mat-dialog-actions>

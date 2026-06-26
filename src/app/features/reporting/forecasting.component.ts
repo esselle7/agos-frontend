@@ -44,7 +44,7 @@ const CATEGORIA_LABEL: Record<string, string> = {
 };
 
 const CATEGORIA_COLOR: Record<string, string> = {
-  MOVIMENTO:       '#1565C0',
+  MOVIMENTO:       '#2C6E8F',
   EVENTO:          '#E65100',
   RATA_RICORRENTE: '#6A1B9A',
   STIPENDIO:       '#2E7D32',
@@ -80,15 +80,25 @@ export class ForecastingComponent implements OnInit {
   // Filtro dettaglio
   readonly categoriaFiltro = signal<string>('TUTTE');
 
+  // Toggle layer STIMATO (ricavi cash): ON di default. Quando OFF mostra solo il certo.
+  readonly includiStime = signal(true);
+
   // Colonne tabelle
-  readonly dettaglioColumns  = ['data', 'categoria', 'descrizione', 'importoEntrata', 'importoUscita', 'vista'];
+  readonly dettaglioColumns  = ['data', 'categoria', 'descrizione', 'importoEntrata', 'importoUscita', 'affidabilita'];
   readonly timelineColumns   = ['bucket', 'entratePreviste', 'uscitePreviste', 'ebitdaPeriodo', 'saldoLiquiditaFine'];
 
-  // Dettaglio filtrato per categoria
+  // Totale ricavi cash stimati nel periodo (somma delle voci STIMATO del dettaglio).
+  readonly stimaTotale = computed(() =>
+    (this.data()?.economico.dettaglio ?? [])
+      .filter(d => d.affidabilita === 'STIMATO')
+      .reduce((s, d) => s + d.importoEntrata, 0));
+
+  // Dettaglio filtrato per categoria; le voci STIMATE sono escluse se il toggle è OFF.
   readonly dettaglioFiltrato = computed(() => {
     const d = this.data();
     if (!d) return [];
-    const items = d.economico.dettaglio;
+    let items = d.economico.dettaglio;
+    if (!this.includiStime()) items = items.filter(i => i.affidabilita !== 'STIMATO');
     const f = this.categoriaFiltro();
     return f === 'TUTTE' ? items : items.filter(i => i.categoria === f);
   });
@@ -99,32 +109,48 @@ export class ForecastingComponent implements OnInit {
     const d = this.data();
     if (!d) return { labels: [], datasets: [] };
     const tl = d.finanziario.timeline;
-    return {
-      labels: tl.map(t => t.bucket),
-      datasets: [
-        {
-          label: 'Saldo Liquidità Proiettato',
-          data: tl.map(t => t.saldoLiquiditaFine),
-          borderColor: '#1565C0',
-          backgroundColor: 'rgba(21,101,192,0.10)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 4,
-          yAxisID: 'y',
-        },
-        {
-          label: 'EBITDA Periodo',
-          data: tl.map(t => t.ebitdaPeriodo),
-          borderColor: '#2E7D32',
-          backgroundColor: 'transparent',
-          borderDash: [5, 3],
-          fill: false,
-          tension: 0.3,
-          pointRadius: 3,
-          yAxisID: 'y2',
-        },
-      ],
-    };
+
+    const datasets: ChartData<'line'>['datasets'] = [
+      {
+        label: 'Saldo Liquidità (certo)',
+        data: tl.map(t => t.saldoLiquiditaFine),
+        borderColor: '#2C6E8F',
+        backgroundColor: 'rgba(21,101,192,0.10)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        label: 'EBITDA Periodo',
+        data: tl.map(t => t.ebitdaPeriodo),
+        borderColor: '#2E7D32',
+        backgroundColor: 'transparent',
+        borderDash: [5, 3],
+        fill: false,
+        tension: 0.3,
+        pointRadius: 3,
+        yAxisID: 'y2',
+      },
+    ];
+
+    // Linea "combinato" = saldo certo + ricavi cash stimati cumulati. Sopra il certo, mai sotto.
+    if (this.includiStime() && tl.some(t => t.entrateStimate > 0)) {
+      let cum = 0;
+      const combinato = tl.map(t => { cum += t.entrateStimate ?? 0; return t.saldoLiquiditaFine + cum; });
+      datasets.push({
+        label: 'Saldo combinato (con stime)',
+        data: combinato,
+        borderColor: '#E65100',
+        backgroundColor: 'transparent',
+        borderDash: [2, 2],
+        fill: false,
+        tension: 0.3,
+        pointRadius: 3,
+        yAxisID: 'y',
+      });
+    }
+    return { labels: tl.map(t => t.bucket), datasets };
   });
 
   readonly timelineChartOptions: ChartOptions<'line'> = {
@@ -206,8 +232,11 @@ export class ForecastingComponent implements OnInit {
   }
 
   vistaColor(v: string): string {
-    return v === 'ENTRAMBE' ? '#37474F' : v === 'ECONOMICA' ? '#1565C0' : '#BF360C';
+    return v === 'ENTRAMBE' ? '#37474F' : v === 'ECONOMICA' ? '#2C6E8F' : '#BF360C';
   }
+
+  affidabilitaLabel(a: string): string { return a === 'STIMATO' ? 'Stima' : 'Certo'; }
+  affidabilitaColor(a: string): string { return a === 'STIMATO' ? '#E65100' : '#2E7D32'; }
 
   ebitdaClass(v: number): string { return v >= 0 ? 'text-success' : 'text-danger'; }
   saldoClass(v: number): string  { return v >= 0 ? 'text-success' : 'text-danger'; }

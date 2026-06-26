@@ -1,0 +1,158 @@
+<h2 mat-dialog-title class="wiz__title">
+  <mat-icon>auto_awesome</mat-icon> Crea una keyword
+</h2>
+
+<mat-dialog-content class="wiz">
+  <mat-stepper orientation="vertical" #stepper>
+    <!-- STEP 1 — Tipo -->
+    <mat-step [completed]="kind() !== null">
+      <ng-template matStepLabel>Che cosa vuoi insegnare?</ng-template>
+      <p class="wiz__hint">
+        Scegli il tipo: determina <b>cosa riconosce</b> la keyword e <b>cosa succede</b> alla riga.
+      </p>
+      <div class="wiz__kinds">
+        @for (o of opzioni; track o.kind) {
+          <button type="button" class="wiz__kind" [class.sel]="kind() === o.kind" [class]="o.accent"
+                  (click)="scegliKind(o.kind)">
+            <mat-icon>{{ o.icon }}</mat-icon>
+            <span class="wiz__kind-title">{{ o.titolo }}</span>
+            <span class="wiz__kind-ex">{{ o.esempi }}</span>
+            <span class="wiz__kind-spiega">{{ o.spiega }}</span>
+            @if (o.kind === 'DOMINIO_EVENTO') {
+              <span class="wiz__kind-tag park">Parcheggia · niente movimento</span>
+            } @else {
+              <span class="wiz__kind-tag book">Contabilizza</span>
+            }
+          </button>
+        }
+      </div>
+      <div class="wiz__nav">
+        <button mat-flat-button color="primary" matStepperNext [disabled]="!kind()">Avanti</button>
+      </div>
+    </mat-step>
+
+    <!-- STEP 2 — Token -->
+    <mat-step [completed]="tokenValido()">
+      <ng-template matStepLabel>Quali parole la attivano?</ng-template>
+      <p class="wiz__hint">
+        La keyword scatta quando <b>tutte</b> le parole qui sotto compaiono nella descrizione (match AND).
+        @if (isIdentita()) { Per un nome composto inseriscile separate, es. <code>NICOLETA</code> <code>MIHAI</code>. }
+      </p>
+      <mat-form-field appearance="outline" class="wiz__full">
+        <mat-label>Aggiungi una parola e premi Invio</mat-label>
+        <input matInput [(ngModel)]="tokenInput" (keydown.enter)="$event.preventDefault(); aggiungiToken()"
+               [placeholder]="visual()?.esempi || ''">
+        <button matSuffix mat-icon-button (click)="aggiungiToken()" type="button"><mat-icon>add</mat-icon></button>
+      </mat-form-field>
+      <mat-chip-set class="wiz__tokens">
+        @for (t of tokens(); track t) {
+          <mat-chip (removed)="rimuoviToken(t)">{{ t }}<button matChipRemove><mat-icon>cancel</mat-icon></button></mat-chip>
+        }
+        @if (!tokens().length) { <span class="wiz__tokens-empty">Nessuna parola ancora aggiunta</span> }
+      </mat-chip-set>
+      <div class="wiz__nav">
+        <button mat-button matStepperPrevious>Indietro</button>
+        <button mat-flat-button color="primary" matStepperNext [disabled]="!tokenValido()">Avanti</button>
+      </div>
+    </mat-step>
+
+    <!-- STEP 3 — Target / dettagli -->
+    <mat-step [completed]="targetValido()">
+      <ng-template matStepLabel>Dove la registro?</ng-template>
+
+      @if (isEvento()) {
+        <p class="wiz__hint">
+          Gli eventi non generano un movimento: vengono <b>parcheggiati</b> e li riconcili a mano.
+          Scegli quanto è "forte" la parola.
+        </p>
+        <mat-form-field appearance="outline">
+          <mat-label>Forza</mat-label>
+          <mat-select [(ngModel)]="eventoForza">
+            <mat-option value="FORTE">Forte — parcheggia da sola</mat-option>
+            <mat-option value="DEBOLE">Debole — solo con contesto evento (data/ordinante)</mat-option>
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <p class="wiz__hint">
+          @if (isIdentita()) { Scegli categoria e (se vuoi) il fornitore da attribuire. }
+          @else { Scegli la categoria. Le keyword di dominio non attribuiscono un fornitore. }
+        </p>
+        <div class="wiz__row">
+          <mat-form-field appearance="outline">
+            <mat-label>Business Unit</mat-label>
+            <mat-select [(ngModel)]="buId">
+              @for (b of data.bu; track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          <app-coge-picker
+            label="Conto COGE"
+            [value]="selectedCogeId"
+            (cogeChange)="setCoge($event)"
+          ></app-coge-picker>
+          @if (isIdentita()) {
+            <mat-form-field appearance="outline">
+              <mat-label>Fornitore (facoltativo)</mat-label>
+              <mat-select [(ngModel)]="fornitoreId">
+                <mat-option [value]="null">—</mat-option>
+                @for (f of data.fornitori; track f.id) { <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          }
+        </div>
+      }
+
+      <div class="wiz__row">
+        <mat-form-field appearance="outline">
+          <mat-label>Vale per</mat-label>
+          <mat-select [(ngModel)]="tipoMovimento">
+            <mat-option value="*">Entrate e uscite</mat-option>
+            <mat-option value="ENTRATA">Solo entrate</mat-option>
+            <mat-option value="USCITA">Solo uscite</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Sorgente</mat-label>
+          <mat-select [(ngModel)]="sorgente">
+            <mat-option value="*">Tutte</mat-option>
+            <mat-option value="BILLY">Billy</mat-option>
+            <mat-option value="BPM">Banco BPM</mat-option>
+            <mat-option value="CA">Crédit Agricole</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="wiz__nav">
+        <button mat-button matStepperPrevious>Indietro</button>
+        <button mat-flat-button color="primary" matStepperNext [disabled]="!targetValido()">Avanti</button>
+      </div>
+    </mat-step>
+
+    <!-- STEP 4 — Riepilogo -->
+    <mat-step>
+      <ng-template matStepLabel>Conferma</ng-template>
+      @if (visual(); as v) {
+        <div class="wiz__summary" [class]="v.accent">
+          <div class="wiz__summary-head"><mat-icon>{{ v.icon }}</mat-icon> {{ v.titolo }}</div>
+          <mat-chip-set class="wiz__tokens">
+            @for (t of tokens(); track t) { <mat-chip>{{ t }}</mat-chip> }
+          </mat-chip-set>
+          <p class="wiz__cosa"><mat-icon>arrow_forward</mat-icon> {{ cosaSuccede() }}</p>
+        </div>
+      }
+      <mat-form-field appearance="outline" class="wiz__full">
+        <mat-label>Nota (facoltativa)</mat-label>
+        <input matInput [(ngModel)]="note">
+      </mat-form-field>
+      <div class="wiz__nav">
+        <button mat-button matStepperPrevious>Indietro</button>
+        <button mat-flat-button color="primary" (click)="crea()" [disabled]="saving() || !tokenValido() || !targetValido()">
+          @if (saving()) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>check</mat-icon> }
+          Crea keyword
+        </button>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="annulla()">Annulla</button>
+</mat-dialog-actions>

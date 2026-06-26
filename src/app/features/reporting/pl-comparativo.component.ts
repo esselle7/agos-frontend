@@ -26,6 +26,7 @@ import {
   PeriodChangeEvent,
 } from '../../shared/components/date-range-picker/date-range-picker.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { HelpNoteComponent } from '../../shared/components/help-note/help-note.component';
 import { EuroPipe } from '../../shared/pipes/euro.pipe';
 
 @Component({
@@ -38,6 +39,7 @@ import { EuroPipe } from '../../shared/pipes/euro.pipe';
     MatTableModule,
     DateRangePickerComponent,
     SkeletonLoaderComponent,
+    HelpNoteComponent,
     EuroPipe,
   ],
   templateUrl: './pl-comparativo.component.html',
@@ -72,8 +74,8 @@ export class PlComparativoComponent implements OnInit {
         {
           label: 'Ricavi',
           data: rows.map(r => r.ricavi),
-          backgroundColor: rows.map(r => (busMap.get(r.bu.id)?.colore ?? '#2D6A4F') + 'BB'),
-          borderColor: rows.map(r => busMap.get(r.bu.id)?.colore ?? '#2D6A4F'),
+          backgroundColor: rows.map(r => (busMap.get(r.bu.id)?.colore ?? '#1F5C43') + 'BB'),
+          borderColor: rows.map(r => busMap.get(r.bu.id)?.colore ?? '#1F5C43'),
           borderWidth: 1,
         },
         {

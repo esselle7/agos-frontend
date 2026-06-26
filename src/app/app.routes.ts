@@ -38,15 +38,17 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },
       },
-      {
-        path: 'cassa',
-        loadComponent: () =>
-          import('./features/cassa/cassa.component').then(
-            m => m.CassaComponent
-          ),
-        canActivate: [roleGuard],
-        data: { roles: ['ADMIN'] },
-      },
+      // Cassa temporaneamente disabilitata: rotta rimossa così /cassa ricade nel
+      // redirect wildcard verso /dashboard. Codice del componente mantenuto.
+      // {
+      //   path: 'cassa',
+      //   loadComponent: () =>
+      //     import('./features/cassa/cassa.component').then(
+      //       m => m.CassaComponent
+      //     ),
+      //   canActivate: [roleGuard],
+      //   data: { roles: ['ADMIN'] },
+      // },
       {
         path: 'spese-ricorrenti',
         loadChildren: () =>
@@ -57,10 +59,53 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
+        path: 'import',
+        loadChildren: () =>
+          import('./features/import/import.routes').then(m => m.importRoutes),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'keyword',
+        loadComponent: () =>
+          import('./features/keyword/keyword-page.component').then(
+            m => m.KeywordPageComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'piano-conti',
+        loadComponent: () =>
+          import('./features/piano-conti/piano-conti.component').then(
+            m => m.PianoContiComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'forecasting',
         loadComponent: () =>
           import('./features/reporting/forecasting.component').then(
             m => m.ForecastingComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'scadenzario',
+        loadComponent: () =>
+          import('./features/scadenzario/scadenzario.component').then(
+            m => m.ScadenzarioComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'export',
+        loadComponent: () =>
+          import('./features/export/export.component').then(
+            m => m.ExportComponent
           ),
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },

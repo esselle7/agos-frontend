@@ -14,10 +14,18 @@
 
   &__title {
     display: flex;
-    align-items: baseline;
-    gap: 12px;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 
     h2 { font-size: 1.6rem; }
+  }
+
+  &__title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   &__count {
@@ -65,7 +73,7 @@
     transition: background 0.15s;
 
     &:hover {
-      background: rgba(45, 106, 79, 0.04);
+      background: rgba(var(--primary-rgb), 0.04);
 
       .mov-list__actions-cell {
         opacity: 1;
@@ -88,9 +96,9 @@
   }
 
   &__liquida-btn {
-    color: #2563eb !important;
+    color: var(--info) !important;
 
-    mat-icon { color: #2563eb; }
+    mat-icon { color: var(--info); }
 
     &:hover:not([disabled]) {
       background: rgba(37, 99, 235, 0.1);
@@ -101,15 +109,15 @@
 // Menu item saldo insufficiente (overlay fuori dal component host)
 // stylelint-disable-next-line selector-pseudo-element-no-unknown
 ::ng-deep .conto-saldo-ko {
-  color: #b91c1c !important;
+  color: var(--danger) !important;
 
   .mat-icon,
-  .icon-danger { color: #ef4444 !important; }
+  .icon-danger { color: var(--danger) !important; }
 
   .saldo-ko-hint {
     margin-left: auto;
     font-size: 11px;
-    color: #ef4444;
+    color: var(--danger);
     font-weight: 600;
   }
 }
@@ -125,8 +133,8 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px 20px;
-  background: #fff;
-  border: 1px solid var(--border, #e0e0e0);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md, 8px);
   box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.08));
 
@@ -136,7 +144,7 @@
     gap: 8px;
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--text-sub, #666);
+    color: var(--text-sub);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 
@@ -157,7 +165,7 @@
     padding: 10px 14px;
     border-left: 3px solid;
     border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
-    background: #fafafa;
+    background: var(--surface-sunken);
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -177,8 +185,8 @@
     flex-wrap: wrap;
   }
 
-  &__entrata { color: #2e7d32; }
-  &__uscita  { color: #c62828; }
+  &__entrata { color: var(--success); }
+  &__uscita  { color: var(--danger); }
 
   &__stato-meta {
     display: flex;
@@ -190,8 +198,8 @@
 
   &__netto {
     font-weight: 600;
-    &.pos { color: #2e7d32; }
-    &.neg { color: #c62828; }
+    &.pos { color: var(--success); }
+    &.neg { color: var(--danger); }
   }
 
   &__mov-count { font-size: 0.75rem; }
@@ -201,7 +209,7 @@
     gap: 12px;
     flex-wrap: wrap;
     padding-top: 6px;
-    border-top: 1px solid var(--border, #e0e0e0);
+    border-top: 1px solid var(--border);
   }
 
   &__total {
@@ -217,18 +225,18 @@
 
     &--entrate {
       background: rgba(46, 125, 50, 0.06);
-      mat-icon { color: #2e7d32; }
+      mat-icon { color: var(--success); }
     }
     &--uscite {
       background: rgba(198, 40, 40, 0.06);
-      mat-icon { color: #c62828; }
+      mat-icon { color: var(--danger); }
     }
     &--netto {
-      background: rgba(0,0,0,.04);
-      mat-icon { color: var(--text-sub, #666); }
+      background: color-mix(in srgb, var(--text-main) 4%, transparent);
+      mat-icon { color: var(--text-sub); }
     }
-    &--positive { background: rgba(46, 125, 50, 0.09); mat-icon { color: #2e7d32; } }
-    &--negative { background: rgba(198, 40, 40, 0.09); mat-icon { color: #c62828; } }
+    &--positive { background: rgba(46, 125, 50, 0.09); mat-icon { color: var(--success); } }
+    &--negative { background: rgba(198, 40, 40, 0.09); mat-icon { color: var(--danger); } }
   }
 
   &__total-body {
@@ -236,7 +244,26 @@
     flex-direction: column;
     gap: 1px;
 
-    span   { font-size: 0.75rem; color: var(--text-sub, #666); }
+    span   { font-size: 0.75rem; color: var(--text-sub); }
     strong { font-size: 0.95rem; }
+  }
+}
+
+/* Indicatore di ritardo/scadenza accanto allo stato Da Liquidare (Feature 1) */
+.mov-list__ritardo {
+  display: inline-block;
+  margin-left: .4rem;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .08rem .4rem;
+  border-radius: 999px;
+  color: var(--text-sub);
+  background: var(--surface-sunken, rgba(0,0,0,.05));
+  white-space: nowrap;
+  vertical-align: middle;
+
+  &.late {
+    color: var(--danger);
+    background: var(--tint-danger, rgba(220,38,38,.12));
   }
 }

@@ -125,10 +125,13 @@
   }
 
   &--ko {
-    border-color: #fca5a5 !important;
-    color: #b91c1c !important;
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent) !important;
+    color: var(--danger) !important;
     opacity: 0.75;
 
-    mat-icon { color: #ef4444 !important; }
+    mat-icon { color: var(--danger) !important; }
   }
 }
+
+/* Stato scadenza in ritardo (Feature 1) */
+.mov-detail__ritardo { color: var(--danger); font-weight: 700; }

@@ -14,6 +14,8 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../../shared/directives/input-filter.directive';
+import { AppValidators } from '../../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -55,21 +57,19 @@ export interface PersonaleFormDialogData {
     MatProgressSpinnerModule,
     MatTooltipModule,
     SkeletonLoaderComponent,
+    InputFilterDirective,
   ],
   templateUrl: './personale-form-dialog.component.html',
   styles: [`
     .full { width: 100%; }
     .retribuzione-block {
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-    .retribuzione-label {
-      font-size: 12px; font-weight: 700; color: #6b7280;
-      text-transform: uppercase; letter-spacing: .5px;
+      gap: 10px;
+      background: var(--surface);
     }
     .retribuzione-toggle { width: 100%; }
     .retribuzione-toggle .mat-button-toggle { flex: 1; }
@@ -77,12 +77,20 @@ export interface PersonaleFormDialogData {
       font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 4px;
     }
     .retribuzione-hint {
-      display: flex; align-items: center; gap: 6px;
-      margin: 0; font-size: 12px; color: #6b7280;
-      background: #f6f7f9; border-radius: 8px; padding: 6px 10px;
+      display: flex; align-items: center; gap: 7px;
+      margin: 0; font-size: .78rem; color: var(--text-sub);
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
     }
-    .retribuzione-hint.oraria { background: #eef4fb; color: #1d4ed8; }
-    .retribuzione-hint mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .retribuzione-hint.oraria {
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+      color: var(--primary-d);
+    }
+    .retribuzione-hint mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
+    .retribuzione-hint strong { color: var(--text-main); }
+    .personale-form__new-opt { display: flex; align-items: center; gap: 6px; color: var(--primary-d); }
+    .personale-form__new-opt mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .personale-form__active { margin-top: 4px; }
   `],
 })
 export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
@@ -101,28 +109,33 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
   buList = signal<BusinessUnitDTO[]>([]);
   mansioni = signal<MansioneDTO[]>([]);
 
+  // Mirror del testo digitato in un signal: un computed reagisce SOLO ai signal, non al
+  // FormControl.value. Senza questo i computed sotto resterebbero memoizzati e il filtro
+  // autocomplete non si aggiornerebbe digitando (aggiornato nella subscription in ngOnInit).
+  private readonly mansioneText = signal('');
+
   /** Mansioni filtrate in base al testo digitato nel campo autocomplete. */
   readonly mansioniFiltered = computed(() => {
-    const val = (this.form.controls.mansione.value ?? '').toLowerCase();
+    const val = this.mansioneText().toLowerCase();
     if (!val) return this.mansioni();
     return this.mansioni().filter(m => m.nome.toLowerCase().includes(val));
   });
 
   /** True se il testo digitato non corrisponde esattamente a nessuna mansione esistente. */
   readonly mansioneIsNew = computed(() => {
-    const val = (this.form.controls.mansione.value ?? '').trim();
+    const val = this.mansioneText().trim();
     if (!val) return false;
     return !this.mansioni().some(m => m.nome.toLowerCase() === val.toLowerCase());
   });
 
   readonly form = new FormGroup({
-    nome:                  new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
-    cognome:               new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
-    mansione:              new FormControl<string | null>(null, [Validators.maxLength(100)]),
+    nome:                  new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100), AppValidators.onlyLetters()] }),
+    cognome:               new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100), AppValidators.onlyLetters()] }),
+    mansione:              new FormControl<string | null>(null, [Validators.maxLength(100), AppValidators.safeText()]),
     businessUnitId:        new FormControl<number | null>(null),
     tipoRetribuzione:      new FormControl<TipoRetribuzione>('MENSILE', { nonNullable: true }),
-    costoAziendaleMensile: new FormControl<number | null>(null),
-    pagaOraria:            new FormControl<number | null>(null),
+    costoAziendaleMensile: new FormControl<number | null>(null, [Validators.min(0)]),
+    pagaOraria:            new FormControl<number | null>(null, [Validators.min(0)]),
     isActive:              new FormControl<boolean>(true, { nonNullable: true }),
   });
 
@@ -137,10 +150,10 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    // Trigger recompute of filtered list on value change
+    // Aggiorna il signal-mirror così i computed (mansioniFiltered/mansioneIsNew) reagiscono.
     this.form.controls.mansione.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.cdr.markForCheck());
+      .subscribe(v => this.mansioneText.set(v ?? ''));
 
     if (this.data.personaleId) {
       this.isEdit.set(true);

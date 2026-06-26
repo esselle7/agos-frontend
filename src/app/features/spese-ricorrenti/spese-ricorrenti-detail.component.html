@@ -75,6 +75,18 @@
       }
     </div>
 
+    @if (p.tipoPiano === 'FINANZIAMENTO') {
+      <agos-help-note tono="info" [collapsed]="true"
+        titolo="Capitale e interessi: cosa pesa sul conto economico">
+        <p>Ogni rata si divide in due parti. La <strong>quota capitale</strong> rimborsa il
+          debito: non è un costo, riduce solo il finanziamento a bilancio e <strong>non entra
+          nel conto economico</strong>. La <strong>quota interessi</strong> è invece un costo
+          vero, contabilizzato sotto l'EBIT come onere finanziario.</p>
+        <p>Per questo, di una rata di mutuo l'utile dell'azienda risente solo degli interessi,
+          non dell'intera rata.</p>
+      </agos-help-note>
+    }
+
     <!-- ── Saldo conto bancario ── -->
     <div class="srd-saldo"
          [class.srd-saldo--ok]="p.saldoContoBancario >= p.totaleResiduo"

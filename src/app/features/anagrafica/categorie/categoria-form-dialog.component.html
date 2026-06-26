@@ -1,4 +1,10 @@
-<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Categoria' : 'Nuova Categoria' }}</h2>
+<div class="dform__head">
+  <span class="dform__head-ico"><mat-icon>sell</mat-icon></span>
+  <span class="dform__head-tt">
+    <h2 mat-dialog-title>{{ isEdit() ? 'Modifica categoria' : 'Nuova categoria' }}</h2>
+    <span class="dform__head-sub">Raggruppa i movimenti per analisi e report</span>
+  </span>
+</div>
 
 <mat-dialog-content>
   @if (loadingForm()) {
@@ -6,46 +12,54 @@
       <agos-skeleton-loader [rows]="2" />
     </div>
   } @else {
-    <form [formGroup]="form" class="categoria-form">
+    <form [formGroup]="form" class="dform__body">
 
       <!-- Contesto (read-only) -->
-      <div class="context-info">
-        <div class="context-item">
-          <span class="context-label">Business Unit</span>
-          <span class="context-value">{{ buNome() }}</span>
+      <div class="dform__context">
+        <div class="dform__context-item">
+          <span class="dform__context-k">Business unit</span>
+          <span class="dform__context-v">{{ buNome() }}</span>
         </div>
-        <div class="context-item">
-          <span class="context-label">Tipo</span>
-          <span class="context-value" [style.color]="data.tipo === 'ENTRATA' ? '#2E7D32' : '#C62828'">
-            {{ data.tipo }}
+        <div class="dform__context-item">
+          <span class="dform__context-k">Tipo</span>
+          <span class="dform__context-v" [style.color]="data.tipo === 'ENTRATA' ? 'var(--primary)' : '#C0392B'">
+            {{ data.tipo === 'ENTRATA' ? 'Ricavo / Entrata' : 'Costo / Uscita' }}
           </span>
         </div>
         @if (data.parentNome) {
-          <div class="context-item">
-            <span class="context-label">Figlia di</span>
-            <span class="context-value">{{ data.parentNome }}</span>
+          <div class="dform__context-item">
+            <span class="dform__context-k">Figlia di</span>
+            <span class="dform__context-v">{{ data.parentNome }}</span>
           </div>
         }
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+      <div class="dform__row">
+        <mat-form-field appearance="outline">
           <mat-label>Nome categoria *</mat-label>
-          <input matInput formControlName="nome" maxlength="100" placeholder="es. Ricavi Ristorazione" />
+          <mat-icon matPrefix>label</mat-icon>
+          <input matInput formControlName="nome" maxlength="100" placeholder="es. Ricavi Ristorazione" appInputFilter="safe-text" />
           @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
+            <mat-error>Il nome è obbligatorio</mat-error>
           }
           @if (form.controls.nome.hasError('maxlength') && form.controls.nome.touched) {
             <mat-error>Massimo 100 caratteri</mat-error>
           }
+          @if (form.controls.nome.hasError('pattern') && form.controls.nome.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+          }
         </mat-form-field>
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="half-width">
+      <div class="dform__row dform__row--2">
+        <mat-form-field appearance="outline">
           <mat-label>Ordinamento</mat-label>
-          <input matInput formControlName="ordinamento" type="number" min="0" />
-          <mat-hint>Numero più basso = prima nella lista</mat-hint>
+          <mat-icon matPrefix>sort</mat-icon>
+          <input matInput formControlName="ordinamento" type="number" min="0" appInputFilter="digits-only" />
+          <mat-hint>Numero più basso = compare prima nella lista</mat-hint>
+          @if (form.controls.ordinamento.hasError('min') && form.controls.ordinamento.touched) {
+            <mat-error>Non può essere negativo</mat-error>
+          }
         </mat-form-field>
       </div>
 
@@ -53,16 +67,13 @@
   }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions class="dform__actions">
   <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
-  <button
-    mat-raised-button
-    color="primary"
-    (click)="submit()"
-    [disabled]="saving() || loadingForm()"
-  >
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving() || loadingForm()">
     @if (saving()) {
       <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    } @else {
+      <mat-icon>{{ isEdit() ? 'save' : 'add' }}</mat-icon>
     }
     {{ isEdit() ? 'Salva modifiche' : 'Crea categoria' }}
   </button>

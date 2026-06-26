@@ -87,6 +87,14 @@
             <span class="mov-detail__field-value">{{ formatDate(mov.dataLiquidita) }}</span>
           </div>
         }
+        @if (mov.stato === 'DA_LIQUIDARE' && mov.giorniAllaScadenza != null) {
+          <div class="mov-detail__field">
+            <span class="mov-detail__field-label">Stato scadenza</span>
+            <span class="mov-detail__field-value" [class.mov-detail__ritardo]="mov.giorniAllaScadenza < 0">
+              {{ scadenzaTesto(mov) }}
+            </span>
+          </div>
+        }
       </div>
     </div>
 

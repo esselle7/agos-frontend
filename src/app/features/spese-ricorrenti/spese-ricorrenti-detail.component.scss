@@ -49,8 +49,8 @@
 
   &__label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--text-sub); }
   &__value { font-size: 1.1rem; font-weight: 700; color: var(--text-main);
-    &--paid    { color: #2e7d32; }
-    &--residuo { color: #e65100; }
+    &--paid    { color: var(--success); }
+    &--residuo { color: var(--warning); }
   }
   &__progress { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
   &__bar  { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
@@ -71,9 +71,9 @@
   box-shadow: var(--shadow-sm);
   transition: border-color .2s;
 
-  &--ok     { border-left-color: #2e7d32; }
-  &--warn   { border-left-color: #e65100; }
-  &--danger { border-left-color: #c62828; }
+  &--ok     { border-left-color: var(--success); }
+  &--warn   { border-left-color: var(--warning); }
+  &--danger { border-left-color: var(--danger); }
 
   // ── left: banca
   &__left {
@@ -125,9 +125,9 @@
     color: var(--text-main);
     line-height: 1;
 
-    .srd-saldo--ok &     { color: #2e7d32; }
-    .srd-saldo--warn &   { color: #e65100; }
-    .srd-saldo--danger & { color: #c62828; }
+    .srd-saldo--ok &     { color: var(--success); }
+    .srd-saldo--warn &   { color: var(--warning); }
+    .srd-saldo--danger & { color: var(--danger); }
   }
 
   &__bar-wrap {
@@ -149,9 +149,9 @@
     border-radius: 999px;
     transition: width .4s ease;
 
-    .srd-saldo--ok &     { background: #2e7d32; }
-    .srd-saldo--warn &   { background: #e65100; }
-    .srd-saldo--danger & { background: #c62828; }
+    .srd-saldo--ok &     { background: var(--success); }
+    .srd-saldo--warn &   { background: var(--warning); }
+    .srd-saldo--danger & { background: var(--danger); }
   }
 
   &__bar-pct {
@@ -188,17 +188,17 @@
 
     &--ok {
       background: rgba(46,125,50,.1);
-      color: #2e7d32;
+      color: var(--success);
     }
 
     &--warn {
       background: rgba(230,81,0,.1);
-      color: #e65100;
+      color: var(--warning);
     }
 
     &--danger {
       background: rgba(198,40,40,.1);
-      color: #c62828;
+      color: var(--danger);
     }
   }
 
@@ -234,7 +234,7 @@
 }
 
 .srd-row {
-  &--past    { opacity: .55; background: var(--surface-dim, #f7f7f7); }
+  &--past    { opacity: .55; background: var(--surface-dim); }
   &--skipped { opacity: .65; text-decoration: line-through; }
 }
 
@@ -262,7 +262,7 @@
 .srd-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.3);
+  background: color-mix(in srgb, var(--text-main) 30%, transparent);
   z-index: 100;
 }
 
@@ -283,7 +283,7 @@
   h3 { margin: 0; font-size: 1.1rem; font-weight: 700; }
   .text-sub { margin: 0; font-size: 0.875rem; color: var(--text-sub); }
 
-  &--warn h3 { color: var(--error, #c62828); }
+  &--warn h3 { color: var(--error); }
 
   &__actions { display: flex; justify-content: flex-end; gap: 8px; }
 }
@@ -298,11 +298,11 @@
   color: var(--text-sub);
   padding: 8px 12px;
   border-radius: 8px;
-  background: rgba(0,0,0,.04);
+  background: color-mix(in srgb, var(--text-main) 4%, transparent);
 
   &--warn {
     background: rgba(198,40,40,.08);
-    color: #c62828;
+    color: var(--danger);
   }
 }
 
@@ -311,7 +311,7 @@
 .srd-error-inline {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--error, #c62828);
+  color: var(--error);
   background: rgba(198,40,40,.08);
   padding: 8px 12px;
   border-radius: 8px;
@@ -320,11 +320,11 @@
 // ── Badges
 .badge {
   font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
-  &--orange { background: rgba(230,81,0,.12); color: #e65100; }
-  &--green  { background: rgba(46,125,50,.12); color: #2e7d32; }
-  &--red    { background: rgba(198,40,40,.12); color: #c62828; }
-  &--gray   { background: rgba(0,0,0,.08);     color: #555; }
-  &--blue   { background: rgba(21,101,192,.12); color: #1565c0; }
+  &--orange { background: rgba(230,81,0,.12); color: var(--warning); }
+  &--green  { background: rgba(46,125,50,.12); color: var(--success); }
+  &--red    { background: rgba(198,40,40,.12); color: var(--danger); }
+  &--gray   { background: color-mix(in srgb, var(--text-main) 8%, transparent);     color: var(--text-sub); }
+  &--blue   { background: rgba(21,101,192,.12); color: var(--info); }
 }
 
 .icon-xs { font-size: 14px; width: 14px; height: 14px; }

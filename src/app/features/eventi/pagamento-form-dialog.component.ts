@@ -18,6 +18,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
@@ -57,7 +58,7 @@ interface TipoConfig {
  */
 const TIPI: TipoConfig[] = [
   { value: 'CAPARRA',  label: 'Caparra',  desc: 'Prima conferma',       icon: 'lock',        color: '#f57c00' },
-  { value: 'ACCONTO',  label: 'Acconto',  desc: 'Pagamento intermedio', icon: 'savings',     color: '#1976d2' },
+  { value: 'ACCONTO',  label: 'Acconto',  desc: 'Pagamento intermedio', icon: 'savings',     color: '#2C6E8F' },
   { value: 'SALDO',    label: 'Saldo',    desc: 'Chiusura totale',      icon: 'done_all',    color: '#388e3c' },
   { value: 'PENALE',   label: 'Penale',   desc: 'Da inadempienza',      icon: 'gavel',       color: '#c62828' },
 ];
@@ -76,6 +77,7 @@ const TIPI: TipoConfig[] = [
     MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    DateMaskDirective,
     MatProgressSpinnerModule,
     CurrencyInputComponent,
     EuroPipe,

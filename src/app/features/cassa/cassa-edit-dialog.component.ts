@@ -13,6 +13,9 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../shared/directives/input-filter.directive';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
+import { AppValidators } from '../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -32,6 +35,7 @@ import { CassaMovimentoDTO, CreateCassaMovimentoRequest } from '../../core/model
 import { ContoBancarioDTO, PianoContiCogeDTO } from '../../core/models/anagrafica.models';
 import { CurrencyInputComponent } from '../../shared/components/currency-input/currency-input.component';
 import { BuSelectorComponent } from '../../shared/components/bu-selector/bu-selector.component';
+import { CogePickerComponent } from '../../shared/components/coge-picker/coge-picker.component';
 
 export interface CassaEditDialogData {
   movimento: CassaMovimentoDTO;
@@ -57,6 +61,9 @@ export interface CassaEditDialogData {
     MatAutocompleteModule,
     CurrencyInputComponent,
     BuSelectorComponent,
+    CogePickerComponent,
+    InputFilterDirective,
+    DateMaskDirective,
   ],
   templateUrl: './cassa-edit-dialog.component.html',
 })
@@ -81,7 +88,7 @@ export class CassaEditDialogComponent implements OnInit, OnDestroy {
     tipo:           new FormControl<string>('PRELIEVO_DA_BANCA', { nonNullable: true }),
     importo:        new FormControl<number | null>(null, [Validators.required, Validators.min(0.01)]),
     dataMovimento:  new FormControl<Date | null>(null, [Validators.required]),
-    descrizione:    new FormControl<string | null>(null),
+    descrizione:    new FormControl<string | null>(null, [AppValidators.safeText()]),
     contoBancaId:   new FormControl<number | null>(null, [Validators.required]),
     businessUnitId: new FormControl<number | null>(null),
     contoCoge:      new FormControl<number | null>(null),
@@ -141,6 +148,11 @@ export class CassaEditDialogComponent implements OnInit, OnDestroy {
   clearCoge(): void {
     this.form.controls.contoCoge.setValue(null);
     this.cogeSearch.setValue('');
+  }
+
+  /** Scelta COGE dal picker → scrive l'id nel control (identico al vecchio autocomplete). */
+  setCoge(conto: PianoContiCogeDTO | null): void {
+    this.form.controls.contoCoge.setValue(conto?.id ?? null);
   }
 
   submit(): void {

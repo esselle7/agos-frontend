@@ -1,0 +1,118 @@
+<div class="kw">
+  <header class="kw__head">
+    <div>
+      <span class="page-eyebrow">Gestione</span>
+      <h1>Keyword</h1>
+      <p class="kw__sub">Insegna al sistema a catalogare da solo. Ogni keyword dice <b>cosa riconoscere</b> in una descrizione e <b>cosa farne</b>.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="apriWizard()">
+      <mat-icon>add</mat-icon> Crea keyword
+    </button>
+  </header>
+
+  <!-- Legenda: il linguaggio visivo dei 3 tipi -->
+  <div class="kw__legenda">
+    <div class="kw__leg kw-identita">
+      <mat-icon>badge</mat-icon>
+      <div><b>Identità</b><span>Un nome/codice preciso → contabilizza e attribuisce il <b>fornitore</b>.</span></div>
+    </div>
+    <div class="kw__leg kw-categoria">
+      <mat-icon>sell</mat-icon>
+      <div><b>Dominio · Categoria</b><span>Un concetto → contabilizza su BU + COGE, <b>senza</b> fornitore.</span></div>
+    </div>
+    <div class="kw__leg kw-evento">
+      <mat-icon>celebration</mat-icon>
+      <div><b>Dominio · Evento</b><span>Un evento → viene <b>parcheggiato</b> (nessun movimento), da riconciliare a mano.</span></div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="kw__loading"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    @if (conflitti().length) {
+      <div class="kw__alert">
+        <mat-icon>warning</mat-icon>
+        <span>Ci sono <b>{{ conflitti().length }}</b> conflitti da risolvere: due classificazioni diverse per la stessa keyword. Finché non li risolvi, quelle righe restano da catalogare.</span>
+      </div>
+    }
+
+    <mat-form-field appearance="outline" class="kw__search">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Cerca per parola o conto</mat-label>
+      <input matInput [ngModel]="filtro()" (ngModelChange)="filtro.set($event)">
+    </mat-form-field>
+
+    <mat-tab-group>
+      <mat-tab label="Identità ({{ identita().length }})">
+        <p class="kw__tab-hint">Nomi e codici di fornitori/clienti. Una riga simile al prossimo import verrà <b>catalogata da sola</b> sul fornitore.</p>
+        @if (!identita().length) { <p class="kw__empty">Nessuna keyword identità. Si creano da sole quando cataloghi una riga nel triage, oppure con «Crea keyword».</p> }
+        <div class="kw__grid">
+          @for (f of identita(); track f.id) { <ng-container [ngTemplateOutlet]="card" [ngTemplateOutletContext]="{ $implicit: f }" /> }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Dominio ({{ dominio().length }})">
+        <p class="kw__tab-hint">Concetti generici. Gli <b>eventi</b> vengono parcheggiati; le <b>categorie</b> vengono contabilizzate.</p>
+        @if (!dominio().length) { <p class="kw__empty">Nessuna keyword di dominio.</p> }
+        <div class="kw__grid">
+          @for (f of dominio(); track f.id) { <ng-container [ngTemplateOutlet]="card" [ngTemplateOutletContext]="{ $implicit: f }" /> }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Conflitti ({{ conflitti().length }})">
+        @if (!conflitti().length) {
+          <p class="kw__empty"><mat-icon class="kw__empty-ic">check_circle</mat-icon> Nessun conflitto. Tutto in ordine.</p>
+        } @else {
+          <p class="kw__tab-hint">Per ognuno scegli quale classificazione tenere. Il sistema non sceglie da solo (niente catalogazioni cieche).</p>
+          @for (c of conflitti(); track c.id) {
+            <mat-card class="kw__conflitto">
+              <div class="kw__conflitto-head"><span class="kw__pill warn">{{ c.tipo === 'MATCH' ? 'In import' : 'In apprendimento' }}</span> {{ c.descrizione }}</div>
+              <div class="kw__conflitto-targets">
+                <div class="kw__conflitto-opt"><span>Già impostata</span><code>{{ c.targetEsistente || '—' }}</code></div>
+                <mat-icon>compare_arrows</mat-icon>
+                <div class="kw__conflitto-opt"><span>Nuova proposta</span><code>{{ c.targetNuovo || '—' }}</code></div>
+              </div>
+              <div class="kw__conflitto-actions">
+                <button mat-stroked-button (click)="risolvi(c, 'TIENI_ESISTENTE')"><mat-icon>lock</mat-icon> Tieni esistente</button>
+                <button mat-flat-button color="primary" (click)="risolvi(c, 'USA_NUOVO')"><mat-icon>swap_horiz</mat-icon> Usa la nuova</button>
+                <button mat-button color="warn" (click)="risolvi(c, 'SCARTA')"><mat-icon>delete</mat-icon> Disattiva</button>
+              </div>
+            </mat-card>
+          }
+        }
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>
+
+<!-- Card riusabile di una keyword -->
+<ng-template #card let-f>
+  <mat-card class="kw__card {{ visual(f).accent }}" [class.off]="f.stato === 'DISATTIVATA'">
+    <div class="kw__card-top">
+      <span class="kw__badge"><mat-icon>{{ visual(f).icon }}</mat-icon>{{ visual(f).naturaLabel }}</span>
+      <span class="kw__action" [class.park]="f.azione === 'PARK_EVENTO'">{{ visual(f).azioneLabel }}</span>
+    </div>
+
+    <mat-chip-set class="kw__card-tokens">
+      @for (t of f.token; track t) { <mat-chip>{{ t }}</mat-chip> }
+    </mat-chip-set>
+
+    <p class="kw__frase">{{ frase(f) }}</p>
+
+    <div class="kw__card-foot">
+      <span class="kw__meta">
+        <span class="kw__chip-mini" [matTooltip]="'Origine: ' + f.origine">{{ f.origine }}</span>
+        @if (f.stato === 'IN_CONFLITTO') { <span class="kw__chip-mini conf">in conflitto</span> }
+        @if (f.stato === 'DISATTIVATA') { <span class="kw__chip-mini off">disattivata</span> }
+      </span>
+      <span class="kw__card-actions">
+        <button mat-icon-button (click)="toggleStato(f)" [matTooltip]="f.stato === 'DISATTIVATA' ? 'Riattiva' : 'Disattiva'">
+          <mat-icon>{{ f.stato === 'DISATTIVATA' ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+        </button>
+        @if (f.origine !== 'SEED') {
+          <button mat-icon-button color="warn" (click)="eliminaFirma(f)" matTooltip="Elimina"><mat-icon>delete</mat-icon></button>
+        }
+      </span>
+    </div>
+  </mat-card>
+</ng-template>

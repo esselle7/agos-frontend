@@ -3,3 +3,7 @@ node_modules/
 .angular/
 .claude/
 Prompt/
+# Playwright E2E
+/test-results/
+/playwright-report/
+/playwright/.cache/

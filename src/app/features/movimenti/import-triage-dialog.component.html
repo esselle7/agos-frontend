@@ -1,0 +1,406 @@
+<div class="triage triage--page">
+
+  @if (loading()) {
+    <div class="triage__loading"><mat-spinner diameter="36"></mat-spinner></div>
+  } @else {
+
+    <mat-tab-group class="triage__tabs" [selectedIndex]="selectedIndex()" animationDuration="0ms">
+      <!-- ════════ TRANSITORI ════════ -->
+      <mat-tab label="Da catalogare ({{ transitori().length }})">
+        @if (sezioneLoading() === 'catalogare') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (transitori().length === 0) {
+          <div class="triage__empty"><mat-icon>task_alt</mat-icon><p>Nessun movimento da catalogare. 🎉</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Questi movimenti sono su conti transitori. Assegna COGE e Business Unit; con
+            <strong>Apprendi keyword</strong> attivo, dalla descrizione vengono imparate le keyword e i prossimi import catalogano da soli una riga simile.
+          </p>
+
+          @for (t of transitori(); track t.id) {
+            <mat-expansion-panel class="triage__row" (opened)="caricaAnteprima(t)">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="triage__amount" [class.in]="t.tipo === 'ENTRATA'" [class.out]="t.tipo === 'USCITA'">
+                    {{ t.tipo === 'ENTRATA' ? '+' : '−' }} € {{ t.importo }}
+                  </span>
+                  <span class="triage__who">{{ t.controparteEstratta || '—' }}</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="triage__date">{{ t.dataMovimento }}</span>
+                  <mat-chip-set><mat-chip highlighted>{{ t.cogeCodiceAttuale }}</mat-chip></mat-chip-set>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <!-- corpo renderizzato solo all'apertura del pannello (lazy) → lista veloce anche con 100+ righe -->
+              <ng-template matExpansionPanelContent>
+              <p class="triage__desc">{{ t.descrizione }}</p>
+              @if (t.ibanEstratto) { <p class="triage__iban">IBAN: {{ t.ibanEstratto }}</p> }
+
+              <form [formGroup]="transFormFor(t.id)" class="triage__form">
+                <app-coge-picker
+                  label="Conto COGE" [required]="true"
+                  [value]="transFormFor(t.id).controls.cogeId.value"
+                  [invalid]="transFormFor(t.id).controls.cogeId.touched && transFormFor(t.id).controls.cogeId.invalid"
+                  (cogeChange)="setCogeTrans(t.id, $event)"
+                ></app-coge-picker>
+                <mat-form-field appearance="outline">
+                  <mat-label>Business Unit *</mat-label>
+                  <mat-select formControlName="businessUnitId">
+                    @for (b of bu(); track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Fornitore</mat-label>
+                  <mat-select formControlName="fornitoreId">
+                    <mat-option [value]="null">—</mat-option>
+                    @for (f of fornitori(); track f.id) { <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="triage__nota">
+                  <mat-label>Nota</mat-label>
+                  <input matInput formControlName="nota">
+                </mat-form-field>
+
+                @if (transFormFor(t.id).controls.apprendiKeyword.value) {
+                  <div class="triage__kw-preview">
+                    @if (anteprimaFor(t.id).length) {
+                      <span class="triage__kw-preview-label"><mat-icon>auto_awesome</mat-icon> Imparerò queste keyword:</span>
+                      <mat-chip-set>
+                        @for (firma of anteprimaFor(t.id); track $index) {
+                          <mat-chip class="triage__kw-chip" [class.dominio]="firma.natura === 'DOMINIO'">{{ firma.token.join(' + ') }}</mat-chip>
+                        }
+                      </mat-chip-set>
+                      <span class="triage__kw-hint">Al prossimo import una riga con queste parole verrà catalogata da sola sul target che scegli qui sotto.</span>
+                    } @else {
+                      <span class="triage__kw-hint triage__kw-none"><mat-icon>spa</mat-icon>
+                        Nessuna keyword da apprendere da questa descrizione: la catalogo solo questa volta, nessun apprendimento automatico (va benissimo).</span>
+                    }
+                  </div>
+                }
+
+                <mat-slide-toggle formControlName="apprendiKeyword"
+                                  matTooltip="Impara le keyword dalla descrizione: i prossimi import cataloghano da soli una riga simile">
+                  Apprendi keyword
+                </mat-slide-toggle>
+
+                <div class="triage__row-actions">
+                  <button mat-flat-button color="primary"
+                          [disabled]="saving() === t.id || !canClassificareTrans(t.id)"
+                          (click)="classificaTrans(t)">
+                    @if (saving() === t.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>check</mat-icon> }
+                    Cataloga
+                  </button>
+                </div>
+              </form>
+              </ng-template>
+            </mat-expansion-panel>
+          }
+        }
+      </mat-tab>
+
+      <!-- ════════ EVENTI ════════ -->
+      <mat-tab label="Eventi parcheggiati ({{ eventi().length }})">
+        @if (sezioneLoading() === 'eventi') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (eventi().length === 0) {
+          <div class="triage__empty"><mat-icon>event_available</mat-icon><p>Nessun evento in attesa.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Incassi-evento messi da parte. <strong>Scarta</strong> se non è un evento,
+            <strong>Riconcilia</strong> se gestito altrove, oppure <strong>registra come movimento</strong>.
+          </p>
+
+          @for (ev of eventi(); track ev.id) {
+            <mat-expansion-panel class="triage__row">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="triage__amount in">+ € {{ ev.importo }}</span>
+                  <span class="triage__who">{{ ev.controparteNome || '—' }}</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="triage__date">{{ ev.dataMovimento }}</span>
+                  @if (ev.tipoEventoPresunto) { <mat-chip-set><mat-chip highlighted>{{ ev.tipoEventoPresunto }}</mat-chip></mat-chip-set> }
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <p class="triage__desc">{{ ev.descrizioneNorm }}</p>
+              <p class="triage__meta">
+                Fonte: {{ ev.fonte }} · Chiave: {{ ev.chiaveAggancio || '—' }}
+                @if (ev.dataEventoEstratta) { · Data evento: {{ ev.dataEventoEstratta }} }
+                @if (ev.controparteIban) { · IBAN: {{ ev.controparteIban }} }
+              </p>
+
+              <form [formGroup]="eventoFormFor(ev.id)" class="triage__form triage__form--evento">
+                <app-coge-picker
+                  label="COGE (per registrare)"
+                  [value]="eventoFormFor(ev.id).controls.cogeId.value"
+                  (cogeChange)="setCogeEvento(ev.id, $event)"
+                ></app-coge-picker>
+                <mat-form-field appearance="outline">
+                  <mat-label>Business Unit</mat-label>
+                  <mat-select formControlName="businessUnitId">
+                    <mat-option [value]="null">—</mat-option>
+                    @for (b of bu(); track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="triage__nota">
+                  <mat-label>Nota</mat-label>
+                  <input matInput formControlName="nota">
+                </mat-form-field>
+
+                <div class="triage__row-actions triage__row-actions--evento">
+                  <button mat-stroked-button color="warn" [disabled]="saving() === ev.id" (click)="scartaEvento(ev)">
+                    <mat-icon>delete</mat-icon> Scarta
+                  </button>
+                  <button mat-stroked-button [disabled]="saving() === ev.id" (click)="riconciliaEvento(ev)">
+                    <mat-icon>link</mat-icon> Riconcilia
+                  </button>
+                  <button mat-flat-button color="primary"
+                          [disabled]="saving() === ev.id || !canClassificareEvento(ev.id)"
+                          (click)="classificaEvento(ev)">
+                    @if (saving() === ev.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>check</mat-icon> }
+                    Registra movimento
+                  </button>
+                </div>
+              </form>
+            </mat-expansion-panel>
+          }
+        }
+      </mat-tab>
+
+      <!-- ════════ POSSIBILI DUPLICATI ════════ -->
+      <mat-tab label="Possibili duplicati ({{ coppie().length }})">
+        @if (sezioneLoading() === 'duplicati') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (coppie().length === 0) {
+          <div class="triage__empty"><mat-icon>done_all</mat-icon><p>Nessuna coppia sospetta in coda.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Lo stesso incasso può comparire in cassa (Billy) e in banca. Senza il numero di
+            registrazione condiviso, il sistema li riaggancia per importo, intestatario, IBAN e
+            data evento — qui vedi le coppie sospette <strong>con la motivazione</strong>. Scarta
+            il lato duplicato per tenerne uno solo.
+          </p>
+
+          @for (c of coppie(); track c.eventoA.id + c.eventoB.id) {
+            <div class="triage__dup" [class.is-certa]="c.confidenza === 'CERTA'">
+              <div class="triage__dup-head">
+                <span class="triage__dup-badge" [class.certa]="c.confidenza === 'CERTA'" [class.probabile]="c.confidenza === 'PROBABILE'">
+                  <mat-icon>{{ c.confidenza === 'CERTA' ? 'verified' : 'help' }}</mat-icon>
+                  {{ confLabel(c) }}
+                </span>
+                <div class="triage__dup-title">
+                  <span class="name">{{ titoloCoppia(c) }}</span>
+                  <span class="sub">€ {{ c.eventoA.importo }} · {{ c.eventoA.dataMovimento }}</span>
+                </div>
+                <svg class="triage__dup-ring" width="48" height="48" viewBox="0 0 48 48"
+                     [attr.aria-label]="'Confidenza ' + c.punteggio + ' su 100'" role="img">
+                  <circle cx="24" cy="24" r="20" fill="none" stroke="var(--border, #e2e8f0)" stroke-width="4"></circle>
+                  <circle cx="24" cy="24" r="20" fill="none" stroke-width="4" stroke-linecap="round"
+                          [attr.stroke]="c.confidenza === 'CERTA' ? 'var(--success)' : 'var(--warning)'"
+                          [attr.stroke-dasharray]="ringCirc"
+                          [attr.stroke-dashoffset]="ringOffset(c.punteggio)"
+                          transform="rotate(-90 24 24)"></circle>
+                  <text x="24" y="28" text-anchor="middle" font-size="14" font-weight="600" fill="currentColor">{{ c.punteggio }}</text>
+                </svg>
+              </div>
+
+              <div class="triage__dup-pair">
+                @for (e of [c.eventoA, c.eventoB]; track e.id) {
+                  <div class="triage__dup-ev">
+                    <span [class]="fonteClass(e.fonte)">{{ fonteLabel(e.fonte) }}</span>
+                    <span class="triage__dup-amt">€ {{ e.importo }}</span>
+                    <dl class="triage__dup-dl">
+                      <div><dt>Intestatario</dt><dd>{{ e.controparteNome || '— non indicato —' }}</dd></div>
+                      @if (e.controparteIban) { <div><dt>IBAN</dt><dd class="mono">{{ e.controparteIban }}</dd></div> }
+                      <div><dt>Data mov.</dt><dd>{{ e.dataMovimento }}</dd></div>
+                      @if (e.dataEvento) { <div><dt>Data evento</dt><dd>{{ e.dataEvento }}</dd></div> }
+                      @if (e.descrizione) { <div><dt>Descrizione</dt><dd class="desc">{{ e.descrizione }}</dd></div> }
+                    </dl>
+                    <button mat-stroked-button color="warn" class="triage__dup-scarta"
+                            [disabled]="saving() === e.id" (click)="scartaDuplicato(e)">
+                      @if (saving() === e.id) { <mat-spinner diameter="16"></mat-spinner> } @else { <mat-icon>delete_sweep</mat-icon> }
+                      Scarta questo
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <div class="triage__dup-why">
+                <span class="triage__dup-why-label">
+                  <mat-icon>info</mat-icon>
+                  {{ c.confidenza === 'CERTA' ? 'Perché sono lo stesso incasso' : 'Perché potrebbero coincidere' }}
+                </span>
+                <div class="triage__dup-reasons">
+                  @for (m of c.motivi; track m.segnale) {
+                    <span [class]="motivoClass(m)" [matTooltip]="m.dettaglio">
+                      <strong>{{ m.segnale }}</strong>{{ m.dettaglio }}
+                    </span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </mat-tab>
+
+      <!-- ════════ SPESE RICORRENTI (parcheggio V9) ════════ -->
+      <mat-tab label="Ricorrenti ({{ ricorrenti().length }})">
+        @if (sezioneLoading() === 'ricorrenti') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (!ricorrenti().length) {
+          <div class="triage__empty"><mat-icon>event_repeat</mat-icon><p>Nessuna spesa ricorrente da riconciliare.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Rate di mutui/finanziamenti, leasing, canoni e cambiali. <strong>Non diventano movimenti</strong>:
+            si gestiscono nel modulo Spese Ricorrenti. Collega ognuna al piano giusto (solo collegamento, nessun effetto contabile) oppure ignorala.
+          </p>
+          @for (r of ricorrenti(); track r.id) {
+            <div class="triage__ric">
+              <div class="triage__ric-head">
+                <span class="triage__amount out">− € {{ r.importo }}</span>
+                <span class="triage__ric-badge">{{ r.tipoPresunto }}</span>
+                <span class="triage__date">{{ r.dataMovimento }}</span>
+              </div>
+              <p class="triage__desc">{{ r.descrizione }}</p>
+              <div class="triage__ric-actions">
+                <mat-form-field appearance="outline" class="triage__ric-plan">
+                  <mat-label>Collega al piano ricorrente</mat-label>
+                  <mat-select [value]="pianoSel()[r.id] || null" (selectionChange)="setPiano(r.id, $event.value)">
+                    @for (p of piani(); track p.id) { <mat-option [value]="p.id">{{ p.descrizione }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-flat-button color="primary" [disabled]="saving() === r.id || !pianoSel()[r.id]" (click)="collegaRicorrente(r)">
+                  @if (saving() === r.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>link</mat-icon> }
+                  Collega
+                </button>
+                <button mat-stroked-button [disabled]="saving() === r.id" (click)="ignoraRicorrente(r)">
+                  <mat-icon>block</mat-icon> Ignora
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </mat-tab>
+
+      <!-- ════════ EFFETTI / RiBa ════════ -->
+      <mat-tab label="Effetti / RiBa ({{ riba().length }})">
+        @if (sezioneLoading() === 'riba') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (!riba().length) {
+          <div class="triage__empty"><mat-icon>receipt_long</mat-icon><p>Nessun effetto/RiBa da catalogare.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Pagamenti a ricevuta bancaria (RiBa / effetti): sono <strong>costi reali</strong> su conto transitorio perché la riga non nomina il fornitore.
+            Assegna fornitore, COGE e Business Unit per catalogarli.
+          </p>
+          @for (t of riba(); track t.id) {
+            <mat-expansion-panel class="triage__row" (opened)="caricaAnteprima(t)">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="triage__amount out">− € {{ t.importo }}</span>
+                  <span class="triage__who">{{ t.controparteEstratta || 'fornitore da indicare' }}</span>
+                </mat-panel-title>
+                <mat-panel-description><span class="triage__date">{{ t.dataMovimento }}</span></mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <p class="triage__desc">{{ t.descrizione }}</p>
+
+              <form [formGroup]="transFormFor(t.id)" class="triage__form">
+                <mat-form-field appearance="outline">
+                  <mat-label>Fornitore</mat-label>
+                  <mat-select formControlName="fornitoreId">
+                    <mat-option [value]="null">—</mat-option>
+                    @for (f of fornitori(); track f.id) { <mat-option [value]="f.id">{{ f.ragioneSociale }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <app-coge-picker
+                  label="Conto COGE" [required]="true"
+                  [value]="transFormFor(t.id).controls.cogeId.value"
+                  [invalid]="transFormFor(t.id).controls.cogeId.touched && transFormFor(t.id).controls.cogeId.invalid"
+                  (cogeChange)="setCogeTrans(t.id, $event)"
+                ></app-coge-picker>
+                <mat-form-field appearance="outline">
+                  <mat-label>Business Unit *</mat-label>
+                  <mat-select formControlName="businessUnitId">
+                    @for (b of bu(); track b.id) { <mat-option [value]="b.id">{{ b.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="triage__nota">
+                  <mat-label>Nota</mat-label>
+                  <input matInput formControlName="nota">
+                </mat-form-field>
+
+                <p class="triage__kw-hint" style="margin:0 0 .25rem">
+                  <mat-icon style="font-size:16px;height:16px;width:16px;vertical-align:middle">info</mat-icon>
+                  Le RiBa non generano keyword (descrizione generica): la categoria va assegnata a mano ogni volta.
+                </p>
+
+                <div class="triage__row-actions">
+                  <button mat-flat-button color="primary"
+                          [disabled]="saving() === t.id || !canClassificareTrans(t.id)"
+                          (click)="classificaRiba(t)">
+                    @if (saving() === t.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>check</mat-icon> }
+                    Cataloga
+                  </button>
+                </div>
+              </form>
+            </mat-expansion-panel>
+          }
+        }
+      </mat-tab>
+
+      <!-- ════════ MATCHING DIFFERITI (import banche ↔ movimenti Da Liquidare) ════════ -->
+      <mat-tab label="Già a libro ({{ matchingDiff().length }})">
+        @if (sezioneLoading() === 'matching-differiti') {
+          <div class="triage__loading"><mat-spinner diameter="32"></mat-spinner></div>
+        } @else if (!matchingDiff().length) {
+          <div class="triage__empty"><mat-icon>join_inner</mat-icon><p>Nessuna riga banca da riconciliare con movimenti già a libro.</p></div>
+        } @else {
+          <p class="text-sub triage__hint">
+            Queste righe importate dalla banca <strong>combaciano</strong> (stesso importo e descrizione) con un
+            movimento <strong>«Da liquidare»</strong> che hai già inserito a mano. Per non registrarlo due volte,
+            scegli: <strong>Collega</strong> se è lo stesso pagamento (liquida quello esistente), oppure
+            <strong>Ignora</strong> se è un movimento diverso (verrà creato a parte).
+          </p>
+          @for (m of matchingDiff(); track m.id) {
+            <div class="triage__ric">
+              <div class="triage__match">
+                <!-- Lato movimento già a libro -->
+                <div class="triage__match-side">
+                  <span class="triage__match-tag">Già a libro · Da liquidare</span>
+                  <span class="triage__amount" [class.out]="m.movimentoTipo === 'USCITA'" [class.in]="m.movimentoTipo === 'ENTRATA'">
+                    {{ m.movimentoTipo === 'USCITA' ? '− ' : '+ ' }}€ {{ m.movimentoImporto }}
+                  </span>
+                  <p class="triage__desc">{{ m.movimentoDescrizione }}</p>
+                  <span class="triage__date">Scadenza: {{ m.movimentoDataLiquidita || '—' }}</span>
+                </div>
+                <mat-icon class="triage__match-eq">drag_handle</mat-icon>
+                <!-- Lato riga banca importata -->
+                <div class="triage__match-side">
+                  <span class="triage__match-tag">Dalla banca · {{ m.fonte === 'IMPORT_BILLY' ? 'Billy' : 'Estratto conto' }}</span>
+                  <span class="triage__amount" [class.out]="m.movimentoTipo === 'USCITA'" [class.in]="m.movimentoTipo === 'ENTRATA'">
+                    {{ m.movimentoTipo === 'USCITA' ? '− ' : '+ ' }}€ {{ m.importo }}
+                  </span>
+                  <p class="triage__desc">{{ m.descrizione }}</p>
+                  <span class="triage__date">Pagamento: {{ m.dataBanca || '—' }}</span>
+                </div>
+              </div>
+              <div class="triage__ric-actions">
+                <button mat-flat-button color="primary" [disabled]="saving() === m.id" (click)="collegaMatching(m)">
+                  @if (saving() === m.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>link</mat-icon> }
+                  Collega (è lo stesso)
+                </button>
+                <button mat-stroked-button [disabled]="saving() === m.id" (click)="ignoraMatching(m)">
+                  <mat-icon>call_split</mat-icon> Ignora (è diverso)
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </mat-tab>
+    </mat-tab-group>
+  }
+
+</div>

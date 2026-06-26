@@ -1,6 +1,6 @@
 <mat-sidenav-container class="shell-container">
 
-  <!-- ── Sidenav ─────────────────────────────────────────────────── -->
+  <!-- ── Side rail ───────────────────────────────────────────────── -->
   <mat-sidenav
     #sidenav
     mode="side"
@@ -8,110 +8,182 @@
     class="sidenav"
     [class.sidenav--collapsed]="!sidenavOpen()"
   >
-    <!-- Brand -->
-    <div class="sidenav-brand">
-      <span class="brand-leaf">🌿</span>
-      @if (sidenavOpen()) {
-        <span class="brand-text">Agostinelli</span>
-      }
-    </div>
+    <div class="rail">
 
-    <mat-divider />
+      <!-- Brand -->
+      <div class="rail-brand">
+        <img src="assets/logo.png" alt="Agostinelli" class="brand-logo" />
+        @if (sidenavOpen()) { <span class="brand-text">Agostinelli</span> }
+      </div>
 
-    <!-- Top nav items -->
-    <mat-nav-list class="nav-list">
-      @for (item of visibleNavItems(); track item.route) {
-        <a
-          mat-list-item
-          [routerLink]="item.route"
-          routerLinkActive="nav-active"
-          [matTooltip]="!sidenavOpen() ? item.label : ''"
-          matTooltipPosition="right"
-          class="nav-item"
-        >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          @if (sidenavOpen()) {
-            <span matListItemTitle>{{ item.label }}</span>
+      <!-- Navigation (scrollable) -->
+      <nav class="rail-nav">
+        <!-- Voci di una sezione: stesso markup sia espanso che compresso (no duplicazione) -->
+        <ng-template #navItems let-items>
+          @for (item of items; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="is-active"
+              [matTooltip]="!sidenavOpen() ? navTooltip(item) : ''"
+              matTooltipPosition="right"
+              class="nav-link"
+              [class.nav-link--alert]="item.badge && item.badge() > 0"
+            >
+              <span class="nav-link__icon-wrap">
+                <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
+                @if (item.badge && item.badge() > 0 && !sidenavOpen()) {
+                  <span class="nav-link__dot" aria-hidden="true"></span>
+                }
+              </span>
+              @if (sidenavOpen()) {
+                <span class="nav-link__label">{{ item.label }}</span>
+                @if (item.badge && item.badge() > 0) {
+                  <span class="nav-link__badge"
+                        [attr.aria-label]="item.badge() + ' scadute da gestire'">
+                    +{{ item.badge() }}
+                  </span>
+                }
+              }
+            </a>
           }
-        </a>
-      }
-    </mat-nav-list>
+        </ng-template>
 
-    @if (isAdmin() && businessUnits().length > 0) {
-      <mat-divider />
-
-      <!-- Business Unit sub-menu -->
-      @if (sidenavOpen()) {
-        <p class="nav-section-label">Business Unit</p>
-      }
-      <mat-nav-list class="nav-list">
-        @for (bu of businessUnits(); track bu.id) {
-          <a
-            mat-list-item
-            [routerLink]="['/bu', bu.id]"
-            routerLinkActive="nav-active"
-            [matTooltip]="!sidenavOpen() ? bu.nome : ''"
-            matTooltipPosition="right"
-            class="nav-item bu-item"
-          >
-            <span
-              class="bu-dot"
-              [style.background]="bu.colore"
-              matListItemIcon
-            ></span>
+        @for (section of visibleSections(); track section.label) {
+          <div class="nav-section">
             @if (sidenavOpen()) {
-              <span matListItemTitle>{{ bu.nome }}</span>
+              <button
+                type="button"
+                class="nav-section__toggle"
+                [class.nav-section__toggle--open]="isSectionOpen(section.label)"
+                (click)="toggleSection(section.label)"
+                [attr.aria-expanded]="isSectionOpen(section.label)"
+              >
+                <span class="nav-section__label">{{ section.label }}</span>
+                <span class="nav-section__count">{{ section.items.length }}</span>
+                <mat-icon class="nav-section__chev">expand_more</mat-icon>
+              </button>
+              <div class="nav-section__panel" [class.nav-section__panel--open]="isSectionOpen(section.label)">
+                <div class="nav-section__panel-inner">
+                  <ng-container [ngTemplateOutlet]="navItems"
+                                [ngTemplateOutletContext]="{ $implicit: section.items }" />
+                </div>
+              </div>
+            } @else {
+              <ng-container [ngTemplateOutlet]="navItems"
+                            [ngTemplateOutletContext]="{ $implicit: section.items }" />
             }
-          </a>
+          </div>
         }
-      </mat-nav-list>
-    }
 
-    <mat-divider />
+        <!-- Dettaglio BU — sotto-livello richiudibile (solo admin, solo barra estesa) -->
+        @if (isAdmin() && businessUnits().length && sidenavOpen()) {
+          <div class="nav-section bu">
+            <button
+              type="button"
+              class="bu__toggle"
+              [class.bu__toggle--open]="buExpanded()"
+              (click)="toggleBu()"
+              [attr.aria-expanded]="buExpanded()"
+            >
+              <mat-icon class="bu__lead">donut_small</mat-icon>
+              <span class="bu__title">Dettaglio BU</span>
+              <span class="bu__count">{{ businessUnits().length }}</span>
+              <mat-icon class="bu__chev">expand_more</mat-icon>
+            </button>
 
-    <!-- Bottom nav items -->
-    <mat-nav-list class="nav-list">
-      @for (item of visibleNavItemsBottom(); track item.route) {
-        <a
-          mat-list-item
-          [routerLink]="item.route"
-          routerLinkActive="nav-active"
-          [matTooltip]="!sidenavOpen() ? item.label : ''"
+            <div class="bu__panel" [class.bu__panel--open]="buExpanded()">
+              <div class="bu__panel-inner">
+                @for (bu of businessUnits(); track bu.id) {
+                  <a
+                    [routerLink]="['/bu', bu.id]"
+                    routerLinkActive="is-active"
+                    class="nav-link nav-link--sub"
+                  >
+                    <span class="bu__dot" [style.background]="bu.colore"></span>
+                    <span class="nav-link__label">{{ bu.nome }}</span>
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </nav>
+
+      <!-- Footer: impostazioni (hover) + profilo -->
+      <div class="rail-foot">
+
+        <!-- Impostazioni: si apre al passaggio del mouse, si chiude quando lo allontani -->
+        <div class="settings">
+          <button
+            type="button"
+            class="settings__trigger"
+            [matTooltip]="!sidenavOpen() ? 'Impostazioni' : ''"
+            matTooltipPosition="right"
+          >
+            <mat-icon class="settings__gear">settings</mat-icon>
+            @if (sidenavOpen()) { <span>Impostazioni</span> }
+          </button>
+
+          <div class="settings__menu" role="menu">
+            <button type="button" class="settings__opt" (click)="toggleSidenav()">
+              <mat-icon>{{ sidenavOpen() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+              <span>{{ sidenavOpen() ? 'Comprimi barra' : 'Espandi barra' }}</span>
+            </button>
+            <button type="button" class="settings__opt" (click)="toggleTheme()">
+              <mat-icon>{{ isDarkTheme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+              <span>{{ isDarkTheme() === 'dark' ? 'Tema chiaro' : 'Tema scuro' }}</span>
+            </button>
+            <button type="button" class="settings__opt settings__opt--danger" (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Esci</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Profilo Google (ultima voce in fondo) -->
+        <div
+          class="profile"
+          [matTooltip]="!sidenavOpen() ? (user()?.nome + ' · ' + user()?.email) : ''"
           matTooltipPosition="right"
-          class="nav-item"
         >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <div class="profile__avatar">{{ userInitial() }}</div>
           @if (sidenavOpen()) {
-            <span matListItemTitle>{{ item.label }}</span>
+            <div class="profile__info">
+              <span class="profile__name">{{ user()?.nome }}</span>
+              <span class="profile__email">{{ user()?.email }}</span>
+            </div>
+            <span class="profile__google" title="Connesso con Google">
+              <svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+            </span>
           }
-        </a>
-      }
-    </mat-nav-list>
+        </div>
+      </div>
+
+    </div>
   </mat-sidenav>
 
   <!-- ── Main content ───────────────────────────────────────────── -->
   <mat-sidenav-content class="shell-content">
 
-    <!-- Topbar -->
     <mat-toolbar class="topbar">
-
-      <!-- Left: hamburger -->
       <button mat-icon-button (click)="toggleSidenav()" class="hamburger-btn">
         <mat-icon>{{ sidenavOpen() ? 'menu_open' : 'menu' }}</mat-icon>
       </button>
 
-      <!-- Spacer -->
       <span class="topbar-spacer"></span>
 
-      <!-- Right: badges + avatar -->
       <div class="topbar-actions">
-
         @if (isAdmin() && scadenzeCount() > 0) {
           <button
             mat-icon-button
             class="badge-btn"
-            matTooltip="Scadenze imminenti ad alta urgenza"
-            [routerLink]="['/dashboard']"
+            [matTooltip]="scadenzeCount() + ' scadenze già scadute — apri lo Scadenzario'"
+            [routerLink]="['/scadenzario']"
           >
             <mat-icon
               [matBadge]="scadenzeCount()"
@@ -120,45 +192,9 @@
             >alarm</mat-icon>
           </button>
         }
-
-        @if (isAdmin() && nonRiconciliatiCount() > 0) {
-          <button
-            mat-icon-button
-            class="badge-btn"
-            matTooltip="Movimenti da riconciliare"
-            [routerLink]="['/movimenti']"
-          >
-            <mat-icon
-              [matBadge]="nonRiconciliatiCount()"
-              matBadgeColor="accent"
-              matBadgeSize="small"
-            >sync_problem</mat-icon>
-          </button>
-        }
-
-        <!-- Avatar menu -->
-        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="avatar-btn">
-          <div class="avatar">
-            {{ user()?.nome?.charAt(0)?.toUpperCase() ?? '?' }}
-          </div>
-        </button>
-
-        <mat-menu #userMenu="matMenu" xPosition="before">
-          <div class="user-menu-header">
-            <strong>{{ user()?.nome }}</strong>
-            <span class="user-email">{{ user()?.email }}</span>
-          </div>
-          <mat-divider />
-          <button mat-menu-item (click)="logout()">
-            <mat-icon>logout</mat-icon>
-            Esci
-          </button>
-        </mat-menu>
       </div>
-
     </mat-toolbar>
 
-    <!-- Page content -->
     <main class="page-content">
       <router-outlet />
     </main>

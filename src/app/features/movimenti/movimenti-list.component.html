@@ -3,24 +3,15 @@
   <!-- Header -->
   <div class="mov-list__header">
     <div class="mov-list__title">
-      <h2>Movimenti</h2>
-      @if (result()?.totalElements != null) {
-        <span class="mov-list__count text-sub">{{ result()!.totalElements }} totali</span>
-      }
+      <span class="page-eyebrow">Contabilità</span>
+      <div class="mov-list__title-row">
+        <h2>Movimenti</h2>
+        @if (result()?.totalElements != null) {
+          <span class="mov-list__count text-sub">{{ result()!.totalElements }} totali</span>
+        }
+      </div>
     </div>
     <div class="mov-list__actions">
-      <button mat-stroked-button (click)="openImport()">
-        <mat-icon>upload</mat-icon>
-        Import bulk
-      </button>
-      <button mat-stroked-button (click)="openRiconciliazione()">
-        <mat-icon>sync</mat-icon>
-        Riconciliazione
-      </button>
-      <button mat-stroked-button (click)="esportaCsv()">
-        <mat-icon>download</mat-icon>
-        Esporta CSV
-      </button>
       <a mat-flat-button color="primary" routerLink="/movimenti/nuovo">
         <mat-icon>add</mat-icon>
         Nuovo Movimento
@@ -51,7 +42,6 @@
         <mat-option value="">Tutti</mat-option>
         <mat-option value="REGISTRATO">Registrato</mat-option>
         <mat-option value="DA_LIQUIDARE">Da liquidare</mat-option>
-        <mat-option value="RICONCILIATO">Riconciliato</mat-option>
         <mat-option value="ANNULLATO">Annullato</mat-option>
       </mat-select>
     </mat-form-field>
@@ -210,6 +200,10 @@
             <th mat-header-cell *matHeaderCellDef>Stato</th>
             <td mat-cell *matCellDef="let row">
               <agos-badge [text]="row.stato" [color]="statoColor(row.stato)"></agos-badge>
+              @if (row.stato === 'DA_LIQUIDARE' && row.giorniAllaScadenza != null) {
+                <span class="mov-list__ritardo" [class.late]="row.giorniAllaScadenza < 0"
+                      [matTooltip]="ritardoTooltip(row)">{{ ritardoLabel(row.giorniAllaScadenza) }}</span>
+              }
             </td>
           </ng-container>
 

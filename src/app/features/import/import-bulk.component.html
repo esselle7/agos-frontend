@@ -1,0 +1,65 @@
+<div class="bulk">
+  @if (!importResult()) {
+    <p class="bulk__hint">
+      Carica i <strong>3 file dello stesso periodo</strong>: vengono riconciliati insieme
+      (le banche danno banca/data/importo, Billy la categoria degli incassi).
+    </p>
+
+    <div class="bulk__slots">
+      @for (s of slots; track s.key) {
+        <label class="bulk__dropzone" [class.bulk__dropzone--filled]="fileFor(s.key)">
+          <input type="file" [accept]="s.accept" (change)="onFileSelected(s.key, $event)" hidden>
+          <mat-icon>{{ fileFor(s.key) ? 'check_circle' : 'cloud_upload' }}</mat-icon>
+          <span class="bulk__slot-label">{{ s.label }}</span>
+          @if (fileFor(s.key)) { <span class="bulk__filename">{{ fileFor(s.key)!.name }}</span> }
+          @else { <span class="bulk__slot-hint">{{ s.hint }}</span> }
+        </label>
+      }
+    </div>
+
+    <div class="bulk__actions">
+      <button mat-flat-button color="primary" (click)="onImport()" [disabled]="importing() || !allSelected()">
+        @if (importing()) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>upload</mat-icon> }
+        {{ importing() ? 'Elaborazione…' : 'Importa i 3 file' }}
+      </button>
+    </div>
+  } @else {
+    <div class="bulk__result">
+      <div class="bulk__row ok"><mat-icon>check_circle</mat-icon><span>Movimenti importati: <strong>{{ importResult()!.importati }}</strong></span></div>
+      @if (importResult()!.ambigui > 0) { <div class="bulk__row warn"><mat-icon>help</mat-icon><span>Ambiguità: <strong>{{ importResult()!.ambigui }}</strong></span></div> }
+      <div class="bulk__row"><mat-icon>event</mat-icon><span>Eventi parcheggiati: <strong>{{ importResult()!.parcheggiati }}</strong></span></div>
+      <div class="bulk__row"><mat-icon>repeat</mat-icon><span>Spese ricorrenti parcheggiate: <strong>{{ importResult()!.ricorrenti ?? 0 }}</strong></span></div>
+      @if ((importResult()!.matchingDifferiti ?? 0) > 0) {
+        <div class="bulk__row warn"><mat-icon>join_inner</mat-icon><span>Già a libro da riconciliare: <strong>{{ importResult()!.matchingDifferiti }}</strong> (righe che combaciano con un movimento «Da liquidare» — confermale in <a routerLink="/import/smistamento/matching-differiti">Già a libro</a>)</span></div>
+      }
+      <div class="bulk__row"><mat-icon>filter_alt</mat-icon><span>Righe escluse (POS/giroconti): <strong>{{ importResult()!.scartati }}</strong></span></div>
+      <div class="bulk__row"><mat-icon>info</mat-icon><span>Duplicati saltati: <strong>{{ importResult()!.duplicati }}</strong></span></div>
+      @if (avvisi().length) {
+        <div class="bulk__row warn"><mat-icon>info</mat-icon>
+          <span>Scontrini Billy esclusi dalla contabilità: <strong>{{ avvisi().length }}</strong>
+            (<strong>{{ avvisiAgriturismo() }}</strong> agriturismo → modulo Eventi,
+            <strong>{{ avvisiInAttesa() }}</strong> in attesa di accredito → al prossimo import)</span>
+        </div>
+      }
+      <div class="bulk__row" [class.err]="importResult()!.errori.length">
+        <mat-icon>{{ importResult()!.errori.length ? 'error' : 'check_circle' }}</mat-icon>
+        <span>Righe con errori: <strong>{{ importResult()!.errori.length }}</strong></span>
+      </div>
+
+      @if (importResult()!.errori.length) {
+        <mat-divider></mat-divider>
+        <mat-expansion-panel class="bulk__errors">
+          <mat-expansion-panel-header><mat-panel-title>Dettaglio errori</mat-panel-title></mat-expansion-panel-header>
+          @for (e of importResult()!.errori; track e.riga) {
+            <div class="bulk__error-item"><span>Riga {{ e.riga }}</span><span>{{ e.messaggio }}</span></div>
+          }
+        </mat-expansion-panel>
+      }
+
+      <div class="bulk__actions">
+        <button mat-stroked-button (click)="ricomincia()"><mat-icon>refresh</mat-icon> Nuovo import</button>
+        <a mat-flat-button color="primary" routerLink="/import/smistamento/catalogare"><mat-icon>inbox</mat-icon> Vai allo smistamento</a>
+      </div>
+    </div>
+  }
+</div>

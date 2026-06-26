@@ -1,4 +1,10 @@
-<h2 mat-dialog-title>{{ isEdit() ? 'Modifica Fornitore' : 'Nuovo Fornitore' }}</h2>
+<div class="dform__head">
+  <span class="dform__head-ico"><mat-icon>local_shipping</mat-icon></span>
+  <span class="dform__head-tt">
+    <h2 mat-dialog-title>{{ isEdit() ? 'Modifica fornitore' : 'Nuovo fornitore' }}</h2>
+    <span class="dform__head-sub">Chi ti fornisce beni o servizi: lo colleghi ai movimenti di costo</span>
+  </span>
+</div>
 
 <mat-dialog-content>
   @if (loadingForm()) {
@@ -6,30 +12,40 @@
       <agos-skeleton-loader [rows]="4" />
     </div>
   } @else {
-    <form [formGroup]="form" class="fornitore-form">
+    <form [formGroup]="form" class="dform__body">
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Ragione Sociale *</mat-label>
-          <input matInput formControlName="ragioneSociale" maxlength="255" />
+      <p class="dform__section"><mat-icon>badge</mat-icon> Identità</p>
+
+      <div class="dform__row">
+        <mat-form-field appearance="outline">
+          <mat-label>Ragione sociale *</mat-label>
+          <mat-icon matPrefix>store</mat-icon>
+          <input matInput formControlName="ragioneSociale" maxlength="255" appInputFilter="safe-text" />
           @if (form.controls.ragioneSociale.hasError('required') && form.controls.ragioneSociale.touched) {
-            <mat-error>Campo obbligatorio</mat-error>
+            <mat-error>La ragione sociale è obbligatoria</mat-error>
+          }
+          @if (form.controls.ragioneSociale.hasError('pattern') && form.controls.ragioneSociale.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
           }
         </mat-form-field>
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+      <div class="dform__row">
+        <mat-form-field appearance="outline">
           <mat-label>Alias breve</mat-label>
-          <input matInput formControlName="alias" maxlength="100" />
-          <mat-hint>Nome abbreviato per visualizzazione rapida</mat-hint>
+          <mat-icon matPrefix>short_text</mat-icon>
+          <input matInput formControlName="alias" maxlength="100" placeholder="es. Sogegross" />
+          <mat-hint>Nome corto usato nelle liste e nei suggerimenti</mat-hint>
         </mat-form-field>
       </div>
 
-      <div class="form-row two-col">
+      <p class="dform__section"><mat-icon>receipt_long</mat-icon> Dati fiscali</p>
+
+      <div class="dform__row dform__row--2">
         <mat-form-field appearance="outline">
           <mat-label>Partita IVA</mat-label>
-          <input matInput formControlName="piva" maxlength="11" inputmode="numeric" />
+          <mat-icon matPrefix>tag</mat-icon>
+          <input matInput formControlName="piva" maxlength="11" inputmode="numeric" appInputFilter="digits-only" />
           @if (form.controls.piva.hasError('pattern') && form.controls.piva.touched) {
             <mat-error>Solo cifre (max 11)</mat-error>
           }
@@ -37,43 +53,37 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Codice SDI</mat-label>
-          <input matInput formControlName="codiceSdi" maxlength="7" />
+          <mat-icon matPrefix>qr_code_2</mat-icon>
+          <input matInput formControlName="codiceSdi" maxlength="7" appInputFilter="alphanumeric" />
+          @if (form.controls.codiceSdi.hasError('pattern') && form.controls.codiceSdi.touched) {
+            <mat-error>Solo lettere e cifre (max 7)</mat-error>
+          }
         </mat-form-field>
       </div>
 
-      <div class="form-row two-col">
+      <p class="dform__section"><mat-icon>auto_fix_high</mat-icon> Predefiniti in fattura</p>
+      <div class="dform__note">
+        <mat-icon>info</mat-icon>
+        <span>Su un nuovo movimento legato a questo fornitore, business unit e conto vengono compilati da soli. Puoi sempre cambiarli.</span>
+      </div>
+
+      <div class="dform__row dform__row--2">
         <agos-bu-selector
           formControlName="buDefaultId"
-          label="BU Default"
+          label="Business unit"
           placeholder="Nessuna"
         />
-
-        <mat-form-field appearance="outline">
-          <mat-label>Conto CoGe default</mat-label>
-          <input matInput
-                 [formControl]="cogeSearch"
-                 [matAutocomplete]="autoCoge"
-                 placeholder="Cerca per nome o codice...">
-          <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
-            @for (c of filteredCoge(); track c.id) {
-              <mat-option [value]="c">
-                <span style="font-size:13px">{{ c.nome }}</span>
-                <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
-              </mat-option>
-            }
-          </mat-autocomplete>
-          @if (form.controls.cogeDefaultId.value) {
-            <button matSuffix mat-icon-button type="button" (click)="clearCoge()">
-              <mat-icon>close</mat-icon>
-            </button>
-          }
-          <mat-hint>Auto-compilato su nuovi movimenti di questo fornitore</mat-hint>
-        </mat-form-field>
+        <app-coge-picker
+          label="Conto CoGe"
+          [value]="form.controls.cogeDefaultId.value"
+          (cogeChange)="setCoge($event)"
+        ></app-coge-picker>
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+      <div class="dform__row">
+        <mat-form-field appearance="outline">
           <mat-label>Note</mat-label>
+          <mat-icon matPrefix>notes</mat-icon>
           <textarea matInput formControlName="note" rows="3"></textarea>
         </mat-form-field>
       </div>
@@ -82,16 +92,13 @@
   }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions class="dform__actions">
   <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
-  <button
-    mat-raised-button
-    color="primary"
-    (click)="submit()"
-    [disabled]="saving() || loadingForm()"
-  >
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving() || loadingForm()">
     @if (saving()) {
       <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    } @else {
+      <mat-icon>{{ isEdit() ? 'save' : 'add' }}</mat-icon>
     }
     {{ isEdit() ? 'Salva modifiche' : 'Crea fornitore' }}
   </button>

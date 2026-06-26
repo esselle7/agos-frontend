@@ -7,6 +7,26 @@ import {
   MovimentoDTO,
   MovimentoUpdateRequest,
   MovimentiSommarioDTO,
+  EtlImportResponse,
+  ImportLogDTO,
+  AmbiguitaDTO,
+  ClassificaAmbiguitaRequest,
+  ImportKpiDTO,
+  RegolaClassificazioneDTO,
+  TransitorioDTO,
+  ClassificaTransitorioRequest,
+  EventoParcheggiatoDTO,
+  RisolviEventoRequest,
+  AnalisiDuplicatiDTO,
+  KeywordFirmaDTO,
+  KeywordConflittoDTO,
+  RisolviConflittoKeywordRequest,
+  KeywordAnteprimaDTO,
+  RicorrenteParcheggiataDTO,
+  RisolviRicorrenteRequest,
+  QuadraturaPeriodoDTO,
+  MatchingDifferitoDTO,
+  RisolviMatchingDifferitoRequest,
 } from '../models/movimenti.models';
 import { PagedResponse } from '../models/shared.models';
 import { API_PATHS } from '../constants/api-paths';
@@ -111,26 +131,220 @@ export class MovimentiService {
     );
   }
 
-  getNonRiconciliati(): Observable<MovimentoDTO[]> {
-    return this.http.get<MovimentoDTO[]>(
-      environment.apiBaseUrl + API_PATHS.MOVIMENTI.NON_RICONCILIATI
-    );
+  // ── Import ETL CONGIUNTO (unica modalità: Billy + BPM + CA insieme) ───────────
+
+  /**
+   * Import CONGIUNTO: i 3 file (Billy + BPM + CA) dello stesso periodo, caricati e
+   * riconciliati insieme in un'unica operazione (rollback atomico). L'import single-file
+   * è stato rimosso (PROMPT-KEYWORD-LEARNING.md §4.9).
+   */
+  importCongiunto(billy: File, bpm: File, ca: File): Observable<EtlImportResponse> {
+    const fd = new FormData();
+    fd.append('billy', billy, billy.name);
+    fd.append('bpm', bpm, bpm.name);
+    fd.append('ca', ca, ca.name);
+    fd.append('filenameBilly', billy.name);
+    fd.append('filenameBpm', bpm.name);
+    fd.append('filenameCa', ca.name);
+    return this.http.post<EtlImportResponse>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_CONGIUNTO, fd);
   }
 
-  riconcilia(id: string, note?: string): Observable<void> {
-    let params = new HttpParams();
-    if (note != null) params = params.set('note', note);
-    return this.http.post<void>(
-      `${environment.apiBaseUrl}/api/movimenti/riconciliazione/${id}/riconcilia`,
-      null,
+  getImportHistory(fonte?: string, page = 0, size = 20): Observable<PagedResponse<ImportLogDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (fonte) params = params.set('fonte', fonte);
+    return this.http.get<PagedResponse<ImportLogDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_HISTORY,
       { params }
     );
   }
 
-  matchAutomatico(): Observable<{ matched: number }> {
-    return this.http.post<{ matched: number }>(
-      environment.apiBaseUrl + API_PATHS.MOVIMENTI.MATCH_AUTO,
-      null
+  getAmbiguita(importLogId: string, stato?: string, page = 0, size = 50): Observable<PagedResponse<AmbiguitaDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (stato) params = params.set('stato', stato);
+    return this.http.get<PagedResponse<AmbiguitaDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_AMBIGUITA(importLogId),
+      { params }
+    );
+  }
+
+  classificaAmbiguita(id: string, req: ClassificaAmbiguitaRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.CLASSIFICA_AMBIGUITA(id),
+      req
+    );
+  }
+
+  // ── Triage assistito / KPI / regole data-driven (ETL v2 §8/§9/§13) ──────────
+
+  getImportKpi(): Observable<ImportKpiDTO> {
+    return this.http.get<ImportKpiDTO>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_KPI);
+  }
+
+  getRegole(): Observable<RegolaClassificazioneDTO[]> {
+    return this.http.get<RegolaClassificazioneDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLE
+    );
+  }
+
+  createRegola(regola: RegolaClassificazioneDTO): Observable<{ id: number }> {
+    return this.http.post<{ id: number }>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLE, regola
+    );
+  }
+
+  setRegolaAttiva(id: number, attiva: boolean): Observable<void> {
+    let params = new HttpParams().set('attiva', attiva);
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLA_ATTIVA(id), null, { params }
+    );
+  }
+
+  deleteRegola(id: number): Observable<void> {
+    return this.http.delete<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_REGOLA(id));
+  }
+
+  rollbackImport(importLogId: string): Observable<Record<string, unknown>> {
+    return this.http.delete<Record<string, unknown>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_ROLLBACK(importLogId)
+    );
+  }
+
+  // ── Centro smistamento: transitori ──────────────────────────────────────────
+
+  getTransitori(tipo?: string, page = 0, size = 20): Observable<PagedResponse<TransitorioDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (tipo) params = params.set('tipo', tipo);
+    return this.http.get<PagedResponse<TransitorioDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORI, { params }
+    );
+  }
+
+  classificaTransitorio(movimentoId: string, req: ClassificaTransitorioRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORIO_CLASSIFICA(movimentoId), req
+    );
+  }
+
+  // ── Centro smistamento: eventi parcheggiati ─────────────────────────────────
+
+  getEventiParcheggiati(stato = 'DA_RICONCILIARE', page = 0, size = 20): Observable<PagedResponse<EventoParcheggiatoDTO>> {
+    const params = new HttpParams().set('stato', stato).set('page', page).set('size', size);
+    return this.http.get<PagedResponse<EventoParcheggiatoDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_EVENTI, { params }
+    );
+  }
+
+  risolviEvento(id: string, req: RisolviEventoRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_EVENTO_RISOLVI(id), req
+    );
+  }
+
+  // ── Parcheggio spese ricorrenti (V9) + vista RiBa ───────────────────────────
+
+  getRicorrenti(stato = 'DA_RICONCILIARE', page = 0, size = 2000): Observable<PagedResponse<RicorrenteParcheggiataDTO>> {
+    const params = new HttpParams().set('stato', stato).set('page', page).set('size', size);
+    return this.http.get<PagedResponse<RicorrenteParcheggiataDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_RICORRENTI, { params });
+  }
+
+  risolviRicorrente(id: string, req: RisolviRicorrenteRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_RICORRENTE_RISOLVI(id), req);
+  }
+
+  getRibaTransitori(page = 0, size = 2000): Observable<PagedResponse<TransitorioDTO>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PagedResponse<TransitorioDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_TRANSITORI_RIBA, { params });
+  }
+
+  // ── Feature 1: movimenti DA_LIQUIDARE scaduti (in ritardo) ──────────────────
+
+  /** Movimenti Da Liquidare con scadenza superata (in ritardo). tipo opzionale ENTRATA/USCITA. */
+  getDaLiquidareInRitardo(tipo?: 'ENTRATA' | 'USCITA', page = 0, size = 50, sort?: string): Observable<PagedResponse<MovimentoDTO>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (tipo) params = params.set('tipo', tipo);
+    if (sort) params = params.set('sort', sort);
+    return this.http.get<PagedResponse<MovimentoDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.DA_LIQUIDARE_RITARDO, { params });
+  }
+
+  // ── Feature 2: matching differiti (import banche ↔ movimenti Da Liquidare) ───
+
+  getMatchingDifferiti(stato = 'DA_RICONCILIARE', page = 0, size = 2000): Observable<PagedResponse<MatchingDifferitoDTO>> {
+    const params = new HttpParams().set('stato', stato).set('page', page).set('size', size);
+    return this.http.get<PagedResponse<MatchingDifferitoDTO>>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_MATCHING_DIFFERITI, { params });
+  }
+
+  risolviMatchingDifferito(id: string, req: RisolviMatchingDifferitoRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_MATCHING_DIFFERITO_RISOLVI(id), req);
+  }
+
+  /**
+   * Quadratura di periodo dell'ultimo import congiunto (o di {@code importLogId} se passato).
+   * 204 (body vuoto) se non c'è ancora nessuna quadratura → ritorna null.
+   */
+  getQuadratura(importLogId?: string): Observable<QuadraturaPeriodoDTO | null> {
+    let params = new HttpParams();
+    if (importLogId) params = params.set('importLogId', importLogId);
+    return this.http.get<QuadraturaPeriodoDTO | null>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_QUADRATURA, { params });
+  }
+
+  /** Coppie di eventi sospette duplicate (confidenza + motivazioni), per la revisione. */
+  getAnalisiDuplicati(): Observable<AnalisiDuplicatiDTO> {
+    return this.http.get<AnalisiDuplicatiDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.IMPORT_ANALISI_DUPLICATI
+    );
+  }
+
+  // ── Gestione Keyword (PROMPT-KEYWORD-LEARNING.md §4.8) ──────────────────────
+
+  getKeyword(natura?: string, stato?: string): Observable<KeywordFirmaDTO[]> {
+    let params = new HttpParams();
+    if (natura) params = params.set('natura', natura);
+    if (stato) params = params.set('stato', stato);
+    return this.http.get<KeywordFirmaDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD, { params }
+    );
+  }
+
+  createKeyword(firma: KeywordFirmaDTO): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD, firma
+    );
+  }
+
+  updateKeyword(id: string, firma: KeywordFirmaDTO): Observable<void> {
+    return this.http.put<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_ID(id), firma);
+  }
+
+  deleteKeyword(id: string): Observable<void> {
+    return this.http.delete<void>(environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_ID(id));
+  }
+
+  getKeywordConflitti(stato?: string): Observable<KeywordConflittoDTO[]> {
+    let params = new HttpParams();
+    if (stato) params = params.set('stato', stato);
+    return this.http.get<KeywordConflittoDTO[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_CONFLITTI, { params }
+    );
+  }
+
+  risolviKeywordConflitto(id: string, req: RisolviConflittoKeywordRequest): Observable<void> {
+    return this.http.put<void>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_CONFLITTO_RISOLVI(id), req
+    );
+  }
+
+  /** Anteprima delle keyword che verrebbero apprese da una descrizione (per il triage). */
+  anteprimaKeyword(descrizione: string, sorgente?: string): Observable<KeywordAnteprimaDTO> {
+    return this.http.post<KeywordAnteprimaDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.KEYWORD_ANTEPRIMA, { descrizione, sorgente: sorgente ?? null }
     );
   }
 }

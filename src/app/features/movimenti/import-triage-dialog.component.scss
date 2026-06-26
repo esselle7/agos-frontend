@@ -1,0 +1,340 @@
+.triage {
+  min-width: 640px;
+  max-width: 920px;
+}
+
+.triage__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.triage__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 0;
+  color: var(--text-sub);
+
+  mat-icon { font-size: 40px; width: 40px; height: 40px; opacity: 0.6; }
+}
+
+.triage__hint {
+  margin: 14px 4px;
+  font-size: 0.85rem;
+}
+
+.triage__kpi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-main) 2%, transparent);
+}
+
+.triage__kpi-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+
+  .lbl { font-size: 0.7rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.02em; }
+  .val { font-size: 1.05rem; font-weight: 600; }
+  .val.ok   { color: var(--success); }
+  .val.warn { color: var(--warning); }
+}
+
+.triage__row {
+  margin-bottom: 8px;
+}
+
+.triage__amount {
+  font-weight: 600;
+  margin-right: 12px;
+  font-variant-numeric: tabular-nums;
+
+  &.in  { color: var(--success); }
+  &.out { color: var(--danger); }
+}
+
+.triage__who {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+
+.triage__date {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-right: 10px;
+}
+
+.triage__desc {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  word-break: break-word;
+  margin: 4px 0;
+}
+
+.triage__iban,
+.triage__meta {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  margin: 2px 0 8px;
+}
+
+.triage__sugg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+
+.triage__sugg-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.triage__sugg-chip {
+  cursor: pointer;
+  font-size: 0.78rem;
+
+  &:hover { background: rgba(21, 101, 192, 0.12); }
+}
+
+.triage__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  align-items: start;
+
+  // Box COGE e select/input allineati: collasso lo spazio del subscript quando
+  // non c'è un errore, così tutte le caselle hanno la stessa altezza (56px).
+  .mat-mdc-form-field-subscript-wrapper { min-height: 0; }
+
+  // lo slide-toggle "Apprendi keyword" occupa la riga intera e respira
+  mat-slide-toggle { grid-column: 1 / -1; margin: 2px 0 2px; }
+}
+
+.triage__nota { grid-column: 1 / -1; }
+.triage__kw-preview { grid-column: 1 / -1; }
+
+.triage__row-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.triage__row-actions--evento {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .triage { min-width: 0; }
+  .triage__form { grid-template-columns: 1fr; }
+}
+
+/* ── Possibili duplicati ──────────────────────────────────────────────────── */
+.triage__dup {
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  border-radius: 12px;
+  margin: 12px 2px;
+  overflow: hidden;
+  background: var(--surface);
+
+  &.is-certa { border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+}
+
+.triage__dup-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+.triage__dup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+  &.certa     { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
+  &.probabile { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); }
+}
+
+.triage__dup-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub  { font-size: 0.78rem; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+}
+
+.triage__dup-ring {
+  margin-left: auto;
+  flex: none;
+  color: var(--text);
+}
+
+.triage__dup-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+
+  @media (max-width: 720px) { grid-template-columns: 1fr; }
+}
+
+.triage__dup-ev {
+  padding: 14px 16px;
+
+  & + & { border-left: 1px solid var(--border, rgba(0, 0, 0, 0.08)); }
+  @media (max-width: 720px) { & + & { border-left: 0; border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08)); } }
+}
+
+.triage__dup-src {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+
+  &.billy { color: var(--info); background: rgba(79, 70, 229, 0.12); }
+  &.banca { color: var(--info); background: rgba(14, 116, 144, 0.12); }
+}
+
+.triage__dup-amt {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+
+.triage__dup-dl {
+  margin: 0 0 12px;
+
+  > div { display: flex; gap: 8px; font-size: 0.8rem; margin-top: 5px; }
+  dt { color: var(--text-sub); min-width: 96px; flex: none; margin: 0; }
+  dd { margin: 0; font-weight: 500; word-break: break-word; }
+  dd.mono { font-family: ui-monospace, Menlo, monospace; font-size: 0.74rem; }
+  dd.desc { font-weight: 400; color: var(--text-sub); }
+}
+
+.triage__dup-scarta {
+  font-size: 0.78rem;
+  mat-spinner { display: inline-block; }
+}
+
+.triage__dup-why {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  background: color-mix(in srgb, var(--text-main) 2%, transparent);
+}
+
+.triage__dup-why-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-sub);
+  margin-bottom: 9px;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.triage__dup-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.triage__dup-reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  border: 1px solid transparent;
+
+  strong { font-weight: 600; }
+
+  &.forte     { color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); border-color: color-mix(in srgb, var(--success) 25%, transparent); }
+  &.medio     { color: var(--info);        background: rgba(37, 99, 235, 0.10);  border-color: rgba(37, 99, 235, 0.28); }
+  &.debole    { color: var(--text-sub); background: rgba(100, 116, 139, 0.10); border-color: rgba(100, 116, 139, 0.24); }
+  &.conflitto { color: var(--danger);  background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 28%, transparent); }
+}
+
+/* Anteprima keyword apprese (PROMPT-KEYWORD-LEARNING.md §4.8) */
+.triage__kw-preview {
+  display: flex; flex-direction: column; gap: .4rem;
+  background: rgba(var(--info-rgb), 0.08); border: 1px solid var(--tint-info); border-radius: 10px;
+  padding: .6rem .75rem; margin: .25rem 0 .5rem;
+}
+.triage__kw-preview-label {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .8rem; font-weight: 700; color: var(--info-d);
+  mat-icon { font-size: 18px; height: 18px; width: 18px; }
+}
+.triage__kw-chip {
+  --mdc-chip-label-text-color: var(--info);
+  background: var(--tint-success) !important; font-weight: 600;
+  &.dominio { background: var(--surface-sunken) !important; --mdc-chip-label-text-color: var(--info-d); }
+}
+.triage__kw-hint { font-size: .78rem; color: var(--text-sub); line-height: 1.4; }
+.triage__kw-none { display: inline-flex; align-items: center; gap: .35rem; color: var(--success); font-style: italic;
+  mat-icon { font-size: 16px; height: 16px; width: 16px; } }
+
+/* Parcheggio spese ricorrenti (V9) */
+.triage__ric {
+  border: 1px solid var(--border-soft); border-left: 4px solid var(--info); border-radius: 12px;
+  padding: .85rem 1rem; margin-bottom: .75rem; background: var(--surface-sunken);
+}
+.triage__ric-head { display: flex; align-items: center; gap: .75rem; margin-bottom: .35rem; flex-wrap: wrap; }
+.triage__ric-badge {
+  font-size: .72rem; font-weight: 700; padding: .12rem .55rem; border-radius: 999px;
+  background: var(--tint-info); color: var(--info); letter-spacing: .02em;
+}
+.triage__ric-actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: .4rem; }
+.triage__ric-plan { flex: 1 1 320px; min-width: 240px; }
+
+/* Matching differiti: confronto a due lati (movimento già a libro ↔ riga banca) */
+.triage__match { display: flex; align-items: stretch; gap: .75rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.triage__match-side {
+  flex: 1 1 280px; min-width: 240px; display: flex; flex-direction: column; gap: .25rem;
+  border: 1px solid var(--border-soft); border-radius: 10px; padding: .6rem .8rem; background: var(--surface);
+}
+.triage__match-tag {
+  font-size: .68rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  color: var(--text-sub);
+}
+.triage__match-eq { align-self: center; color: var(--text-sub); }
+
+/* Versione PAGINA: le sezioni sono guidate dalla nav laterale dello shell → niente header tab */
+.triage--page { padding: 0; }
+.triage--page .triage__tabs ::ng-deep .mat-mdc-tab-header { display: none; }

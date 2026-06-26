@@ -1,6 +1,9 @@
 <div class="eventi-page">
   <div class="page-header">
-    <h1 class="page-title">Eventi</h1>
+    <div class="page-header__title">
+      <span class="page-eyebrow">Gestione</span>
+      <h1 class="page-title">Eventi</h1>
+    </div>
     @if (auth.isAdmin()) {
       <button mat-raised-button color="primary" (click)="openNuovoEvento()">
         <mat-icon>add</mat-icon>

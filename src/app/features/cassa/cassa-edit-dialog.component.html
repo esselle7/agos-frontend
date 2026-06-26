@@ -33,7 +33,10 @@
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Descrizione</mat-label>
-        <input matInput formControlName="descrizione" />
+        <input matInput formControlName="descrizione" appInputFilter="safe-text" />
+        @if (form.controls.descrizione.hasError('pattern') && form.controls.descrizione.touched) {
+          <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+        }
       </mat-form-field>
     </div>
 
@@ -61,26 +64,11 @@
     </div>
 
     <div class="form-row">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Conto CoGe</mat-label>
-        <input matInput
-               [formControl]="cogeSearch"
-               [matAutocomplete]="autoCoge"
-               placeholder="Cerca per nome o codice...">
-        <mat-autocomplete #autoCoge (optionSelected)="onCogeSelected($event)">
-          @for (c of filteredCoge(); track c.id) {
-            <mat-option [value]="c">
-              <span style="font-size:13px">{{ c.nome }}</span>
-              <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
-            </mat-option>
-          }
-        </mat-autocomplete>
-        @if (form.controls.contoCoge.value) {
-          <button matSuffix mat-icon-button type="button" (click)="clearCoge()">
-            <mat-icon>close</mat-icon>
-          </button>
-        }
-      </mat-form-field>
+      <app-coge-picker
+        label="Conto CoGe"
+        [value]="form.controls.contoCoge.value"
+        (cogeChange)="setCoge($event)"
+      ></app-coge-picker>
     </div>
 
   </form>

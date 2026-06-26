@@ -1,0 +1,63 @@
+:host-context(html[data-theme="dark"]) .wiz {
+  --kw-identita: #4FB3A4;
+  --kw-evento:   #E0A35C;
+}
+
+.wiz {
+  --kw-identita: #0f766e;
+  --kw-categoria: var(--info-d);
+  --kw-evento: #b45309;
+  min-width: min(620px, 90vw);
+  max-width: 680px;
+
+  &__title { display: flex; align-items: center; gap: .5rem; }
+  &__hint { color: var(--text-sub); font-size: .88rem; line-height: 1.45; margin: 0 0 1rem;
+    code { background: var(--surface-sunken); padding: .05rem .3rem; border-radius: 4px; font-size: .85em; } }
+
+  &__kinds { display: grid; gap: .75rem; }
+  &__kind {
+    display: grid; grid-template-columns: auto 1fr; grid-template-areas: 'icon title' 'icon ex' 'icon spiega' 'icon tag';
+    column-gap: .9rem; row-gap: .15rem; align-items: start;
+    text-align: left; padding: 1rem 1.1rem; border-radius: 14px; cursor: pointer;
+    background: var(--card); border: 1.5px solid var(--border-soft); transition: all .18s ease;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04);
+    mat-icon { grid-area: icon; align-self: center; font-size: 34px; height: 34px; width: 34px; color: var(--accent); }
+    &-title { grid-area: title; font-weight: 700; font-size: 1.02rem; color: var(--text-main); }
+    &-ex { grid-area: ex; font-size: .8rem; color: var(--text-faint); font-style: italic; }
+    &-spiega { grid-area: spiega; font-size: .85rem; color: var(--text-sub); line-height: 1.4; margin-top: .2rem; }
+    &-tag { grid-area: tag; justify-self: start; margin-top: .45rem; font-size: .72rem; font-weight: 700;
+      padding: .12rem .5rem; border-radius: 999px; }
+    &-tag.book { background: color-mix(in srgb, var(--kw-identita) 14%, var(--card)); color: var(--kw-identita); }
+    &-tag.park { background: color-mix(in srgb, var(--kw-evento) 14%, var(--card)); color: var(--kw-evento); }
+    &:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,24,40,.08); }
+    &.sel { border-color: var(--accent); border-width: 2px; background: color-mix(in srgb, var(--accent) 6%, var(--card)); }
+    &.kw-identita { --accent: var(--kw-identita); }
+    &.kw-categoria { --accent: var(--kw-categoria); }
+    &.kw-evento { --accent: var(--kw-evento); }
+  }
+
+  &__full { width: 100%; }
+  // align-items:start così il coge-picker (senza la fascia subscript del mat-form-field)
+  // non si disallinea verticalmente; il flex va dato anche a app-coge-picker o resterebbe
+  // di dimensione diversa dagli altri campi e si accavallerebbe in wrap.
+  &__row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;
+    mat-form-field, app-coge-picker { flex: 1 1 200px; min-width: 0; } }
+
+  &__tokens { margin: .25rem 0 .75rem; }
+  &__tokens-empty { color: var(--text-faint); font-size: .85rem; font-style: italic; }
+
+  &__summary {
+    --accent: var(--text-sub);
+    border-left: 4px solid var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--card));
+    border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+    &.kw-identita { --accent: var(--kw-identita); }
+    &.kw-categoria { --accent: var(--kw-categoria); }
+    &.kw-evento { --accent: var(--kw-evento); }
+    &-head { display: flex; align-items: center; gap: .5rem; font-weight: 700; color: var(--text-main); margin-bottom: .5rem;
+      mat-icon { color: var(--accent); } }
+  }
+  &__cosa { display: flex; gap: .5rem; align-items: flex-start; font-size: .92rem; color: var(--text-main); line-height: 1.5; margin: .4rem 0 0;
+    mat-icon { color: var(--accent); font-size: 20px; height: 20px; width: 20px; margin-top: 1px; } }
+
+  &__nav { display: flex; gap: .5rem; margin-top: 1rem; }
+}

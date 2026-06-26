@@ -78,7 +78,7 @@
           @for (c of filteredCoge(); track c.id) {
             <mat-option [value]="c">
               <span style="font-size:13px">{{ c.nome }}</span>
-              <span style="font-size:11px;color:#6B7280;margin-left:6px">{{ c.codice }}</span>
+              <span style="font-size:11px;color:var(--text-sub);margin-left:6px">{{ c.codice }}</span>
             </mat-option>
           }
         </mat-autocomplete>

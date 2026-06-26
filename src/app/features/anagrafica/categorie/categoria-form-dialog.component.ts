@@ -12,6 +12,8 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { InputFilterDirective } from '../../../shared/directives/input-filter.directive';
+import { AppValidators } from '../../../shared/validators/app-validators';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -45,6 +47,7 @@ export interface CategoriaFormDialogData {
     MatIconModule,
     MatProgressSpinnerModule,
     SkeletonLoaderComponent,
+    InputFilterDirective,
   ],
   templateUrl: './categoria-form-dialog.component.html',
 })
@@ -62,8 +65,8 @@ export class CategoriaFormDialogComponent implements OnInit {
   buNome = signal('');
 
   readonly form = new FormGroup({
-    nome:        new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100)] }),
-    ordinamento: new FormControl<number>(0, { nonNullable: true }),
+    nome:        new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(100), AppValidators.safeText()] }),
+    ordinamento: new FormControl<number>(0, { nonNullable: true, validators: [Validators.min(0)] }),
   });
 
   ngOnInit(): void {

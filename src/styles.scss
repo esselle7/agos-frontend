@@ -6,16 +6,16 @@
 // ─── Custom palettes ────────────────────────────────────────────────────────
 
 $agos-primary-palette: (
-  50:  #e8f5ee,
-  100: #c6e6d4,
-  200: #a0d6b8,
-  300: #79c69b,
-  400: #5db985,
-  500: #2D6A4F,
-  600: #285f47,
-  700: #22523d,
-  800: #1B4332,
-  900: #112b1f,
+  50:  #e8f0ec,
+  100: #c5dbd0,
+  200: #9ec3b2,
+  300: #76ab93,
+  400: #4f8e72,
+  500: #1F5C43,
+  600: #1b533c,
+  700: #174933,
+  800: #133A2B,
+  900: #0b2419,
   contrast: (
     50:   rgba(0, 0, 0, 0.87),
     100:  rgba(0, 0, 0, 0.87),
@@ -31,23 +31,23 @@ $agos-primary-palette: (
 );
 
 $agos-accent-palette: (
-  50:  #fbe9e0,
-  100: #f5c8b0,
-  200: #efa47d,
-  300: #e97f4a,
-  400: #e46323,
-  500: #C0540A,
-  600: #b04b09,
-  700: #9b4007,
-  800: #873606,
-  900: #622503,
+  50:  #f8f3ea,
+  100: #ecdcc0,
+  200: #dfc596,
+  300: #d1ad6c,
+  400: #c79b4d,
+  500: #B5894B,
+  600: #a07840,
+  700: #876435,
+  800: #6e512b,
+  900: #4f3a1d,
   contrast: (
     50:   rgba(0, 0, 0, 0.87),
     100:  rgba(0, 0, 0, 0.87),
     200:  rgba(0, 0, 0, 0.87),
     300:  rgba(0, 0, 0, 0.87),
-    400:  white,
-    500:  white,
+    400:  rgba(0, 0, 0, 0.87),
+    500:  rgba(0, 0, 0, 0.87),
     600:  white,
     700:  white,
     800:  white,
@@ -82,26 +82,140 @@ $agos-theme: mat.m2-define-light-theme((
 @include mat.all-component-themes($agos-theme);
 @include mat.typography-hierarchy($agos-typography);
 
+// ─── Tema scuro Material ─────────────────────────────────────────────────────
+// In dark si usano le tonalità più chiare delle palette (300/100) come primary/
+// accent, così i controlli Material restano leggibili su fondo scuro. Lo scope è
+// html[data-theme="dark"]: gli overlay CDK (dialog/menu/select/tooltip) montano
+// dentro <body>, quindi vengono raggiunti da questo selettore di antenato.
+$agos-dark-primary: mat.m2-define-palette($agos-primary-palette, 300, 100, 500);
+$agos-dark-accent:  mat.m2-define-palette($agos-accent-palette,  300, 100, 500);
+
+$agos-dark-theme: mat.m2-define-dark-theme((
+  color: (
+    primary: $agos-dark-primary,
+    accent:  $agos-dark-accent,
+    warn:    $agos-warn,
+  ),
+  typography: $agos-typography,
+  density: 0,
+));
+
+html[data-theme="dark"] {
+  @include mat.all-component-colors($agos-dark-theme);
+}
+
 // ─── CSS Custom Properties ──────────────────────────────────────────────────
 
 :root {
-  --primary:    #2D6A4F;
-  --primary-rgb: 45, 106, 79;
-  --primary-d:  #1B4332;
-  --accent:     #C0540A;
-  --surface:    #F8FAF9;
-  --card:       #FFFFFF;
-  --border:     #DCE8E2;
-  --text-main:  #1A1A1A;
-  --text-sub:   #6B7280;
+  // ── Brand ────────────────────────────────────────────────
+  --primary:     #1F5C43;          // verde foresta profondo
+  --primary-rgb: 31, 92, 67;
+  --primary-d:   #133A2B;          // abete scuro
+  --primary-l:   #4f8e72;          // verde chiaro (hint, hover icone)
+  --accent:      #B5894B;          // ottone / oro caldo
+  --accent-rgb:  181, 137, 75;
+  --accent-d:    #8a6636;
+  --info:        #2C6E8F;          // blu petrolio — unifica i blu sparsi
+  --info-rgb:    44, 110, 143;
+  --info-d:      #225772;          // petrolio scuro (hover dei CTA "info")
+
+  // ── Neutri / superfici ───────────────────────────────────
+  --surface:        #E9F1EC;       // salvia tenue — dà colore allo sfondo, le card bianche risaltano
+  --surface-2:      #DFEAE2;       // salvia un filo più carico (bande/zebre)
+  --surface-sunken: #EEF2EF;       // pannelli "incassati" / sfondi tenui (ex grigi #f3f4f6, #f9fafb…)
+  --card:           #FFFFFF;
+  --card-tint:      #F4F8F5;       // bianco appena verdolino (card secondarie, header)
+  --on-accent:      #FFFFFF;       // testo/icone su fondo colorato (resta chiaro anche in dark)
+  --border:         #DCE7E0;
+  --border-soft:    #E7EDE9;       // bordi tenui (ex #e5e7eb, #e0e0e0, #dde1e7…)
+  --border-strong:  #C3D3CA;
+  --text-main:      #1A1A1A;
+  --text-sub:       #66726C;       // grigio verdolino, intonato alla salvia
+  --text-faint:     #9AA39D;       // grigio chiaro muto (ex #9ca3af, #98a2b3…)
+
+  // ── Semantici (invariati: combaciano con gli usi esistenti) ─
   --success:    #2E7D32;
   --warning:    #E65100;
   --danger:     #C62828;
-  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.10);
+
+  // ── Tinte derivate (uso coerente di hover/sfondi soft) ───
+  --tint-primary:        rgba(31, 92, 67, 0.06);
+  --tint-primary-hover:  rgba(31, 92, 67, 0.10);
+  --tint-primary-strong: rgba(31, 92, 67, 0.14);
+  --tint-info:           rgba(44, 110, 143, 0.10);
+  --tint-success:        rgba(46, 125, 50, 0.10);
+  --tint-warning:        rgba(230, 81, 0, 0.10);
+  --tint-danger:         rgba(198, 40, 40, 0.10);
+
+  // ── Ombre (tinte di verde scuro, soffici) ────────────────
+  --shadow-sm:    0 1px 2px rgba(19, 58, 43, 0.06), 0 1px 3px rgba(19, 58, 43, 0.04);
+  --shadow-md:    0 4px 12px rgba(19, 58, 43, 0.08);
+  --shadow-lg:    0 12px 28px rgba(19, 58, 43, 0.12);
+  --shadow-hover: 0 6px 16px rgba(19, 58, 43, 0.10);
+
   --radius-sm:  6px;
   --radius-md:  12px;
   --radius-lg:  20px;
+
+  // tempo standard delle micro-interazioni (coerenza + reduced-motion)
+  --t-fast: 0.14s;
+  --t-base: 0.2s;
+  --ease:   cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+// ─── Token TEMA SCURO ────────────────────────────────────────────────────────
+// Ridefinisce SOLO i token: tutto ciò che usa var(--…) si adatta in automatico.
+// I brand color sono schiariti per restare leggibili su fondo scuro.
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  // Brand (schiariti)
+  --primary:     #56B189;
+  --primary-rgb: 86, 177, 137;
+  --primary-d:   #7FC6A4;          // in dark il "d" è la variante più chiara (testo attivo)
+  --primary-l:   #3E9370;
+  --accent:      #CBA86A;
+  --accent-rgb:  203, 168, 106;
+  --accent-d:    #DBC08C;
+  --info:        #5AA6C9;
+  --info-rgb:    90, 166, 201;
+  --info-d:      #86C2DD;
+
+  // Superfici / neutri (verde-carbone)
+  --surface:        #0E1512;
+  --surface-2:      #14201B;
+  --surface-sunken: #0A0F0D;
+  --card:           #18221E;
+  --card-tint:      #1E2A24;
+  --on-accent:      #0E1512;       // testo su fondo colorato chiaro → scuro
+  --border:         #2B3833;
+  --border-soft:    #232E29;
+  --border-strong:  #3A4B43;
+  --text-main:      #E8EDEA;
+  --text-sub:       #9FACA4;
+  --text-faint:     #6E7B74;
+
+  // Semantici (schiariti per il fondo scuro)
+  --success:    #5CC97D;
+  --warning:    #E8904A;
+  --danger:     #F26B6B;
+
+  // Tinte (rgb aggiornati + alpha un filo più alta sul dark)
+  --tint-primary:        rgba(86, 177, 137, 0.12);
+  --tint-primary-hover:  rgba(86, 177, 137, 0.18);
+  --tint-primary-strong: rgba(86, 177, 137, 0.24);
+  --tint-info:           rgba(90, 166, 201, 0.16);
+  --tint-success:        rgba(92, 201, 125, 0.16);
+  --tint-warning:        rgba(232, 144, 74, 0.16);
+  --tint-danger:         rgba(242, 107, 107, 0.16);
+
+  // Ombre nere più marcate
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
+  --shadow-md:    0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg:    0 12px 28px rgba(0, 0, 0, 0.55);
+  --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.50);
 }
 
 // ─── Reset / Base ────────────────────────────────────────────────────────────
@@ -135,8 +249,24 @@ h4, h5, h6, p {
 
 .card {
   background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+}
+
+// Card cliccabile / interattiva: hover-lift soffice e performante
+// (solo transform + box-shadow). Opt-in con la classe `card--interactive`.
+.card--interactive {
+  cursor: pointer;
+  transition: box-shadow var(--t-base) var(--ease),
+              transform var(--t-base) var(--ease),
+              border-color var(--t-base) var(--ease);
+
+  &:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
 }
 
 // ─── Custom scrollbar ────────────────────────────────────────────────────────
@@ -155,7 +285,7 @@ h4, h5, h6, p {
   border-radius: 3px;
 
   &:hover {
-    background: color.adjust(#DCE8E2, $lightness: -10%);
+    background: var(--border-strong);
   }
 }
 
@@ -172,9 +302,15 @@ h4, h5, h6, p {
 }
 
 @keyframes skeleton-pulse {
-  0%   { background-color: #e8efec; }
-  50%  { background-color: #d4ddd9; }
-  100% { background-color: #e8efec; }
+  0%   { background-color: #e7ede9; }
+  50%  { background-color: #d6e0da; }
+  100% { background-color: #e7ede9; }
+}
+
+@keyframes skeleton-pulse-dark {
+  0%   { background-color: #1f2a25; }
+  50%  { background-color: #2a3832; }
+  100% { background-color: #1f2a25; }
 }
 
 .skeleton-line {
@@ -182,6 +318,10 @@ h4, h5, h6, p {
   height: 14px;
   border-radius: var(--radius-sm);
   animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+html[data-theme="dark"] .skeleton-line {
+  animation-name: skeleton-pulse-dark;
 }
 
 // CoGe autocomplete option layout
@@ -202,7 +342,7 @@ h4, h5, h6, p {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--primary);
-    background: rgba(45, 106, 79, 0.1);
+    background: var(--tint-primary-hover);
     padding: 1px 6px;
     border-radius: 4px;
     white-space: nowrap;
@@ -384,13 +524,18 @@ h4, h5, h6, p {
 .mat-mdc-table {
   background: transparent;
 
+  .mat-mdc-header-row {
+    background: var(--tint-primary);
+  }
+
   .mat-mdc-header-cell {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: var(--text-sub);
+    color: var(--primary-d);
     white-space: nowrap;
+    background: transparent;
   }
 
   .mat-mdc-cell {
@@ -403,7 +548,7 @@ h4, h5, h6, p {
     transition: background 0.12s ease;
 
     &:hover {
-      background: rgba(45, 106, 79, 0.04);
+      background: var(--tint-primary);
 
       .agos-actions-col,
       .agos-actions-col-reveal {
@@ -419,6 +564,14 @@ h4, h5, h6, p {
     white-space: nowrap;
     text-align: right;
   }
+}
+
+// Material cards adottano la stessa identità delle nostre .card.
+.mat-mdc-card {
+  --mdc-elevated-card-container-shape: var(--radius-md);
+  --mdc-outlined-card-container-shape: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm) !important;
 }
 
 // Status chips: pill-shaped, compact, consistent on every page.
@@ -438,11 +591,81 @@ h4, h5, h6, p {
   justify-content: flex-end;
 }
 
+// Dialog "scelta conto" e form piano dei conti: superficie più arrotondata e ben rifinita.
+.coge-picker-panel .mat-mdc-dialog-surface,
+.pc-dialog-panel .mat-mdc-dialog-surface {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
 // Icon-only buttons sit on a consistent 36px square hit area.
 .icon-btn-sm.mat-mdc-icon-button {
   width: 36px;
   height: 36px;
   padding: 6px;
+}
+
+// Buttons: una sola identità (raggio, peso, transizione soft) su tutte le pagine.
+.mat-mdc-raised-button,
+.mat-mdc-flat-button,
+.mat-mdc-stroked-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button,
+.mat-mdc-button {
+  --mdc-filled-button-container-shape: 10px;
+  --mdc-protected-button-container-shape: 10px;
+  --mdc-outlined-button-container-shape: 10px;
+  --mdc-text-button-container-shape: 10px;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+  transition: box-shadow var(--t-base) var(--ease),
+              transform var(--t-fast) var(--ease),
+              background-color var(--t-fast) var(--ease);
+}
+
+// Filled CTA: micro hover-lift coerente (transform/shadow → performante).
+.mat-mdc-raised-button:not(:disabled):hover,
+.mat-mdc-unelevated-button:not(:disabled):hover,
+.mat-mdc-flat-button:not(:disabled):hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.mat-mdc-stroked-button {
+  --mdc-outlined-button-outline-color: var(--border-strong);
+}
+
+// Focus ring accessibile e coerente per la navigazione da tastiera.
+a:focus-visible,
+button:focus-visible,
+.nav-link:focus-visible,
+.mat-mdc-button-base:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+// Eyebrow sopra il titolo pagina — utility globale riusabile su ogni header.
+// Trattino in ottone + etichetta in verde: introduce colore in cima a ogni pagina.
+.page-eyebrow,
+.agos-page-header__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 3px;
+
+  &::before {
+    content: '';
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
 }
 
 // ─── Responsive ───────────────────────────────────────────────────────────────
@@ -473,5 +696,111 @@ h4, h5, h6, p {
 
   .agos-form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Dialog form — identità coerente per TUTTI i form di inserimento
+   (eventi, anagrafica, …). Globale perché i dialog vivono nell'overlay.
+   ════════════════════════════════════════════════════════════════════ */
+.dform__head {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 22px 24px 6px;
+}
+.dform__head-ico {
+  width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary-d);
+  mat-icon { font-size: 25px; width: 25px; height: 25px; }
+}
+.dform__head-tt { display: flex; flex-direction: column; }
+.dform__head-tt h2 {
+  margin: 0; font-family: 'DM Sans', sans-serif; font-size: 1.25rem; font-weight: 700;
+  color: var(--text-main); line-height: 1.2;
+}
+.dform__head-sub { margin: 3px 0 0; font-size: .85rem; color: var(--text-sub); }
+
+.dform__body { padding: 14px 24px 4px; }
+
+.dform__row { display: grid; grid-template-columns: 1fr; gap: 4px 16px; margin-bottom: 4px; }
+.dform__row--2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 540px) { .dform__row--2 { grid-template-columns: 1fr; } }
+.dform__row mat-form-field,
+.dform__field { width: 100%; }
+
+.dform__section {
+  display: flex; align-items: center; gap: 8px;
+  margin: 16px 0 10px; padding-top: 2px;
+  font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--text-sub);
+  &::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  mat-icon { font-size: 17px; width: 17px; height: 17px; color: var(--primary); opacity: .9; }
+}
+
+.dform__hint { margin: -6px 2px 10px; font-size: .74rem; color: var(--text-sub); }
+
+/* callout informativo (le "note" guida) */
+.dform__note {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin: 4px 0 12px; padding: 10px 12px;
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  border-radius: 10px; font-size: .82rem; color: var(--text-main); line-height: 1.4;
+  mat-icon { font-size: 19px; width: 19px; height: 19px; color: var(--primary); flex-shrink: 0; margin-top: 1px; }
+}
+
+/* contesto read-only (es. BU/Tipo nella creazione categoria) */
+.dform__context {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+}
+.dform__context-item {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 7px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border);
+}
+.dform__context-k { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-sub); }
+.dform__context-v { font-size: .9rem; font-weight: 600; color: var(--text-main); }
+
+.dform__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 24px 18px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   Caselle di input UNIFORMI — stesso "box" del campo Conto COGE:
+   riquadro arrotondato 12px, bordo soft, sfondo card, hover/focus verde.
+   Vale per input, select, textarea, datepicker, autocomplete (outline).
+   ════════════════════════════════════════════════════════════════════ */
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 12px;
+  --mdc-outlined-text-field-outline-color: var(--border);
+  --mdc-outlined-text-field-hover-outline-color: #{'color-mix(in srgb, var(--primary) 45%, var(--border))'};
+  --mdc-outlined-text-field-focus-outline-color: var(--primary);
+  --mdc-outlined-text-field-outline-width: 1px;
+  --mdc-outlined-text-field-focus-outline-width: 1.5px;
+  --mdc-outlined-text-field-label-text-color: var(--text-sub);
+  --mdc-outlined-text-field-input-text-color: var(--text-main);
+  --mdc-outlined-text-field-caret-color: var(--primary);
+  --mat-form-field-focus-select-arrow-color: var(--primary);
+}
+
+/* sfondo bianco "a pillola" dentro l'outline, come la casella COGE */
+.mat-mdc-form-field-appearance-outline .mat-mdc-text-field-wrapper {
+  background: var(--card);
+  border-radius: 12px;
+}
+
+/* ── Motion ridotta (globale) ──────────────────────────────────────────
+   Disattiva i micro-movimenti (transform) per chi preferisce meno animazioni.
+   Le transizioni di colore restano: non pesano e migliorano la leggibilità. */
+@media (prefers-reduced-motion: reduce) {
+  .card--interactive:hover,
+  .mat-mdc-raised-button:hover,
+  .mat-mdc-unelevated-button:hover,
+  .mat-mdc-flat-button:hover {
+    transform: none;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

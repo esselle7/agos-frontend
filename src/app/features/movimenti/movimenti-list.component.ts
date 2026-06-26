@@ -5,7 +5,6 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
 } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -21,13 +20,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { DateMaskDirective } from '../../shared/directives/date-mask.directive';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { MovimentiService, MovimentiFilter } from '../../core/services/movimenti.service';
 import { ContiService } from '../../core/services/conti.service';
-import { ReportingService } from '../../core/services/reporting.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { BuService } from '../../core/services/bu.service';
 import { MovimentoDTO, MovimentiSommarioDTO, TipoMovimento, StatoMovimento } from '../../core/models/movimenti.models';
@@ -38,8 +37,6 @@ import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { RiconciliazioneDialogComponent } from './riconciliazione-dialog.component';
-import { ImportDialogComponent } from './import-dialog.component';
 
 @Component({
   selector: 'app-movimenti-list',
@@ -58,6 +55,7 @@ import { ImportDialogComponent } from './import-dialog.component';
     MatTooltipModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    DateMaskDirective,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatMenuModule,
@@ -71,14 +69,12 @@ import { ImportDialogComponent } from './import-dialog.component';
 })
 export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly movimentiService = inject(MovimentiService);
-  private readonly reportingService = inject(ReportingService);
   private readonly buService = inject(BuService);
   private readonly contiService = inject(ContiService);
   readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
   readonly displayedColumns = ['dataMovimento', 'tipo', 'descrizione', 'bu', 'fonte', 'importo', 'stato', 'azioni'];
@@ -104,12 +100,10 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.contiService.getAll().pipe(takeUntil(this.destroy$)).subscribe(list => {
       this.conti.set(list);
-      this.cdr.markForCheck();
     });
 
     this.buService.getAll().subscribe(units => {
       this.buMap.set(new Map(units.map(u => [u.id, u])));
-      this.cdr.markForCheck();
     });
 
     this.searchControl.valueChanges.pipe(
@@ -138,17 +132,15 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       next: res => {
         this.result.set(res);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.loading.set(false);
         this.snackBar.open('Errore nel caricamento dei movimenti', 'OK', { duration: 3000 });
-        this.cdr.markForCheck();
       },
     });
 
     this.movimentiService.getSommario(baseFilter).subscribe({
-      next: s => { this.sommario.set(s); this.cdr.markForCheck(); },
+      next: s => { this.sommario.set(s); },
       error: () => {},
     });
   }
@@ -189,27 +181,6 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   onRowClick(row: MovimentoDTO): void {
     this.router.navigate(['/movimenti', row.id]);
-  }
-
-  openRiconciliazione(): void {
-    this.dialog.open(RiconciliazioneDialogComponent, { width: '800px', maxHeight: '90vh' });
-  }
-
-  openImport(): void {
-    this.dialog.open(ImportDialogComponent, { width: '600px' }).afterClosed().subscribe(imported => {
-      if (imported) this.loadData();
-    });
-  }
-
-  esportaCsv(): void {
-    const from = this.fromControl.value;
-    const to = this.toControl.value;
-    const today = new Date();
-    const fromStr = from ? this.toIso(from) : this.toIso(new Date(today.getFullYear(), today.getMonth(), 1));
-    const toStr = to ? this.toIso(to) : this.toIso(today);
-    this.reportingService.exportMovimenti(fromStr, toStr, 'csv').subscribe(blob => {
-      this.reportingService.downloadBlob(blob, `movimenti-${fromStr}.csv`);
-    });
   }
 
   liquidaMovimento(mov: MovimentoDTO, contoBancarioId: number, event?: Event): void {
@@ -266,10 +237,9 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      REGISTRATO:   '#1565C0',
+      REGISTRATO:   '#2C6E8F',
       DA_LIQUIDARE: '#F57C00',
       ANNULLATO:    '#C62828',
-      RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';
   }
@@ -279,13 +249,31 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       REGISTRATO:   'Registrato',
       DA_LIQUIDARE: 'Da liquidare',
       ANNULLATO:    'Annullato',
-      RICONCILIATO: 'Riconciliato',
     };
     return map[stato] ?? stato;
   }
 
   sommarioCount(s: { countEntrate: number; countUscite: number }): number {
     return s.countEntrate + s.countUscite;
+  }
+
+  /** Etichetta compatta del ritardo/scadenza per un movimento Da Liquidare. */
+  ritardoLabel(giorni: number): string {
+    if (giorni < 0) return `+${-giorni}gg di ritardo`;
+    if (giorni === 0) return 'scade oggi';
+    return `tra ${giorni}gg`;
+  }
+
+  /** Spiegazione estesa: distingue uscita (pago io) da entrata (mi pagano). */
+  ritardoTooltip(row: { giorniAllaScadenza: number | null; tipo: string }): string {
+    const g = row.giorniAllaScadenza ?? 0;
+    if (g < 0) {
+      return row.tipo === 'USCITA'
+        ? `Sei in ritardo di ${-g} giorni sul pagamento`
+        : `Sei in attesa del pagamento da ${-g} giorni`;
+    }
+    if (g === 0) return 'Scade oggi';
+    return `Scade tra ${g} giorni`;
   }
 
   fonteColor(fonte: string | null): string {

@@ -159,7 +159,7 @@
 
 .coge-chip {
   font-size: 0.72rem;
-  background: rgba(45, 106, 79, 0.1);
+  background: rgba(var(--primary-rgb), 0.1);
   color: var(--primary);
   padding: 2px 6px;
   border-radius: 4px;
@@ -193,10 +193,4 @@
     background: rgba(198, 40, 40, 0.07);
     color: var(--danger);
   }
-}
-
-.bu-export-row {
-  display: flex;
-  justify-content: flex-end;
-  padding-bottom: 8px;
 }

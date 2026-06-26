@@ -1,6 +1,10 @@
 # Documentazione Movimenti — Agostinelli Gestionale
 
-> Versione: V29+ | Ultimo aggiornamento: 2026-05-20
+> Schema DB consolidato `V1`–`V10` | Ultimo aggiornamento: 2026-06-22
+>
+> Nota: questo documento è **logicamente allineato al codice**. I riferimenti a numeri di migration
+> storici (V20, V29…) sono stati rimossi: tutte le strutture descritte (mastri COGE 10–70, modello a
+> 3 date, viste materializzate del P&L e del cash flow) vivono ora nello schema consolidato `V1`–`V10`.
 
 ---
 
@@ -141,12 +145,12 @@ Il conto COGE (`conto_coge_id`) determina **come ogni movimento viene classifica
     50.01.002  Lavapavimenti
     50.01.003  Arredi e attrezzature
 
-60  ONERI FINANZIARI (ONERE_FINANZIARIO)   ← introdotto in V29
+60  ONERI FINANZIARI (ONERE_FINANZIARIO)
     60.01.001  Interessi mutuo ipotecario
     60.01.002  Interessi Regione
     60.01.003  Interessi ISMEA
 
-70  IMPOSTE E TRIBUTI (IMPOSTA)             ← introdotto in V29
+70  IMPOSTE E TRIBUTI (IMPOSTA)
     70.01.001  IRAP
     70.02.001  IRPEF / IRES
 ```
@@ -336,6 +340,9 @@ PREVENTIVATO ──(caparra/acconto)──► CONFERMATO ──(saldo completo)�
 | `ACCONTO` | ENTRATA | PREVENTIVATO → CONFERMATO | Multipli ammessi | Pagamenti parziali intermedi |
 | `SALDO` | ENTRATA | Se importoResiduo ≤ €0.01 → SALDATO | Max 1 per evento | Chiusura totale |
 | `PENALE` | ENTRATA | Solo su evento ANNULLATO | Multipli ammessi | Penale di recesso |
+| `RIMBORSO` | USCITA | Nessuna | Multipli ammessi; non vincolato al residuo | Restituzione al cliente (es. su annullamento) |
+
+> Vincoli applicati da `EventiService.registraPagamento()`: max 1 fra CAPARRA/ACCONTO/SALDO; su evento ANNULLATO è ammessa solo PENALE (e RIMBORSO); l'importo non può superare il residuo per CAPARRA/ACCONTO/SALDO (PENALE e RIMBORSO sono esclusi dal vincolo del residuo).
 
 ### Struttura del movimento generato
 
@@ -347,7 +354,7 @@ importo:               importo del pagamento
 dataMovimento:         evento.dataEvento   ← COMPETENZA = data dell'evento
 dataFinanziaria:       request.data()      ← LIQUIDAZIONE = data del pagamento fisico
 dataLiquidita:         request.data()
-stato:                 REGISTRATO (o ATTIVO nei sistemi pre-V20)
+stato:                 REGISTRATO  (ATTIVO è un alias legacy ancora presente tra i lk_stati_movimento)
 fonte:                 MANUALE
 eventoId:              evento.id
 tipoEventoMovimento:   CAPARRA | ACCONTO | SALDO | PENALE
@@ -600,6 +607,11 @@ Uscite finanziarie: −€101.888,04  (totale rate pagate)
 
 ## 9. Movimenti cassa
 
+> **Stato UI (2026-06):** il modulo Cassa è **disabilitato nel frontend** — la voce di
+> menu e la rotta `/cassa` sono commentate in `app-shell.component.ts` e `app.routes.ts`
+> (codice del componente mantenuto). La logica descritta qui sotto resta valida lato backend
+> ma non è raggiungibile dall'interfaccia finché la voce non viene riattivata.
+
 Il modulo cassa gestisce il denaro contante dell'azienda separatamente. I movimenti cassa (`cassa_movimenti`) sono un'entità distinta, ma alcuni tipi generano automaticamente un corrispondente `Movimento` sul libro contabile.
 
 ### Tipi di movimento cassa
@@ -720,6 +732,12 @@ La vista viene aggiornata:
 ---
 
 ## 12. Impatto finanziario: il cash flow
+
+> **Stato UI (2026-06):** la logica del cash flow vive nel modello dati e nei KPI di
+> Dashboard, ma **non esiste una schermata "Cash Flow" autonoma** raggiungibile dal menu.
+> Il componente `cash-flow.component` esiste nel frontend ma non è agganciato a nessuna
+> rotta. La sezione **Reporting** espone solo i tab *P&L Comparativo* ed *Export*; le
+> proiezioni di cassa future sono nella voce **Previsioni** (forecasting).
 
 ### La materialized view `mv_cash_flow_statement`
 

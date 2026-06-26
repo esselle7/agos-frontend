@@ -1,0 +1,48 @@
+<div class="storico">
+  @if (loading()) {
+    <div class="storico__loading"><mat-spinner diameter="36"></mat-spinner></div>
+  } @else if (!result()?.content?.length) {
+    <div class="storico__empty"><mat-icon>inbox</mat-icon><p>Nessun import effettuato.</p></div>
+  } @else {
+    <table mat-table [dataSource]="result()!.content" class="storico__table">
+      <ng-container matColumnDef="dataImport">
+        <th mat-header-cell *matHeaderCellDef>Data</th>
+        <td mat-cell *matCellDef="let row">{{ formatDate(row.dataImport) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="fonte">
+        <th mat-header-cell *matHeaderCellDef>Fonte</th>
+        <td mat-cell *matCellDef="let row">{{ fonteLabel(row.fonte) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="righe">
+        <th mat-header-cell *matHeaderCellDef>Esiti</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="storico__stat ok">{{ row.righeImportate ?? 0 }} imp.</span>
+          @if (pendenti(row) > 0) { <span class="storico__stat warn">{{ pendenti(row) }} pend.</span> }
+          @if ((row.righeParcheggiate ?? 0) > 0) { <span class="storico__stat">{{ row.righeParcheggiate }} eventi</span> }
+          @if ((row.righeScartate ?? 0) > 0) { <span class="storico__stat">{{ row.righeScartate }} escl.</span> }
+          @if ((row.righeErrore ?? 0) > 0) { <span class="storico__stat err">{{ row.righeErrore }} err.</span> }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="stato">
+        <th mat-header-cell *matHeaderCellDef>Stato</th>
+        <td mat-cell *matCellDef="let row"><span class="storico__stato" [style.color]="statoColor(row.stato)">{{ statoLabel(row.stato) }}</span></td>
+      </ng-container>
+      <ng-container matColumnDef="azioni">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="storico__azioni">
+          @if (pendenti(row) > 0) {
+            <button mat-stroked-button color="warn" (click)="apriRevisione(row)"><mat-icon>rule</mat-icon> Rivedi ({{ pendenti(row) }})</button>
+          }
+          <button mat-icon-button color="warn" [disabled]="rollingBack() === row.id" (click)="rollback(row)" matTooltip="Annulla import (rollback)">
+            @if (rollingBack() === row.id) { <mat-spinner diameter="18"></mat-spinner> } @else { <mat-icon>undo</mat-icon> }
+          </button>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <mat-paginator [length]="result()!.totalElements" [pageIndex]="result()!.page" [pageSize]="result()!.size"
+                   [pageSizeOptions]="[10, 15, 30]" (page)="onPage($event)" showFirstLastButtons></mat-paginator>
+  }
+</div>

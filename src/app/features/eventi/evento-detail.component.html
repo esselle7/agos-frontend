@@ -125,6 +125,15 @@
         </div>
 
       </div>
+
+      @if (authService.isAdmin() && ev.stato !== 'ANNULLATO') {
+        <agos-help-note tono="info" [collapsed]="true" titolo="Come avanza un evento">
+          <p>L'evento nasce <strong>Preventivato</strong>. Lo confermi quando il cliente
+            accetta — di solito all'arrivo della caparra o di un acconto. Quando registri il
+            pagamento di <strong>SALDO</strong> e il residuo arriva a zero, passa da solo a
+            <strong>Saldato</strong>.</p>
+        </agos-help-note>
+      }
     </div>
 
     <!-- ====== MENU PDF ====== -->
@@ -142,12 +151,20 @@
       </div>
 
       @if (ev.menuPdfUrl) {
-        @if (menuPdfSafeUrl(); as safeUrl) {
-          <iframe class="menu-viewer" [src]="safeUrl" type="application/pdf" title="Menu evento"></iframe>
+        @if (menuIsWord()) {
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:32px 24px;border:1.5px dashed var(--border-strong);border-radius:12px;background:var(--surface-sunken);color:var(--text-sub);text-align:center">
+            <mat-icon style="font-size:48px;width:48px;height:48px;color:var(--info)">description</mat-icon>
+            <p style="margin:0;font-size:15px;font-weight:600;color:var(--text-main)">Anteprima non disponibile</p>
+            <p style="margin:0;font-size:13px">Il file è un documento Word — scaricalo per visualizzarlo.</p>
+          </div>
+        } @else {
+          @if (menuPdfSafeUrl(); as safeUrl) {
+            <iframe class="menu-viewer" [src]="safeUrl" type="application/pdf" title="Menu evento"></iframe>
+          }
+          <div class="menu-fallback">
+            <button class="menu-link-btn" (click)="openMenuNewTab()">Apri PDF in una nuova scheda</button>
+          </div>
         }
-        <div class="menu-fallback">
-          <button class="menu-link-btn" (click)="openMenuNewTab()">Apri PDF in una nuova scheda</button>
-        </div>
 
         <div class="menu-buttons">
           <button mat-flat-button color="primary" (click)="downloadMenu()">
@@ -173,12 +190,14 @@
             <mat-spinner diameter="32" />
             <p class="menu-dropzone-sub">Caricamento in corso…</p>
           } @else {
-            <mat-icon>picture_as_pdf</mat-icon>
-            <p class="menu-dropzone-title">{{ ev.menuPdfUrl ? 'Sostituisci il menu' : 'Carica il menu in PDF' }}</p>
-            <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — max 10 MB</p>
+            <mat-icon>upload_file</mat-icon>
+            <p class="menu-dropzone-title">{{ ev.menuPdfUrl ? 'Sostituisci il menu' : 'Carica il menu (PDF o Word)' }}</p>
+            <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — PDF, .doc, .docx — max 10 MB</p>
           }
         </div>
-        <input #menuFileInput type="file" accept="application/pdf" hidden (change)="onMenuFileInput($event)" />
+        <input #menuFileInput type="file"
+               accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+               hidden (change)="onMenuFileInput($event)" />
       }
     </div>
     }
@@ -187,6 +206,15 @@
     @if (authService.isAdmin()) {
     <div class="section financial-card">
       <h2 class="section-title">Riepilogo Finanziario</h2>
+
+      <agos-help-note tono="info" [collapsed]="true" titolo="Come si calcola il profitto">
+        <p><strong>Incassato</strong> e <strong>Residuo</strong> riguardano la cassa (quanto è
+          già entrato e quanto manca al preventivo). Il <strong>Profitto</strong> è invece il
+          margine dell'evento: ricavo meno i <strong>costi diretti</strong> (DJ, torta, affitto
+          sala, catering…), cioè le spese specifiche di questo evento che ne erodono il guadagno.</p>
+        <p>Ricorda: il ricavo è di competenza alla data dell'evento, anche se l'incasso avviene
+          in momenti diversi.</p>
+      </agos-help-note>
 
       <div class="preventivo-row">
         <span class="preventivo-label">Preventivo totale</span>
@@ -370,7 +398,7 @@
       <div class="section-header">
         <h2 class="section-title">Personale impiegato</h2>
         @if (partecipanti().length > 0) {
-          <span style="font-size:13px;color:#6b7280">{{ partecipanti().length }} dipendente{{ partecipanti().length === 1 ? '' : 'i' }}</span>
+          <span style="font-size:13px;color:var(--text-sub)">{{ partecipanti().length }} dipendente{{ partecipanti().length === 1 ? '' : 'i' }}</span>
         }
       </div>
 
@@ -383,7 +411,7 @@
         @for (gruppo of partecipantiPerMansione(); track gruppo.mansione) {
           <div class="personale-gruppo-card">
             <div class="personale-gruppo-header">
-              <mat-icon style="font-size:16px;width:16px;height:16px;color:#6b7280">work_outline</mat-icon>
+              <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--text-sub)">work_outline</mat-icon>
               <span class="personale-gruppo-titolo">{{ gruppo.mansione }}</span>
               <span class="personale-gruppo-count">{{ gruppo.persone.length }}</span>
             </div>

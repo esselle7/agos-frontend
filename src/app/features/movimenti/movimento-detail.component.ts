@@ -172,6 +172,19 @@ export class MovimentoDetailComponent implements OnInit {
     return `${d}/${m}/${y}`;
   }
 
+  /** Testo leggibile dello stato di scadenza per un movimento Da Liquidare (Feature 1). */
+  scadenzaTesto(mov: { giorniAllaScadenza: number | null; tipo: string }): string {
+    const g = mov.giorniAllaScadenza;
+    if (g == null) return '—';
+    if (g < 0) {
+      return mov.tipo === 'USCITA'
+        ? `In ritardo di ${-g} giorni sul pagamento`
+        : `In attesa del pagamento da ${-g} giorni`;
+    }
+    if (g === 0) return 'Scade oggi';
+    return `Scade tra ${g} giorni`;
+  }
+
   formatDateTime(iso: string): string {
     if (!iso) return '—';
     const d = new Date(iso);
@@ -184,10 +197,9 @@ export class MovimentoDetailComponent implements OnInit {
 
   statoColor(stato: StatoMovimento): string {
     const map: Record<StatoMovimento, string> = {
-      REGISTRATO:   '#1565C0',
+      REGISTRATO:   '#2C6E8F',
       DA_LIQUIDARE: '#F57C00',
       ANNULLATO:    '#C62828',
-      RICONCILIATO: '#2E7D32',
     };
     return map[stato] ?? '#6B7280';
   }

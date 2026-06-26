@@ -1,21 +1,24 @@
 import { Component, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { EuroPipe } from '../../pipes/euro.pipe';
 
-type CardColor = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
+type CardColor = 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'info' | 'accent';
 
-const COLOR_HEX: Record<CardColor, string> = {
-  primary: '#2D6A4F',
-  success: '#2E7D32',
-  warning: '#E65100',
-  danger:  '#C62828',
-  neutral: '#6B7280',
+// Mappa il colore logico su un token CSS: così la card si adatta a chiaro/scuro
+// senza colori hardcoded (i token cambiano valore sotto html[data-theme="dark"]).
+const COLOR_VAR: Record<CardColor, string> = {
+  primary: 'var(--primary)',
+  success: 'var(--success)',
+  warning: 'var(--warning)',
+  danger:  'var(--danger)',
+  neutral: 'var(--text-sub)',
+  info:    'var(--info)',
+  accent:  'var(--accent)',
 };
 
 @Component({
   selector: 'agos-stat-card',
   standalone: true,
-  imports: [MatIconModule, EuroPipe],
+  imports: [MatIconModule],
   templateUrl: './stat-card.component.html',
   styleUrls: ['./stat-card.component.scss'],
 })
@@ -30,12 +33,18 @@ export class StatCardComponent {
   @Input() format: 'euro' | 'number' | 'percent' = 'euro';
   @Input() deltaPositiveIsGood = true;
 
-  get hexColor(): string {
-    return COLOR_HEX[this.color];
+  /** Token CSS del colore (si adatta a tema chiaro/scuro). */
+  get colorVar(): string {
+    return COLOR_VAR[this.color];
   }
 
   get iconBg(): string {
-    return this.hexToRgba(this.hexColor, 0.15);
+    return `color-mix(in srgb, ${this.colorVar} 15%, transparent)`;
+  }
+
+  /** Sfondo card: soft fade del colore in alto → colore della card (chiaro o scuro). */
+  get cardBg(): string {
+    return `linear-gradient(180deg, color-mix(in srgb, ${this.colorVar} 9%, var(--card)) 0%, var(--card) 58%)`;
   }
 
   get deltaIsPositive(): boolean {
@@ -70,12 +79,5 @@ export class StatCardComponent {
     }
     if (this.format === 'percent') return `${abs.toFixed(1)}%`;
     return new Intl.NumberFormat('it-IT').format(abs);
-  }
-
-  private hexToRgba(hex: string, alpha: number): string {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 }

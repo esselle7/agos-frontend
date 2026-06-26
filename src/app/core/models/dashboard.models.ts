@@ -81,4 +81,6 @@ export interface ScadenzeImminentiDTO {
   eventi: ScadenzaDTO[];
   rateRicorrenti: ScadenzaDTO[];
   usciteDaLiquidare: UscitaDaLiquidareDTO[];
+  /** Incassi attesi: ENTRATA registrata ma non ancora liquidata (simmetrico a usciteDaLiquidare). */
+  entrateDaRicevere: UscitaDaLiquidareDTO[];
 }

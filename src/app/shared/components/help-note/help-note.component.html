@@ -1,0 +1,17 @@
+<div class="help-note help-note--{{ tono }}"
+     [class.help-note--open]="open" [class.help-note--static]="!collapsed">
+  @if (collapsed) {
+    <button type="button" class="help-note__trigger" (click)="toggle()"
+            [attr.aria-expanded]="open">
+      <mat-icon class="help-note__icon">{{ icon }}</mat-icon>
+      <span class="help-note__title">{{ titolo }}</span>
+      <mat-icon class="help-note__chevron">{{ open ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+  } @else {
+    <mat-icon class="help-note__icon">{{ icon }}</mat-icon>
+  }
+  <!-- ponytail: un solo ng-content (due slot default = proiezione persa quando collapsed) -->
+  <div class="help-note__body" [hidden]="collapsed && !open">
+    <ng-content></ng-content>
+  </div>
+</div>
