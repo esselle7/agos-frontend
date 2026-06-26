@@ -175,7 +175,10 @@ export class ImportTriageDialogComponent implements OnInit {
     const fail = (e: unknown) => { this.caricate.delete(s); done(); this.fail(e as { error?: { message?: string } }); };
     switch (s) {
       case 'catalogare':
-        this.movimentiService.getTransitori(undefined, 0, 2000).subscribe({
+        // ponytail: cap a 200 (era 2000). Il backend riestrae IBAN/controparte con regex
+        // per riga: 200 righe ~80ms vs 780ms su 600. Le righe escono man mano che le smisti.
+        // Se servono >200 visibili insieme, persisti la controparte all'import (no regex al read).
+        this.movimentiService.getTransitori(undefined, 0, 200).subscribe({
           next: r => { r.content.forEach(t => this.transForms.set(t.id, this.buildTransForm())); this.transitori.set(r.content); done(); }, error: fail });
         break;
       case 'riba':

@@ -1,7 +1,10 @@
 <h2 mat-dialog-title>{{ data.title }}</h2>
 
 <mat-dialog-content>
-  <p [innerHTML]="data.message"></p>
+  <!-- security: interpolazione, non [innerHTML]: i messaggi sono testo (nomi conto,
+       pattern alias inseriti dall'utente) e non devono passare per il sanitizer HTML
+       (Angular ha una CVE di bypass del sanitizer in questa fascia di versioni). -->
+  <p>{{ data.message }}</p>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

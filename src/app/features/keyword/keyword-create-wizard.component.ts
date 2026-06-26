@@ -101,13 +101,18 @@ export class KeywordCreateWizardComponent {
   readonly isIdentita = computed(() => this.kind() === 'IDENTITA');
 
   readonly tokenValido = computed(() => this.tokens().length >= 1);
-  readonly targetValido = computed(() => {
+
+  // NB: buId/cogeCodice/tipoMovimento/... sono campi mutati via [(ngModel)], NON signal.
+  // Un computed() non li traccierebbe e resterebbe congelato al valore iniziale (false),
+  // bloccando "Avanti" allo step 3. Come metodo viene rivalutato a ogni change-detection
+  // (innescata dagli eventi ngModel/cogeChange del template) → riflette le selezioni reali.
+  targetValido(): boolean {
     if (this.isEvento()) return true;
     return this.buId != null && !!this.cogeCodice;
-  });
+  }
 
   /** Frase in italiano: cosa farà concretamente questa keyword. */
-  readonly cosaSuccede = computed(() => {
+  cosaSuccede(): string {
     const k = this.kind();
     if (!k || this.tokens().length === 0) return '';
     const tk = this.tokens().join(' + ');
@@ -122,7 +127,7 @@ export class KeywordCreateWizardComponent {
       return `${quando} → la registro su ${cogeTxt} (${buTxt})${forn}.`;
     }
     return `${quando} → la registro su ${cogeTxt} (${buTxt}), senza fornitore.`;
-  });
+  }
 
   scegliKind(k: KeywordKind): void {
     this.kind.set(k);

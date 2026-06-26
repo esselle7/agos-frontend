@@ -37,7 +37,11 @@
   }
 
   &__full { width: 100%; }
-  &__row { display: flex; gap: 1rem; flex-wrap: wrap; mat-form-field { flex: 1 1 200px; } }
+  // align-items:start così il coge-picker (senza la fascia subscript del mat-form-field)
+  // non si disallinea verticalmente; il flex va dato anche a app-coge-picker o resterebbe
+  // di dimensione diversa dagli altri campi e si accavallerebbe in wrap.
+  &__row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;
+    mat-form-field, app-coge-picker { flex: 1 1 200px; min-width: 0; } }
 
   &__tokens { margin: .25rem 0 .75rem; }
   &__tokens-empty { color: var(--text-faint); font-size: .85rem; font-style: italic; }

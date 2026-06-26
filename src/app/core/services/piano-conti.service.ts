@@ -29,6 +29,10 @@ export class PianoContiService {
     return this.http.put<PianoContiCogeDTO>(`${this.base}/${id}`, req).pipe(tap(() => this.bustCache()));
   }
 
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`).pipe(tap(() => this.bustCache()));
+  }
+
   private bustCache(): void {
     this.cache.invalidate('lookup:piano-dei-conti');
   }

@@ -109,16 +109,21 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
   buList = signal<BusinessUnitDTO[]>([]);
   mansioni = signal<MansioneDTO[]>([]);
 
+  // Mirror del testo digitato in un signal: un computed reagisce SOLO ai signal, non al
+  // FormControl.value. Senza questo i computed sotto resterebbero memoizzati e il filtro
+  // autocomplete non si aggiornerebbe digitando (aggiornato nella subscription in ngOnInit).
+  private readonly mansioneText = signal('');
+
   /** Mansioni filtrate in base al testo digitato nel campo autocomplete. */
   readonly mansioniFiltered = computed(() => {
-    const val = (this.form.controls.mansione.value ?? '').toLowerCase();
+    const val = this.mansioneText().toLowerCase();
     if (!val) return this.mansioni();
     return this.mansioni().filter(m => m.nome.toLowerCase().includes(val));
   });
 
   /** True se il testo digitato non corrisponde esattamente a nessuna mansione esistente. */
   readonly mansioneIsNew = computed(() => {
-    const val = (this.form.controls.mansione.value ?? '').trim();
+    const val = this.mansioneText().trim();
     if (!val) return false;
     return !this.mansioni().some(m => m.nome.toLowerCase() === val.toLowerCase());
   });
@@ -145,10 +150,10 @@ export class PersonaleFormDialogComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    // Trigger recompute of filtered list on value change
+    // Aggiorna il signal-mirror così i computed (mansioniFiltered/mansioneIsNew) reagiscono.
     this.form.controls.mansione.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.cdr.markForCheck());
+      .subscribe(v => this.mansioneText.set(v ?? ''));
 
     if (this.data.personaleId) {
       this.isEdit.set(true);

@@ -1,6 +1,8 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -89,7 +91,13 @@ const TIPI: { value: TipoCoge; label: string }[] = [
       }
     </mat-dialog-content>
 
-    <mat-dialog-actions align="end">
+    <mat-dialog-actions>
+      @if (isEdit) {
+        <button mat-button class="pc-form__delete" [disabled]="saving()" (click)="elimina()">
+          <mat-icon>delete_outline</mat-icon> Elimina
+        </button>
+      }
+      <span class="pc-form__spacer"></span>
       <button mat-button [disabled]="saving()" (click)="close()">Annulla</button>
       <button mat-flat-button color="primary" [disabled]="saving() || form.invalid" (click)="salva()">
         @if (saving()) { <mat-spinner diameter="18" /> } @else { {{ isEdit ? 'Salva' : 'Crea' }} }
@@ -104,6 +112,9 @@ const TIPI: { value: TipoCoge; label: string }[] = [
       color: var(--danger); font-size: 0.85rem;
     }
     .pc-form__error mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .pc-form__spacer { flex: 1 1 auto; }
+    .pc-form__delete { color: var(--danger); }
+    .pc-form__delete mat-icon { margin-right: 4px; }
   `],
 })
 export class PianoContiFormDialogComponent {
@@ -111,6 +122,7 @@ export class PianoContiFormDialogComponent {
   private readonly data: PianoContiFormData = inject(MAT_DIALOG_DATA);
   private readonly service = inject(PianoContiService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   readonly tipi = TIPI;
   readonly isEdit = !!this.data.conto;
@@ -129,6 +141,38 @@ export class PianoContiFormDialogComponent {
 
   close(): void {
     this.dialogRef.close(false);
+  }
+
+  elimina(): void {
+    const conto = this.data.conto!;
+    this.dialog
+      .open(ConfirmDialogComponent, {
+        data: {
+          title: 'Elimina conto',
+          message: `Eliminare il conto ${conto.codice} · ${conto.nome}? Non comparirà più nei selettori. ` +
+            `Lo storico dei movimenti resta invariato.`,
+          confirmLabel: 'Elimina',
+          danger: true,
+        },
+      })
+      .afterClosed()
+      .pipe(switchMap((ok) => {
+        if (!ok) throw new Error('cancelled');
+        this.saving.set(true);
+        this.errore.set(null);
+        return this.service.delete(conto.id);
+      }))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Conto eliminato', 'OK', { duration: 2500 });
+          this.dialogRef.close(true);
+        },
+        error: (err) => {
+          this.saving.set(false);
+          if (err?.message === 'cancelled') return;
+          this.errore.set(err?.error?.message ?? 'Eliminazione non riuscita.');
+        },
+      });
   }
 
   salva(): void {
