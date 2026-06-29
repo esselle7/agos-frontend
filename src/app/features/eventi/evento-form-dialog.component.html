@@ -6,376 +6,334 @@
   </span>
 </div>
 
-<mat-dialog-content style="padding:0 0 8px">
+<mat-dialog-content>
   @if (loadingForm()) {
-    <div style="padding: 24px">
-      <agos-skeleton-loader [rows]="4" />
-    </div>
+    <div style="padding:16px 24px"><agos-skeleton-loader type="text" [rows]="6" /></div>
   } @else {
-    <mat-stepper linear="false" #stepper labelPosition="bottom" style="background:transparent">
+    <form [formGroup]="form" class="dform__body evento-form">
 
-      <!-- ════════════════════════════════════════════════════ -->
-      <!-- STEP 1: Dati evento                                  -->
-      <!-- ════════════════════════════════════════════════════ -->
-      <mat-step label="Dati evento" [stepControl]="form">
-        <form [formGroup]="form" class="evento-form" style="padding:16px 24px">
+      <!-- ── Dati evento ─────────────────────────────────────── -->
+      <p class="dform__section"><mat-icon>event</mat-icon> Dati evento</p>
 
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Nome evento *</mat-label>
-              <mat-icon matPrefix>celebration</mat-icon>
-              <input matInput formControlName="nome" placeholder="es. Matrimonio Rossi" />
-              @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
-                <mat-error>Campo obbligatorio</mat-error>
-              }
-            </mat-form-field>
+      <div class="dform__row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Nome evento *</mat-label>
+          <mat-icon matPrefix>celebration</mat-icon>
+          <input matInput formControlName="nome" placeholder="es. Matrimonio Rossi" />
+          @if (form.controls.nome.hasError('required') && form.controls.nome.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="dform__row dform__row--2">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Tipo evento *</mat-label>
+          <mat-icon matPrefix>category</mat-icon>
+          <mat-select formControlName="tipo">
+            @for (t of tipiEvento(); track t.codice) {
+              <mat-option [value]="t.codice">{{ t.descrizione }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.tipo.hasError('required') && form.controls.tipo.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="bu-display">
+          <mat-icon>business</mat-icon>
+          <div class="bu-display__txt">
+            <span class="bu-display__k">Business unit</span>
+            <span class="bu-name">{{ selectedBu()?.nome ?? 'Caricamento…' }}</span>
           </div>
+        </div>
+      </div>
 
-          <div class="form-row two-col">
-            <mat-form-field appearance="outline">
-              <mat-label>Tipo evento *</mat-label>
-              <mat-icon matPrefix>category</mat-icon>
-              <mat-select formControlName="tipo">
-                @for (t of tipiEvento(); track t.codice) {
-                  <mat-option [value]="t.codice">{{ t.descrizione }}</mat-option>
-                }
-              </mat-select>
-              @if (form.controls.tipo.hasError('required') && form.controls.tipo.touched) {
-                <mat-error>Campo obbligatorio</mat-error>
-              }
-            </mat-form-field>
+      <div class="dform__row dform__row--2">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Data evento *</mat-label>
+          <mat-icon matPrefix>event</mat-icon>
+          <input matInput [matDatepicker]="pickerEvento" formControlName="dataEvento" />
+          <mat-datepicker-toggle matSuffix [for]="pickerEvento" />
+          <mat-datepicker #pickerEvento />
+          @if (form.controls.dataEvento.hasError('required') && form.controls.dataEvento.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+        </mat-form-field>
 
-            <div class="bu-display">
-              <mat-icon>business</mat-icon>
-              <span class="bu-name">{{ selectedBu()?.nome ?? 'Caricamento…' }}</span>
-            </div>
-          </div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Data preventivo</mat-label>
+          <mat-icon matPrefix>request_quote</mat-icon>
+          <input matInput [matDatepicker]="pickerPreventivo" formControlName="dataPreventivo" />
+          <mat-datepicker-toggle matSuffix [for]="pickerPreventivo" />
+          <mat-datepicker #pickerPreventivo />
+        </mat-form-field>
+      </div>
 
-          <div class="form-row two-col">
-            <mat-form-field appearance="outline">
-              <mat-label>Data evento *</mat-label>
-              <mat-icon matPrefix>event</mat-icon>
-              <input matInput [matDatepicker]="pickerEvento" formControlName="dataEvento" />
-              <mat-datepicker-toggle matSuffix [for]="pickerEvento" />
-              <mat-datepicker #pickerEvento />
-              @if (form.controls.dataEvento.hasError('required') && form.controls.dataEvento.touched) {
-                <mat-error>Campo obbligatorio</mat-error>
-              } @else {
-                <mat-hint>Data di competenza del ricavo: l'evento pesa nel conto economico di questo mese, anche se caparra e saldo arrivano prima o dopo</mat-hint>
-              }
-            </mat-form-field>
+      <p class="dform__note">
+        <mat-icon>info</mat-icon>
+        La <strong>data evento</strong> è la competenza del ricavo: l'evento pesa nel conto economico di
+        quel mese, anche se caparra e saldo arrivano prima o dopo.
+      </p>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Data preventivo</mat-label>
-              <input matInput [matDatepicker]="pickerPreventivo" formControlName="dataPreventivo" />
-              <mat-datepicker-toggle matSuffix [for]="pickerPreventivo" />
-              <mat-datepicker #pickerPreventivo />
-            </mat-form-field>
-          </div>
+      <div class="dform__row">
+        <agos-currency-input
+          formControlName="importoTotalePreviventivato"
+          label="Importo preventivato"
+          placeholder="0,00"
+        />
+      </div>
 
-          <div class="form-row">
-            <agos-currency-input
-              formControlName="importoTotalePreviventivato"
-              label="Importo preventivato"
-              placeholder="0,00"
-            />
-          </div>
+      <!-- ── Dati contatto ──────────────────────────────────── -->
+      <p class="dform__section"><mat-icon>contacts</mat-icon> Dati contatto</p>
 
-          <p class="dform__section"><mat-icon>contacts</mat-icon> Dati contatto</p>
+      <div class="dform__row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Nome contatto *</mat-label>
+          <mat-icon matPrefix>person</mat-icon>
+          <input matInput formControlName="contattoNome" appInputFilter="letters-only" />
+          @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.controls.contattoNome.hasError('pattern') && form.controls.contattoNome.touched) {
+            <mat-error>Solo lettere, spazi e trattini</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Nome contatto *</mat-label>
-              <mat-icon matPrefix>person</mat-icon>
-              <input matInput formControlName="contattoNome" appInputFilter="letters-only" />
-              @if (form.controls.contattoNome.hasError('required') && form.controls.contattoNome.touched) {
-                <mat-error>Campo obbligatorio</mat-error>
-              }
-              @if (form.controls.contattoNome.hasError('pattern') && form.controls.contattoNome.touched) {
-                <mat-error>Solo lettere, spazi e trattini</mat-error>
-              }
-            </mat-form-field>
-          </div>
+      <div class="dform__row dform__row--2">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Telefono</mat-label>
+          <mat-icon matPrefix>call</mat-icon>
+          <input matInput formControlName="contattoTelefono" type="tel" appInputFilter="phone" />
+          @if (form.controls.contattoTelefono.hasError('pattern') && form.controls.contattoTelefono.touched) {
+            <mat-error>Formato non valido (es. +39 02 1234567)</mat-error>
+          }
+        </mat-form-field>
 
-          <div class="form-row two-col">
-            <mat-form-field appearance="outline">
-              <mat-label>Telefono</mat-label>
-              <mat-icon matPrefix>call</mat-icon>
-              <input matInput formControlName="contattoTelefono" type="tel" appInputFilter="phone" />
-              @if (form.controls.contattoTelefono.hasError('pattern') && form.controls.contattoTelefono.touched) {
-                <mat-error>Formato non valido (es. +39 02 1234567)</mat-error>
-              }
-            </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Email</mat-label>
+          <mat-icon matPrefix>mail</mat-icon>
+          <input matInput formControlName="contattoEmail" type="email" />
+          @if (form.controls.contattoEmail.hasError('email') && form.controls.contattoEmail.touched) {
+            <mat-error>Email non valida</mat-error>
+          }
+        </mat-form-field>
+      </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Email</mat-label>
-              <mat-icon matPrefix>mail</mat-icon>
-              <input matInput formControlName="contattoEmail" type="email" />
-              @if (form.controls.contattoEmail.hasError('email') && form.controls.contattoEmail.touched) {
-                <mat-error>Email non valida</mat-error>
-              }
-            </mat-form-field>
-          </div>
+      <!-- ── Partecipanti ───────────────────────────────────── -->
+      <p class="dform__section"><mat-icon>groups</mat-icon> Partecipanti</p>
 
-          <p class="dform__section"><mat-icon>groups</mat-icon> Partecipanti</p>
+      <div class="dform__row dform__row--2">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Totale ospiti *</mat-label>
+          <mat-icon matPrefix>group</mat-icon>
+          <input matInput formControlName="numeroTotalePartecipanti" type="number" min="1" />
+          @if (form.controls.numeroTotalePartecipanti.hasError('required') && form.controls.numeroTotalePartecipanti.touched) {
+            <mat-error>Campo obbligatorio</mat-error>
+          }
+          @if (form.controls.numeroTotalePartecipanti.hasError('min') && form.controls.numeroTotalePartecipanti.touched) {
+            <mat-error>Minimo 1</mat-error>
+          }
+        </mat-form-field>
 
-          <div class="form-row two-col">
-            <mat-form-field appearance="outline">
-              <mat-label>Totale ospiti *</mat-label>
-              <input matInput formControlName="numeroTotalePartecipanti" type="number" min="1" />
-              @if (form.controls.numeroTotalePartecipanti.hasError('required') && form.controls.numeroTotalePartecipanti.touched) {
-                <mat-error>Campo obbligatorio</mat-error>
-              }
-              @if (form.controls.numeroTotalePartecipanti.hasError('min') && form.controls.numeroTotalePartecipanti.touched) {
-                <mat-error>Minimo 1</mat-error>
-              }
-            </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Di cui bambini</mat-label>
+          <mat-icon matPrefix>child_care</mat-icon>
+          <input matInput formControlName="numeroBambini" type="number" min="0" />
+        </mat-form-field>
+      </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>Di cui bambini</mat-label>
-              <input matInput formControlName="numeroBambini" type="number" min="0" />
-            </mat-form-field>
-          </div>
-
-          <!-- Allergie -->
-          <div class="form-row">
-            <div class="allergie-section">
-              <p class="allergie-label">Allergie e intolleranze</p>
-              <div class="allergie-comuni-grid">
-                @for (a of allergieComuni; track a) {
-                  <button type="button" class="allergia-toggle" [class.active]="hasAllergia(a)" (click)="toggleAllergia(a)">{{ a }}</button>
-                }
-              </div>
-              @if (allergieCustom().length > 0) {
-                <div class="allergie-custom-list">
-                  @for (a of allergieCustom(); track a) {
-                    <span class="allergia-custom-chip">
-                      {{ a }}
-                      <button type="button" (click)="removeAllergia(a)" aria-label="Rimuovi">×</button>
-                    </span>
-                  }
-                </div>
-              }
-              <div class="allergie-input-row">
-                <mat-form-field appearance="outline" style="flex:1">
-                  <mat-label>Altra allergia</mat-label>
-                  <input matInput [formControl]="allergiaInputControl" (keydown)="onAllergiaKeydown($event)" placeholder="es. Kiwi, Nichel…" />
-                </mat-form-field>
-                <button mat-icon-button type="button" (click)="addAllergia()" color="primary" matTooltip="Aggiungi">
-                  <mat-icon>add_circle</mat-icon>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Note</mat-label>
-              <textarea matInput formControlName="note" rows="3" appInputFilter="safe-text"></textarea>
-              @if (form.controls.note.hasError('pattern') && form.controls.note.touched) {
-                <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
-              }
-            </mat-form-field>
-          </div>
-
-          <!-- Avanti -->
-          <div style="display:flex;justify-content:flex-end;margin-top:8px">
-            <button mat-flat-button color="primary" matStepperNext [disabled]="form.invalid">
-              Personale <mat-icon>arrow_forward</mat-icon>
-            </button>
-          </div>
-        </form>
-      </mat-step>
-
-      <!-- ════════════════════════════════════════════════════ -->
-      <!-- STEP 2: Personale                                    -->
-      <!-- ════════════════════════════════════════════════════ -->
-      <mat-step label="Personale">
-        <div class="personale-step" style="padding:16px 24px">
-
-          <!-- Header con contatore -->
-          <div class="personale-step-header">
-            <span style="font-size:.88rem;color:var(--text-sub)">Seleziona i dipendenti che lavoreranno all'evento</span>
-            @if (contaSelezionati() > 0) {
-              <span class="personale-count-chip">
-                <mat-icon style="font-size:14px;width:14px;height:14px">check_circle</mat-icon>
-                {{ contaSelezionati() }} selezionati
-              </span>
+      <div class="dform__row">
+        <div class="allergie-section">
+          <p class="allergie-label">Allergie e intolleranze</p>
+          <div class="allergie-comuni-grid">
+            @for (a of allergieComuni; track a) {
+              <button type="button" class="allergia-toggle" [class.active]="hasAllergia(a)" (click)="toggleAllergia(a)">{{ a }}</button>
             }
           </div>
-
-          <!-- Riepilogo selezionati (chips) -->
-          @if (personaleSelezionatiList().length > 0) {
-            <div class="selezionati-chips">
-              @for (p of personaleSelezionatiList(); track p.id) {
-                <span class="selezionato-chip">
-                  {{ p.nome }} {{ p.cognome }}
-                  <button type="button" (click)="rimuoviSelezionato(p.id)" aria-label="Rimuovi">×</button>
+          @if (allergieCustom().length > 0) {
+            <div class="allergie-custom-list">
+              @for (a of allergieCustom(); track a) {
+                <span class="allergia-custom-chip">
+                  {{ a }}
+                  <button type="button" (click)="removeAllergia(a)" aria-label="Rimuovi">×</button>
                 </span>
               }
             </div>
           }
+          <div class="allergie-input-row">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex:1">
+              <mat-label>Altra allergia</mat-label>
+              <input matInput [formControl]="allergiaInputControl" (keydown)="onAllergiaKeydown($event)" placeholder="es. Kiwi, Nichel…" />
+            </mat-form-field>
+            <button mat-icon-button type="button" (click)="addAllergia()" color="primary" matTooltip="Aggiungi">
+              <mat-icon>add_circle</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
 
-          <!-- Lista gruppi per mansione -->
-          @if (personaleAttivi().length === 0) {
-            <div class="empty-personale">
-              <mat-icon style="font-size:40px;width:40px;height:40px;color:var(--border)">people_outline</mat-icon>
-              <p>Nessun dipendente attivo trovato</p>
+      <div class="dform__row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Note</mat-label>
+          <mat-icon matPrefix>sticky_note_2</mat-icon>
+          <textarea matInput formControlName="note" rows="3" appInputFilter="safe-text"></textarea>
+          @if (form.controls.note.hasError('pattern') && form.controls.note.touched) {
+            <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- ── Personale ──────────────────────────────────────── -->
+      <p class="dform__section">
+        <mat-icon>badge</mat-icon> Personale
+        @if (contaSelezionati() > 0) {
+          <span class="personale-count-chip">
+            <mat-icon>check_circle</mat-icon>
+            {{ contaSelezionati() }} selezionati
+          </span>
+        }
+      </p>
+
+      <div class="personale-step">
+        <span class="dform__hint" style="margin:0">Seleziona i dipendenti che lavoreranno all'evento.</span>
+
+        @if (personaleSelezionatiList().length > 0) {
+          <div class="selezionati-chips">
+            @for (p of personaleSelezionatiList(); track p.id) {
+              <span class="selezionato-chip">
+                {{ p.nome }} {{ p.cognome }}
+                <button type="button" (click)="rimuoviSelezionato(p.id)" aria-label="Rimuovi">×</button>
+              </span>
+            }
+          </div>
+        }
+
+        @if (personaleAttivi().length === 0) {
+          <div class="empty-personale">
+            <mat-icon style="font-size:40px;width:40px;height:40px;color:var(--border)">people_outline</mat-icon>
+            <p>Nessun dipendente attivo trovato</p>
+          </div>
+        } @else {
+          @for (gruppo of personalePerMansione(); track gruppo.mansione) {
+            <div class="mansione-gruppo">
+              <div class="mansione-header" (click)="toggleGruppoExpanded(gruppo.mansione)">
+                <span class="mansione-label">
+                  <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--text-sub)">work_outline</mat-icon>
+                  {{ gruppo.mansione }}
+                  <span class="mansione-badge" [class.selected]="contaSelezionatiGruppo(gruppo.persone) > 0">
+                    @if (contaSelezionatiGruppo(gruppo.persone) > 0) {
+                      {{ contaSelezionatiGruppo(gruppo.persone) }}/{{ gruppo.persone.length }}
+                    } @else {
+                      {{ gruppo.persone.length }}
+                    }
+                  </span>
+                </span>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button
+                    mat-button
+                    type="button"
+                    style="font-size:12px;min-width:auto;padding:0 8px;height:28px"
+                    (click)="$event.stopPropagation(); toggleGruppo(gruppo.mansione, gruppo.persone)"
+                  >
+                    {{ isGruppoTuttoSelezionato(gruppo.persone) ? 'Deseleziona tutti' : 'Seleziona tutti' }}
+                  </button>
+                  <mat-icon class="mansione-toggle">
+                    {{ isGruppoExpanded(gruppo.mansione) ? 'expand_less' : 'expand_more' }}
+                  </mat-icon>
+                </div>
+              </div>
+
+              @if (isGruppoExpanded(gruppo.mansione)) {
+                <div class="persone-grid">
+                  @for (persona of gruppo.persone; track persona.id) {
+                    <div
+                      class="persona-card"
+                      [class.selected]="isSelected(persona.id)"
+                      (click)="togglePersona(persona.id)"
+                    >
+                      <div class="persona-avatar" [class.selected]="isSelected(persona.id)">
+                        {{ iniziali(persona.nome, persona.cognome) }}
+                      </div>
+                      <div class="persona-info">
+                        <div class="persona-nome">{{ persona.cognome }} {{ persona.nome }}</div>
+                      </div>
+                      <mat-checkbox
+                        class="persona-check"
+                        [checked]="isSelected(persona.id)"
+                        (click)="$event.stopPropagation()"
+                        (change)="togglePersona(persona.id)"
+                      />
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <!-- ── Menu (solo creazione) ──────────────────────────── -->
+      @if (!isEdit()) {
+        <p class="dform__section"><mat-icon>restaurant_menu</mat-icon> Menu · facoltativo</p>
+
+        <div class="menu-step">
+          @if (!menuFile()) {
+            <div
+              class="menu-dropzone"
+              [class.dragover]="menuDragOver()"
+              (click)="menuInput.click()"
+              (drop)="onMenuDrop($event)"
+              (dragover)="onMenuDragOver($event)"
+              (dragleave)="onMenuDragLeave($event)"
+            >
+              <mat-icon>upload_file</mat-icon>
+              <p class="menu-dropzone-title">Carica il menu (PDF o Word)</p>
+              <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — PDF, .doc, .docx — max 10 MB</p>
             </div>
           } @else {
-            @for (gruppo of personalePerMansione(); track gruppo.mansione) {
-              <div class="mansione-gruppo">
-                <!-- Header gruppo (toggle expand) -->
-                <div class="mansione-header" (click)="toggleGruppoExpanded(gruppo.mansione)">
-                  <span class="mansione-label">
-                    <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--text-sub)">work_outline</mat-icon>
-                    {{ gruppo.mansione }}
-                    <span class="mansione-badge" [class.selected]="contaSelezionatiGruppo(gruppo.persone) > 0">
-                      @if (contaSelezionatiGruppo(gruppo.persone) > 0) {
-                        {{ contaSelezionatiGruppo(gruppo.persone) }}/{{ gruppo.persone.length }}
-                      } @else {
-                        {{ gruppo.persone.length }}
-                      }
-                    </span>
-                  </span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <button
-                      mat-button
-                      type="button"
-                      style="font-size:12px;min-width:auto;padding:0 8px;height:28px"
-                      (click)="$event.stopPropagation(); toggleGruppo(gruppo.mansione, gruppo.persone)"
-                    >
-                      {{ isGruppoTuttoSelezionato(gruppo.persone) ? 'Deseleziona tutti' : 'Seleziona tutti' }}
-                    </button>
-                    <mat-icon class="mansione-toggle">
-                      {{ isGruppoExpanded(gruppo.mansione) ? 'expand_less' : 'expand_more' }}
-                    </mat-icon>
-                  </div>
-                </div>
-
-                <!-- Griglia persone -->
-                @if (isGruppoExpanded(gruppo.mansione)) {
-                  <div class="persone-grid">
-                    @for (persona of gruppo.persone; track persona.id) {
-                      <div
-                        class="persona-card"
-                        [class.selected]="isSelected(persona.id)"
-                        (click)="togglePersona(persona.id)"
-                      >
-                        <div class="persona-avatar" [class.selected]="isSelected(persona.id)">
-                          {{ iniziali(persona.nome, persona.cognome) }}
-                        </div>
-                        <div class="persona-info">
-                          <div class="persona-nome">{{ persona.cognome }} {{ persona.nome }}</div>
-                        </div>
-                        <mat-checkbox
-                          class="persona-check"
-                          [checked]="isSelected(persona.id)"
-                          (click)="$event.stopPropagation()"
-                          (change)="togglePersona(persona.id)"
-                        />
-                      </div>
-                    }
-                  </div>
-                }
+            <div class="menu-file-card">
+              <mat-icon class="pdf-ico">{{ menuFileIsWord() ? 'description' : 'picture_as_pdf' }}</mat-icon>
+              <div class="menu-file-meta">
+                <div class="menu-file-name">{{ menuFile()!.name }}</div>
+                <div class="menu-file-size">{{ formatFileSize(menuFile()!.size) }}</div>
               </div>
+              <button mat-button color="warn" type="button" (click)="removeMenuFile()">
+                <mat-icon>close</mat-icon> Rimuovi
+              </button>
+            </div>
+            @if (menuFileIsWord()) {
+              <div class="menu-word-note">
+                <mat-icon>description</mat-icon>
+                <p class="menu-word-note__tt">Anteprima non disponibile</p>
+                <p>Il file è un documento Word e verrà caricato correttamente. Per visualizzarlo sarà necessario scaricarlo.</p>
+              </div>
+            } @else {
+              @if (menuPreviewUrl(); as preview) {
+                <iframe class="menu-preview" [src]="preview" title="Anteprima menu"></iframe>
+              }
             }
           }
 
-          <!-- Navigazione step 2 -->
-          <div style="display:flex;justify-content:space-between;margin-top:12px">
-            <button mat-button matStepperPrevious>
-              <mat-icon>arrow_back</mat-icon> Indietro
-            </button>
-            @if (isEdit()) {
-              <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving() || form.invalid">
-                @if (saving()) {
-                  <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
-                }
-                Salva modifiche
-              </button>
-            } @else {
-              <button mat-flat-button color="primary" matStepperNext [disabled]="form.invalid">
-                Menu <mat-icon>arrow_forward</mat-icon>
-              </button>
-            }
-          </div>
-
+          <input #menuInput type="file"
+                 accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                 hidden (change)="onMenuFileInput($event)" />
         </div>
-      </mat-step>
-
-      <!-- ════════════════════════════════════════════════════ -->
-      <!-- STEP 3: Menu PDF (solo creazione)                    -->
-      <!-- ════════════════════════════════════════════════════ -->
-      @if (!isEdit()) {
-        <mat-step label="Menu">
-          <div class="menu-step" style="padding:16px 24px">
-
-            @if (!menuFile()) {
-              <div
-                class="menu-dropzone"
-                [class.dragover]="menuDragOver()"
-                (click)="menuInput.click()"
-                (drop)="onMenuDrop($event)"
-                (dragover)="onMenuDragOver($event)"
-                (dragleave)="onMenuDragLeave($event)"
-              >
-                <mat-icon>upload_file</mat-icon>
-                <p class="menu-dropzone-title">Carica il menu (PDF o Word)</p>
-                <p class="menu-dropzone-sub">Trascina qui il file o clicca per selezionare — PDF, .doc, .docx — max 10 MB</p>
-              </div>
-            } @else {
-              <div class="menu-file-card">
-                <mat-icon class="pdf-ico">{{ menuFileIsWord() ? 'description' : 'picture_as_pdf' }}</mat-icon>
-                <div class="menu-file-meta">
-                  <div class="menu-file-name">{{ menuFile()!.name }}</div>
-                  <div class="menu-file-size">{{ formatFileSize(menuFile()!.size) }}</div>
-                </div>
-                <button mat-button color="warn" type="button" (click)="removeMenuFile()">
-                  <mat-icon>close</mat-icon> Rimuovi
-                </button>
-              </div>
-              @if (menuFileIsWord()) {
-                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;border:1.5px dashed var(--border);border-radius:12px;background:var(--surface);color:var(--text-sub);text-align:center">
-                  <mat-icon style="font-size:40px;width:40px;height:40px;color:var(--primary)">description</mat-icon>
-                  <p style="margin:0;font-size:.88rem;font-weight:600;color:var(--text-main)">Anteprima non disponibile</p>
-                  <p style="margin:0;font-size:.78rem">Il file è un documento Word e verrà caricato correttamente.<br>Per visualizzarlo sarà necessario scaricarlo.</p>
-                </div>
-              } @else {
-                @if (menuPreviewUrl(); as preview) {
-                  <iframe class="menu-preview" [src]="preview" title="Anteprima menu"></iframe>
-                }
-              }
-            }
-
-            <input #menuInput type="file"
-                   accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                   hidden (change)="onMenuFileInput($event)" />
-
-            <!-- Navigazione step 3 -->
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-              <button mat-button matStepperPrevious>
-                <mat-icon>arrow_back</mat-icon> Indietro
-              </button>
-              <div style="display:flex;align-items:center;gap:16px">
-                <button type="button" class="menu-skip-link" (click)="skipMenu()" [disabled]="saving()">Salta</button>
-                <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving()">
-                  @if (saving()) {
-                    <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
-                  }
-                  Crea evento
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </mat-step>
       }
 
-    </mat-stepper>
+    </form>
   }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end" style="padding:8px 24px">
+<mat-dialog-actions class="dform__actions">
   <button mat-button (click)="cancel()" [disabled]="saving()">Annulla</button>
+  <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving() || loadingForm() || form.invalid">
+    @if (saving()) {
+      <mat-spinner diameter="18" style="display:inline-block;margin-right:6px" />
+    } @else {
+      <mat-icon>{{ isEdit() ? 'save' : 'celebration' }}</mat-icon>
+    }
+    {{ isEdit() ? 'Salva modifiche' : 'Crea evento' }}
+  </button>
 </mat-dialog-actions>

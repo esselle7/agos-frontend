@@ -28,7 +28,6 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatStepperModule } from '@angular/material/stepper';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -76,7 +75,6 @@ interface PersonaleGruppo {
     MatProgressSpinnerModule,
     MatDividerModule,
     MatTooltipModule,
-    MatStepperModule,
     MatCheckboxModule,
     MatChipsModule,
     CurrencyInputComponent,
@@ -110,23 +108,25 @@ interface PersonaleGruppo {
     }
     .allergie-input-row { display: flex; align-items: center; gap: 8px; }
     .bu-display {
-      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
-      border-radius: 10px; background: color-mix(in srgb, var(--primary) 6%, transparent);
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      border-radius: 12px; background: color-mix(in srgb, var(--primary) 6%, transparent);
       border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
-      font-size: .88rem; color: var(--text-main);
+      color: var(--text-main); min-height: 52px;
     }
-    .bu-display mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--primary); }
-    .bu-name { font-weight: 600; }
+    .bu-display mat-icon { font-size: 20px; width: 20px; height: 20px; color: var(--primary); flex-shrink: 0; }
+    .bu-display__txt { display: flex; flex-direction: column; min-width: 0; }
+    .bu-display__k { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-sub); }
+    .bu-name { font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ── Step 2: Personale ─────────────────────────────────── */
+    /* ── Personale ─────────────────────────────────────────── */
     .personale-step { display: flex; flex-direction: column; gap: 12px; }
-    .personale-step-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
     .personale-count-chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 2px 10px; border-radius: 12px;
+      display: inline-flex; align-items: center; gap: 4px; margin-left: auto;
+      padding: 2px 10px; border-radius: 12px; text-transform: none; letter-spacing: 0;
       background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary-d);
-      font-size: .74rem; font-weight: 600;
+      font-size: .72rem; font-weight: 700;
     }
+    .personale-count-chip mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .mansione-gruppo { margin-bottom: 4px; }
     .mansione-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -194,8 +194,14 @@ interface PersonaleGruppo {
     .menu-file-name { font-size: .88rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .menu-file-size { font-size: .74rem; color: var(--text-sub); }
     .menu-preview { width: 100%; height: 280px; border: 1px solid var(--border); border-radius: 10px; }
-    .menu-skip-link { background: none; border: none; cursor: pointer; color: var(--text-sub); font-size: .82rem; font-family: inherit; text-decoration: underline; padding: 0; }
-    .menu-skip-link:hover { color: var(--text-main); }
+    .menu-word-note {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 24px 16px; border: 1.5px dashed var(--border); border-radius: 12px;
+      background: var(--surface); color: var(--text-sub); text-align: center;
+    }
+    .menu-word-note mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--primary); }
+    .menu-word-note p { margin: 0; font-size: .78rem; }
+    .menu-word-note__tt { font-size: .88rem !important; font-weight: 600; color: var(--text-main); }
   `],
 })
 export class EventoFormDialogComponent implements OnInit, OnDestroy {
@@ -527,12 +533,6 @@ export class EventoFormDialogComponent implements OnInit, OnDestroy {
       URL.revokeObjectURL(this.menuObjectUrl);
       this.menuObjectUrl = null;
     }
-  }
-
-  /** "Salta": crea l'evento senza menu, scartando un eventuale file già scelto. */
-  skipMenu(): void {
-    this.setMenuFile(null);
-    this.submit();
   }
 
   formatFileSize(bytes: number): string {
