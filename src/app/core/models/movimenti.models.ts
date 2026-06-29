@@ -1,6 +1,6 @@
 export type TipoMovimento = 'ENTRATA' | 'USCITA';
 export type StatoMovimento = 'REGISTRATO' | 'DA_LIQUIDARE' | 'ANNULLATO';
-export type FonteMovimento = 'MANUALE' | 'IMPORT_CSV' | 'STRIPE' | 'SATISPAY' | 'SHOPIFY' | 'BILLY';
+export type FonteMovimento = 'MANUALE' | 'IMPORT_CSV' | 'STRIPE' | 'SATISPAY' | 'SHOPIFY' | 'BILLY' | 'APERTURA';
 
 export interface MovimentoDTO {
   id: string;

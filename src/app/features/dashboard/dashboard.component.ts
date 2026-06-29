@@ -19,6 +19,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatBadgeModule } from '@angular/material/badge';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartData, ChartOptions } from 'chart.js';
 
@@ -40,6 +42,7 @@ import { StatCardComponent } from '../../shared/components/stat-card/stat-card.c
 import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { DateRangePickerComponent, PeriodChangeEvent } from '../../shared/components/date-range-picker/date-range-picker.component';
+import { MovimentiSenzaBancaDialogComponent } from './movimenti-senza-banca-dialog.component';
 
 const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
@@ -54,6 +57,8 @@ const MESI =['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott
     MatProgressSpinnerModule,
     MatMenuModule,
     MatTooltipModule,
+    MatDialogModule,
+    MatBadgeModule,
     BaseChartDirective,
     StatCardComponent,
     SkeletonLoaderComponent,
@@ -71,7 +76,9 @@ export class DashboardComponent implements OnInit {
   private readonly movimentiSvc = inject(MovimentiService);
   private readonly contiSvc = inject(ContiService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
+  readonly senzaBancaCount = signal(0);
   readonly kpi = signal<DashboardKpiDTO | null>(null);
   readonly andamento = signal<AndamentoMensileDTO[]>([]);
   readonly fatturatoPerBu = signal<FatturatoPerBuDTO[]>([]);
@@ -322,7 +329,26 @@ export class DashboardComponent implements OnInit {
     this.contiSvc.getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(list => this.conti.set(list));
+    this.loadSenzaBancaCount();
     this.reloadAll();
+  }
+
+  private loadSenzaBancaCount(): void {
+    this.movimentiSvc.getSenzaBanca()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: l => this.senzaBancaCount.set(l.length), error: () => {} });
+  }
+
+  apriSenzaBanca(): void {
+    this.dialog.open(MovimentiSenzaBancaDialogComponent, {
+      data: { conti: this.conti() },
+      panelClass: 'agos-dialog',
+      autoFocus: false,
+      width: '680px',
+      maxWidth: '92vw',
+    }).afterClosed().subscribe(modificato => {
+      if (modificato) { this.loadSenzaBancaCount(); this.reloadAll(); }
+    });
   }
 
   private reloadAll(): void {

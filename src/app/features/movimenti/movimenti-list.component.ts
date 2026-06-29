@@ -284,6 +284,7 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
       SATISPAY:   '#FF466C',
       SHOPIFY:    '#95BF47',
       BILLY:      '#DD6B20',
+      APERTURA:   '#B5894B',
     };
     return fonte ? (map[fonte] ?? '#6B7280') : '#6B7280';
   }
