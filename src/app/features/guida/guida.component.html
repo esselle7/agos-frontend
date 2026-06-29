@@ -1,0 +1,68 @@
+<div class="guide" [class.guide--menu-open]="menuOpen()">
+
+  <!-- ── Navbar verticale (stile rail del gestionale) ─────────────────── -->
+  <aside class="rail">
+    <div class="rail-brand">
+      <img src="assets/logo.png" alt="Agostinelli" class="brand-logo" />
+      <span class="brand-text">Guida</span>
+    </div>
+
+    <nav class="rail-nav">
+      @for (section of sections; track section.label) {
+        <div class="nav-section">
+          <div class="nav-section__label">{{ section.label }}</div>
+          @for (item of section.items; track item.file) {
+            <button
+              type="button"
+              class="nav-link"
+              [class.is-active]="isActive(item.file)"
+              (click)="select(item.file)"
+            >
+              <span class="nav-link__icon-wrap">
+                <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
+              </span>
+              <span class="nav-link__label">{{ item.title }}</span>
+            </button>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="rail-foot">
+      <a class="back-link" routerLink="/dashboard">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Torna al gestionale</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Contenuto ─────────────────────────────────────────────────────── -->
+  <main class="guide-main">
+    <div class="guide-topbar">
+      <button type="button" class="menu-toggle" (click)="menuOpen.set(!menuOpen())"
+              [matTooltip]="'Sezioni'" aria-label="Apri sezioni">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="guide-topbar__title">Manuale utente</span>
+      <a class="guide-topbar__close" routerLink="/dashboard" matTooltip="Chiudi la guida" aria-label="Chiudi">
+        <mat-icon>close</mat-icon>
+      </a>
+    </div>
+
+    <div #scroll class="guide-scroll">
+      @if (loading()) {
+        <div class="guide-center"><mat-spinner diameter="34" /></div>
+      } @else if (error()) {
+        <div class="guide-center guide-error">
+          <mat-icon>error_outline</mat-icon>
+          <p>Impossibile caricare questa pagina della guida.</p>
+        </div>
+      } @else {
+        <article class="markdown" (click)="onContentClick($event)" [innerHTML]="html()"></article>
+      }
+    </div>
+  </main>
+
+  <!-- backdrop per chiudere la sidebar su mobile -->
+  <div class="guide-backdrop" (click)="menuOpen.set(false)"></div>
+</div>

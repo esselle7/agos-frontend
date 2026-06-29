@@ -507,8 +507,16 @@ $topbar-height:            64px;
 
 .topbar-spacer { flex: 1; }
 .hamburger-btn { color: var(--text-sub); flex-shrink: 0; }
-.topbar-actions { display: flex; align-items: center; gap: 4px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
 .badge-btn { color: var(--text-sub); }
+.guide-btn {
+  color: var(--primary);
+  mat-icon { margin-right: 6px; }
+}
+@media (max-width: 600px) {
+  .guide-btn .guide-btn__label { display: none; }
+  .guide-btn mat-icon { margin-right: 0; }
+}
 
 // ── Main content ─────────────────────────────────────────────────────────────
 
