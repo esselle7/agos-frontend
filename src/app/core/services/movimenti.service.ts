@@ -104,10 +104,17 @@ export class MovimentiService {
     );
   }
 
-  /** Attribuisce un movimento a un conto/cassa (PATCH-semantics: tocca solo conto_bancario_id). */
+  /** Crediti (ENTRATA) / debiti (USCITA) di apertura pre-2026 da liquidare. */
+  getPartiteApertura(tipo: 'ENTRATA' | 'USCITA'): Observable<MovimentoDTOShared[]> {
+    return this.http.get<MovimentoDTOShared[]>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.PARTITE_APERTURA, { params: { tipo } }
+    );
+  }
+
+  /** Attribuisce un movimento a un conto/cassa (PATCH mirato: tocca solo conto_bancario_id). */
   assegnaConto(id: string, contoBancarioId: number): Observable<MovimentoDTO> {
-    return this.http.put<MovimentoDTO>(
-      `${environment.apiBaseUrl}${API_PATHS.MOVIMENTI.BASE}/${id}`,
+    return this.http.patch<MovimentoDTO>(
+      environment.apiBaseUrl + API_PATHS.MOVIMENTI.ASSEGNA_CONTO(id),
       { contoBancarioId }
     );
   }

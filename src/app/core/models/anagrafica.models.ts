@@ -17,6 +17,33 @@ export interface ContoBancarioDTO {
   tipo: string;
   iban: string | null;
   saldoCalcolato: number;
+  saldoIniziale: number;
+  dataSaldoIniziale: string | null;
+}
+
+export interface CespiteDTO {
+  id: string;
+  descrizione: string;
+  contoCogeId: number;
+  contoCogeCodice: string | null;
+  contoCogeDescrizione: string | null;
+  costoStorico: number;
+  aliquotaAmmortamento: number;
+  dataAcquisto: string;
+  isActive: boolean;
+  ammortamentoMensile: number;
+  ammortamentoAnnuo: number;
+  giaAmmortizzato: number;
+  valoreResiduo: number;
+}
+
+export interface CespiteRequest {
+  descrizione: string;
+  contoCogeId: number;
+  costoStorico: number;
+  aliquotaAmmortamento: number;
+  dataAcquisto: string;
+  isActive: boolean;
 }
 
 export interface CategoriaNode {

@@ -70,10 +70,11 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Gestione',
     items: [
-      { label: 'Eventi',          icon: 'celebration',  route: '/eventi',      adminOnly: false },
-      { label: 'Anagrafica',      icon: 'groups',       route: '/anagrafica',  adminOnly: true },
-      { label: 'Keyword',         icon: 'label',        route: '/keyword',     adminOnly: true },
-      { label: 'Piano dei conti', icon: 'account_tree', route: '/piano-conti', adminOnly: true },
+      { label: 'Eventi',             icon: 'celebration',  route: '/eventi',              adminOnly: false },
+      { label: 'Situazione iniziale', icon: 'savings',     route: '/situazione-iniziale', adminOnly: true },
+      { label: 'Anagrafica',         icon: 'groups',       route: '/anagrafica',          adminOnly: true },
+      { label: 'Keyword',            icon: 'label',        route: '/keyword',             adminOnly: true },
+      { label: 'Piano dei conti',    icon: 'account_tree', route: '/piano-conti',         adminOnly: true },
     ],
   },
   {

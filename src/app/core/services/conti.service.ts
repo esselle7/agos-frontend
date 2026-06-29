@@ -20,4 +20,17 @@ export class ContiService {
       tap(data => this.cache.set(CACHE_KEY, data, environment.cacheTtlStaticMs))
     );
   }
+
+  /** Forza il refetch dal server (per la pagina Situazione iniziale che mostra i saldi iniziali). */
+  getAllFresh(): Observable<ContoBancarioDTO[]> {
+    this.cache.invalidate(CACHE_KEY);
+    return this.getAll();
+  }
+
+  updateSaldoIniziale(id: number, saldoIniziale: number, dataSaldoIniziale: string | null): Observable<ContoBancarioDTO> {
+    return this.http.put<ContoBancarioDTO>(
+      environment.apiBaseUrl + API_PATHS.CONTI_SALDO_INIZIALE(id),
+      { saldoIniziale, dataSaldoIniziale }
+    ).pipe(tap(() => this.cache.invalidate(CACHE_KEY)));
+  }
 }

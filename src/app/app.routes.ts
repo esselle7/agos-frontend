@@ -84,6 +84,15 @@ export const routes: Routes = [
         data: { roles: ['ADMIN'] },
       },
       {
+        path: 'situazione-iniziale',
+        loadComponent: () =>
+          import('./features/situazione-iniziale/situazione-iniziale.component').then(
+            m => m.SituazioneInizialeComponent
+          ),
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'forecasting',
         loadComponent: () =>
           import('./features/reporting/forecasting.component').then(
