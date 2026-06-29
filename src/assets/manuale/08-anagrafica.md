@@ -1,6 +1,6 @@
 # 14. Anagrafica
 
-> Menu: **Gestione → Anagrafica**. Riservata all'amministratore.
+> Menu: **Configurazione → Anagrafica**. Riservata all'amministratore.
 
 L'Anagrafica è l'archivio delle entità che usi ovunque nel gestionale. Tenerla in ordine fa
 funzionare meglio l'auto-classificazione e i report. Ha tre schede: **Fornitori**, **Categorie**,
@@ -98,4 +98,4 @@ imputarne le ore (vedi [capitolo 10](04-eventi.md#107-partecipanti-e-ore-del-per
 
 ---
 
-[← 19. Situazione iniziale](12-situazione-iniziale.md) · [Indice](README.md) · **Prossimo:** [13. Keyword →](07-keyword.md)
+[← 19. Situazione iniziale](12-situazione-iniziale.md) · [Indice](README.md) · **Prossimo:** [13. Regole di classificazione →](07-keyword.md)

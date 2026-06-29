@@ -1,14 +1,14 @@
-# 15. Reporting e Previsioni
+# 15. Report e Previsioni
 
-> Menu: **Analisi → Reporting** e **Analisi → Previsioni**. Riservate all'amministratore.
+> Menu: **Analisi → Report** e **Analisi → Previsioni**. Riservate all'amministratore.
 
-Qui leggi i risultati. **Reporting** guarda al **passato e al presente** (cos'è successo);
+Qui leggi i risultati. **Report** guarda al **passato e al presente** (cos'è successo);
 **Previsioni** guarda al **futuro** (cosa succederà alla cassa e all'utile). Per interpretarle ti
 serve la [Parte I](01-capire-il-gestionale.md) (waterfall, tre date, famiglie di conto).
 
 ---
 
-## 15.1 Reporting → P&L Comparativo
+## 15.1 Report → P&L Comparativo
 
 **A cosa serve:** leggere il **conto economico** (il [waterfall](01-capire-il-gestionale.md#3-il-conto-economico))
 confrontando i periodi e le Business Unit.
@@ -23,7 +23,7 @@ confrontando i periodi e le Business Unit.
 
 ### Come si legge
 
-1. **Reporting → P&L Comparativo.**
+1. **Report → P&L Comparativo.**
 2. Scegli il **periodo** da analizzare.
 3. Parti dall'**EBITDA** e dal suo **margine %**: ti dice se l'attività "pura" rende.
 4. Scendi a **EBIT** (dopo gli ammortamenti) e all'**Utile Netto** (dopo interessi e imposte).
@@ -37,8 +37,8 @@ confrontando i periodi e le Business Unit.
 
 ## 15.2 Esportare i dati
 
-Lo scarico dei dati per la commercialista non vive più dentro Reporting: ha una sezione propria,
-**[Export](15-export.md)**, oggi in ricostruzione. Vedi quel capitolo per lo stato e per cosa
+Lo scarico dei dati per la commercialista non vive più dentro Report: ha una sezione propria,
+**[Esporta dati](15-export.md)**, oggi in ricostruzione. Vedi quel capitolo per lo stato e per cosa
 arriverà.
 
 ---
@@ -107,4 +107,4 @@ Puoi proiettare a **30, 60, 90, 180 giorni** o fino a **fine anno**. La previsio
 
 ---
 
-[← 20. Piano dei conti](14-piano-conti.md) · [Indice](README.md) · **Prossimo:** [21. Export →](15-export.md)
+[← 20. Piano dei conti](14-piano-conti.md) · [Indice](README.md) · **Prossimo:** [21. Esporta dati →](15-export.md)

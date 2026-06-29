@@ -84,6 +84,28 @@ interface PersonaleGruppo {
   ],
   templateUrl: './evento-form-dialog.component.html',
   styles: [`
+    /* ── Ritmo del form evento ─────────────────────────────────
+       Più aria fra i campi e intestazioni di sezione con identità. */
+    .evento-form { padding-bottom: 6px; }
+    .evento-form .dform__row { margin-bottom: 18px; }
+    .evento-form .dform__row:last-child { margin-bottom: 0; }
+
+    .evento-form .dform__section {
+      margin: 30px 0 18px; gap: 11px; font-size: .8rem; letter-spacing: .08em;
+    }
+    .evento-form .dform__section:first-child { margin-top: 6px; }
+    .evento-form .dform__section mat-icon {
+      box-sizing: content-box; padding: 6px; border-radius: 9px;
+      font-size: 17px; width: 17px; height: 17px; opacity: 1;
+      color: var(--primary-d);
+      background: color-mix(in srgb, var(--primary) 13%, transparent);
+    }
+
+    .evento-form .dform__note { margin: 4px 0 20px; padding: 12px 14px; line-height: 1.5; }
+
+    /* La textarea Note: niente icona prefix (si disallinea), più presenza. */
+    .evento-form__note textarea { line-height: 1.55; }
+
     /* Amber semantico SOLO per gli allergeni (caution), il resto segue l'identità verde. */
     .allergie-section { width: 100%; }
     .allergie-label { font-size: .78rem; color: var(--text-sub); margin: 0 0 8px; font-weight: 600; }

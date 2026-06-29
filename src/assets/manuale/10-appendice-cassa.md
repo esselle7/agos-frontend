@@ -36,4 +36,4 @@ registrare come [movimenti](03-movimenti.md) ordinari indicando il metodo di pag
 
 ---
 
-[← 21. Export](15-export.md) · [Indice](README.md) · **Prossimo:** [17. Glossario →](11-glossario.md)
+[← 21. Esporta dati](15-export.md) · [Indice](README.md) · **Prossimo:** [17. Glossario →](11-glossario.md)

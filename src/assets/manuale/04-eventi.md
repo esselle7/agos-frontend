@@ -1,6 +1,6 @@
 # 10. Eventi
 
-> Menu: **Gestione → Eventi**. È l'unica sezione (oltre alla Dashboard) che vedono anche i
+> Menu: **Operatività → Eventi**. È l'unica sezione (oltre alla Dashboard) che vedono anche i
 > dipendenti — ma loro vedono solo i propri eventi.
 
 Il modulo Eventi gestisce matrimoni, banchetti e cerimonie (Business Unit **BU2 – Cerimonie ed

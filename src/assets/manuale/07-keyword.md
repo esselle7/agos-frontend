@@ -1,8 +1,8 @@
-# 13. Keyword (regole di riconoscimento)
+# 13. Regole di classificazione (keyword)
 
-> Menu: **Gestione → Keyword**. Riservata all'amministratore.
+> Menu: **Configurazione → Regole di classificazione**. Riservata all'amministratore.
 
-Le **keyword** sono le regole che insegnano al sistema a **catalogare da solo** le righe importate.
+Le **regole di classificazione** (o «keyword») insegnano al sistema a **catalogare da solo** le righe importate.
 Ogni keyword dice, in sostanza: *"quando in una descrizione bancaria compaiono queste parole, fai
 questa cosa"*. Più keyword crei, meno lavoro manuale ti resta nello smistamento.
 
@@ -32,7 +32,7 @@ La creazione è guidata da un wizard a tre domande.
 
 ### Passo passo
 
-1. **Keyword → Crea** (o "Nuova").
+1. **Regole di classificazione → Crea** (o "Nuova").
 2. **Che cosa vuoi insegnare?** Scegli il tipo (Identità / Dominio-categoria / Dominio-evento).
    La scelta determina *cosa riconosce* e *cosa succede* alla riga.
 3. **Quali parole la attivano?** Aggiungi una o più **parole** (premi Invio dopo ciascuna). La
@@ -57,7 +57,7 @@ La creazione è guidata da un wizard a tre domande.
 
 ## 13.3 Gestire le keyword esistenti
 
-Nella pagina **Keyword** trovi l'elenco diviso per tipo (**Identità** e **Dominio**), con una barra
+Nella pagina **Regole di classificazione** trovi l'elenco diviso per tipo (**Identità** e **Dominio**), con una barra
 di ricerca (**Cerca per parola o conto**). Per ciascuna keyword puoi:
 
 - vedere su quale conto/BU/fornitore agisce;
