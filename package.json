@@ -4,10 +4,6 @@
   "private": true,
   "scripts": {
     "ng": "ng",
-    "sync:manuale": "node scripts/sync-manuale.mjs",
-    "prestart": "node scripts/sync-manuale.mjs",
-    "prebuild": "node scripts/sync-manuale.mjs",
-    "prebuild:prod": "node scripts/sync-manuale.mjs",
     "start": "ng serve",
     "build": "ng build",
     "build:prod": "ng build --configuration production",
