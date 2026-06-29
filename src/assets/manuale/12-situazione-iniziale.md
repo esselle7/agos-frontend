@@ -1,6 +1,6 @@
 # 19. Situazione iniziale
 
-> Menu: **Gestione → Situazione iniziale**. Riservata all'amministratore.
+> Menu: **Configurazione → Situazione iniziale**. Riservata all'amministratore.
 
 ## A cosa serve
 

@@ -28,7 +28,7 @@ Ci sono due livelli di accesso:
 |---|---|---|
 | Dashboard | Dashboard completa (finanza + agenda) | Dashboard eventi (solo i suoi eventi) |
 | Eventi | Tutti gli eventi | I propri eventi |
-| Movimenti, Import, Spese ricorrenti, Anagrafica, Keyword, Reporting, Previsioni | ✅ Sì | ❌ No |
+| Movimenti, Import, Spese ricorrenti, Anagrafica, Regole di classificazione, Report, Previsioni | ✅ Sì | ❌ No |
 
 In pratica: tutta la parte contabile e di analisi è **riservata a te**. Un dipendente usa il
 gestionale solo per consultare e lavorare gli eventi.
@@ -136,7 +136,7 @@ In parole povere, riga per riga:
 - **Imposte** — le tasse di competenza del periodo.
 - **Utile netto** — il risultato finale.
 
-> Vedrai questa cascata, mese per mese e BU per BU, nella sezione **Reporting → P&L Comparativo**
+> Vedrai questa cascata, mese per mese e BU per BU, nella sezione **Report → P&L Comparativo**
 > ([capitolo 15](09-reporting-e-previsioni.md)).
 
 ---

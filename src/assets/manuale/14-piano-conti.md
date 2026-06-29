@@ -1,6 +1,6 @@
 # 20. Piano dei conti
 
-> Menu: **Gestione → Piano dei conti**. Riservato all'amministratore.
+> Menu: **Configurazione → Piano dei conti**. Riservato all'amministratore.
 
 ## A cosa serve
 
@@ -50,4 +50,4 @@ alto filtra per codice o descrizione.
 
 ---
 
-[← 13. Keyword](07-keyword.md) · [Indice](README.md) · **Prossimo:** [15. Reporting e Previsioni →](09-reporting-e-previsioni.md)
+[← 13. Regole di classificazione](07-keyword.md) · [Indice](README.md) · **Prossimo:** [15. Report e Previsioni →](09-reporting-e-previsioni.md)

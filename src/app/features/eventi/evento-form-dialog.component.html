@@ -175,10 +175,9 @@
       </div>
 
       <div class="dform__row">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="evento-form__note">
           <mat-label>Note</mat-label>
-          <mat-icon matPrefix>sticky_note_2</mat-icon>
-          <textarea matInput formControlName="note" rows="3" appInputFilter="safe-text"></textarea>
+          <textarea matInput formControlName="note" rows="4" placeholder="Richieste particolari, accordi col cliente, dettagli logistici…" appInputFilter="safe-text"></textarea>
           @if (form.controls.note.hasError('pattern') && form.controls.note.touched) {
             <mat-error>Caratteri non consentiti (&lt; &gt;)</mat-error>
           }

@@ -46,14 +46,21 @@ interface NavSection {
 
 /**
  * Navigazione raggruppata per area di lavoro (rotte invariate: nessun link rotto).
- * Le etichette sono in sentence case e i nomi resi più parlanti ("Previsioni" al posto
- * di "Forecasting"); le icone scelte tra quelle del font Material Icons classico in uso.
+ * Quattro aree con confini netti — lavoro quotidiano → soldi → lettura → impostazioni:
+ *   Operatività   = ciò che si apre ogni giorno (incluso Eventi, unica voce non-admin con Dashboard)
+ *   Contabilità   = il registro dei soldi
+ *   Analisi       = lettura/sola consultazione (report, previsioni, export)
+ *   Configurazione = setup e dati di base, toccati di rado
+ * Etichette in sentence case e nomi parlanti ("Regole di classificazione" al posto di
+ * "Keyword", "Previsioni" al posto di "Forecasting", "Report" al posto di "Reporting").
+ * Icone scelte tra quelle del font Material Icons classico in uso.
  */
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Panoramica',
+    label: 'Operatività',
     items: [
-      { label: 'Dashboard',   icon: 'dashboard',     route: '/dashboard',   adminOnly: false },
+      { label: 'Dashboard',   icon: 'dashboard',      route: '/dashboard',   adminOnly: false },
+      { label: 'Eventi',      icon: 'celebration',    route: '/eventi',      adminOnly: false },
       { label: 'Scadenzario', icon: 'event_upcoming', route: '/scadenzario', adminOnly: true },
     ],
   },
@@ -68,26 +75,20 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: 'Gestione',
-    items: [
-      { label: 'Eventi',             icon: 'celebration',  route: '/eventi',              adminOnly: false },
-      { label: 'Situazione iniziale', icon: 'savings',     route: '/situazione-iniziale', adminOnly: true },
-      { label: 'Anagrafica',         icon: 'groups',       route: '/anagrafica',          adminOnly: true },
-      { label: 'Keyword',            icon: 'label',        route: '/keyword',             adminOnly: true },
-      { label: 'Piano dei conti',    icon: 'account_tree', route: '/piano-conti',         adminOnly: true },
-    ],
-  },
-  {
     label: 'Analisi',
     items: [
-      { label: 'Reporting',  icon: 'assessment',  route: '/reporting',   adminOnly: true },
-      { label: 'Previsioni', icon: 'query_stats', route: '/forecasting', adminOnly: true },
+      { label: 'Report',       icon: 'assessment',  route: '/reporting',   adminOnly: true },
+      { label: 'Previsioni',   icon: 'query_stats', route: '/forecasting', adminOnly: true },
+      { label: 'Esporta dati', icon: 'ios_share',   route: '/export',      adminOnly: true },
     ],
   },
   {
-    label: 'Export',
+    label: 'Configurazione',
     items: [
-      { label: 'Esporta dati', icon: 'ios_share', route: '/export', adminOnly: true },
+      { label: 'Anagrafica',                 icon: 'groups',       route: '/anagrafica',          adminOnly: true },
+      { label: 'Piano dei conti',            icon: 'account_tree', route: '/piano-conti',         adminOnly: true },
+      { label: 'Regole di classificazione',  icon: 'label',        route: '/keyword',             adminOnly: true },
+      { label: 'Situazione iniziale',        icon: 'savings',      route: '/situazione-iniziale', adminOnly: true },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 # 8. Dashboard
 
-> Menu: **Panoramica → Dashboard**. È la pagina che vedi appena entri.
+> Menu: **Operatività → Dashboard**. È la pagina che vedi appena entri.
 
 ## A cosa serve
 

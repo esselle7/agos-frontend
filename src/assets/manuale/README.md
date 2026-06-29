@@ -36,12 +36,13 @@ senso solo dopo aver letto la Parte I.
 
 ### Parte II — Capitoli operativi
 
-I capitoli seguono le aree del menu. (I numeri di capitolo sono identificativi stabili: non sempre
-sono consecutivi, ma i collegamenti "Precedente/Prossimo" in fondo a ogni capitolo seguono questo
-stesso ordine.)
+I capitoli sono raggruppati per area del menu. (I numeri di capitolo sono identificativi stabili e
+non sempre consecutivi; i collegamenti "Precedente/Prossimo" in fondo a ogni capitolo ti guidano in
+una lettura lineare di tutta la Parte II.)
 
-**Panoramica**
+**Operatività**
 - [8. Dashboard](02-dashboard.md)
+- [10. Eventi](04-eventi.md)
 - [18. Scadenzario](13-scadenzario.md)
 
 **Contabilità**
@@ -49,18 +50,15 @@ stesso ordine.)
 - [12. Import & smistamento](06-import-e-smistamento.md)
 - [11. Spese ricorrenti](05-spese-ricorrenti.md)
 
-**Gestione**
-- [10. Eventi](04-eventi.md)
-- [19. Situazione iniziale](12-situazione-iniziale.md)
-- [14. Anagrafica](08-anagrafica.md)
-- [13. Keyword (regole di riconoscimento)](07-keyword.md)
-- [20. Piano dei conti](14-piano-conti.md)
-
 **Analisi**
-- [15. Reporting e Previsioni](09-reporting-e-previsioni.md)
+- [15. Report e Previsioni](09-reporting-e-previsioni.md)
+- [21. Esporta dati](15-export.md)
 
-**Export**
-- [21. Export](15-export.md)
+**Configurazione**
+- [14. Anagrafica](08-anagrafica.md)
+- [20. Piano dei conti](14-piano-conti.md)
+- [13. Regole di classificazione](07-keyword.md)
+- [19. Situazione iniziale](12-situazione-iniziale.md)
 
 **Riferimento**
 - [16. Appendice — Cassa (funzione non attiva)](10-appendice-cassa.md)
@@ -70,15 +68,14 @@ stesso ordine.)
 
 ## Le voci di menu (a colpo d'occhio)
 
-Il menu a sinistra è raggruppato in cinque aree:
+Il menu a sinistra è raggruppato in quattro aree — *lavoro quotidiano → soldi → lettura → impostazioni*:
 
 | Area | Voci |
 |---|---|
-| **Panoramica** | Dashboard · Scadenzario |
+| **Operatività** | Dashboard · Eventi · Scadenzario |
 | **Contabilità** | Movimenti · Import & smistamento · Spese ricorrenti |
-| **Gestione** | Eventi · Situazione iniziale · Anagrafica · Keyword · Piano dei conti |
-| **Analisi** | Reporting · Previsioni |
-| **Export** | Esporta dati |
+| **Analisi** | Report · Previsioni · Esporta dati |
+| **Configurazione** | Anagrafica · Piano dei conti · Regole di classificazione · Situazione iniziale |
 
 Tu sei **amministratore** e vedi tutte le voci. Un dipendente vede solo **Dashboard** ed
 **Eventi**. (Vedi [capitolo 1](01-capire-il-gestionale.md#1-benvenuto).)

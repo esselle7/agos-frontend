@@ -1,6 +1,6 @@
 # 18. Scadenzario
 
-> Menu: **Panoramica → Scadenzario**. Riservato all'amministratore.
+> Menu: **Operatività → Scadenzario**. Riservato all'amministratore.
 
 ## A cosa serve
 
