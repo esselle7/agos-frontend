@@ -17,6 +17,13 @@ export const routes: Routes = [
     component: AuthCallbackComponent,
   },
   {
+    // Guida a tutto schermo: fuori dall'AppShell (niente sidebar dell'app), solo autenticato.
+    path: 'guida',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/guida/guida.component').then(m => m.GuidaComponent),
+  },
+  {
     path: '',
     component: AppShellComponent,
     canActivate: [authGuard],
