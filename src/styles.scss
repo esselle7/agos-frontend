@@ -698,6 +698,27 @@ button:focus-visible,
   .agos-form-grid {
     grid-template-columns: 1fr;
   }
+
+  // ── Fix globali mobile ───────────────────────────────────────────
+  // Dialog: nessun form più largo dello schermo (cap sull'overlay-pane di Material).
+  .cdk-overlay-pane.mat-mdc-dialog-panel { max-width: 96vw !important; }
+
+  // Azioni-riga normalmente reveal-on-hover: su touch l'hover non c'è → sempre visibili.
+  .mat-mdc-table .agos-actions-col-reveal { opacity: 1; }
+
+  // Tap target ≥44px per gli icon button compatti (default custom = 36px).
+  .icon-btn-sm.mat-mdc-icon-button { width: 44px; height: 44px; padding: 10px; }
+
+  // Header pagina: CTA e gruppi-azioni a tutta larghezza quando vanno a capo.
+  .agos-page-header__actions,
+  .agos-page-header__cta { width: 100%; }
+
+  // Tabelle con wrapper dedicato: scroll orizzontale invece di colonne illeggibili.
+  // (movimenti escluso: lì la tabella diventa una lista di card.)
+  [class*="__table-wrapper"]:not(.mov-list__table-wrapper) {
+    overflow-x: auto;
+    .mat-mdc-table { min-width: 560px; }
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════════

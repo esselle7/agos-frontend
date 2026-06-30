@@ -8,3 +8,8 @@
   &__stato { font-weight: 700; font-size: .85rem; }
   &__azioni { display: flex; gap: .35rem; align-items: center; justify-content: flex-end; }
 }
+
+@media (max-width: 768px) {
+  .storico { overflow-x: auto; }
+  .storico__table { min-width: 520px; }
+}

@@ -105,7 +105,7 @@ mat-slide-toggle {
   margin-top: 4px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .ambiguita { min-width: 0; }
   .ambiguita__form { grid-template-columns: 1fr; }
 }
