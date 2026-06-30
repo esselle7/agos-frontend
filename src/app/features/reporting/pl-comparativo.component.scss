@@ -229,3 +229,26 @@
   opacity: .7;
   margin-left: 4px;
 }
+
+// ── Mobile (≤768px) ───────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .plc { gap: 16px; }
+  .plc-card { padding: 16px; }
+
+  // Tabella P&L: scroll orizzontale (con la riga totale) invece di 7 colonne schiacciate.
+  .plc-card:has(.plc-table) { overflow-x: auto; }
+  .plc-table,
+  .plc-total-row { min-width: 620px; }
+
+  // Waterfall: riga in colonna così la descrizione resta leggibile a tutta larghezza
+  // (prima tag 130px + valore 130px lasciavano alla descrizione una colonna sottile).
+  .plc-wf-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding-left: 14px;
+
+    &__label { min-width: 0; }
+    &__value { min-width: 0; text-align: left; }
+  }
+}
