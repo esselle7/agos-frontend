@@ -14,3 +14,8 @@
 .rep-tab-content {
   padding-top: 24px;
 }
+
+@media (max-width: 768px) {
+  .rep-page { padding: 16px; }
+  .rep-tab-content { padding-top: 16px; }
+}

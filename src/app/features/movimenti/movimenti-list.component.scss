@@ -249,55 +249,55 @@
   }
 }
 
-// ── Mobile: tabella → lista di card (CSS-only, le celle usano data-label) ─────
+// ── Mobile: la tabella diventa una lista di card (vedi @if (isMobile()) nel template) ──
 @media (max-width: 768px) {
   .mov-list { padding: 16px; gap: 16px; }
+  .mov-list__actions a { width: 100%; }   // CTA "Nuovo Movimento" a tutta larghezza
+}
 
-  .mov-list__actions a { width: 100%; }      // CTA "Nuovo Movimento" a tutta larghezza
+.mov-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-  .mov-list__table-wrapper { overflow-x: visible; }
+.mov-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
+  background: var(--card);
+  cursor: pointer;
 
-  .mov-list__table {
-    display: block;
-
-    .mat-mdc-header-row { display: none; }
-
-    .mat-mdc-row {
-      display: block;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md, 10px);
-      margin-bottom: 10px;
-      padding: 4px 14px;
-    }
-
-    .mat-mdc-cell {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      min-height: 40px;
-      padding: 4px 0;
-      border: none;
-      text-align: right;
-
-      &::before {
-        content: attr(data-label);
-        flex-shrink: 0;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-        color: var(--text-sub);
-        text-align: left;
-      }
-    }
-
-    // Riga azioni: niente label, bottoni allineati e sempre visibili (no hover su touch)
-    .mov-list__actions-cell {
-      opacity: 1;
-      justify-content: flex-end;
-      &::before { content: none; }
-    }
+  &__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  &__date { font-size: .8rem; color: var(--text-sub); }
+  &__importo {
+    font-weight: 700;
+    font-size: 1rem;
+    &--entrata { color: var(--success); }
+    &--uscita  { color: var(--danger); }
+  }
+  &__desc { font-size: .9rem; color: var(--text-main); line-height: 1.35; }
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+    margin-top: 2px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
   }
 }
 

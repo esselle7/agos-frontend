@@ -6,6 +6,10 @@ import {
   inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { map } from 'rxjs';
+import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -44,6 +48,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule,
+    NgTemplateOutlet,
     ReactiveFormsModule,
     MatTableModule,
     MatPaginatorModule,
@@ -76,6 +81,12 @@ export class MovimentiListComponent implements OnInit, OnDestroy {
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
+
+  /** Sotto 768px la tabella (8 colonne) lascia il posto a una lista di card. */
+  readonly isMobile = toSignal(
+    inject(BreakpointObserver).observe('(max-width: 768px)').pipe(map(r => r.matches)),
+    { initialValue: false },
+  );
 
   readonly displayedColumns = ['dataMovimento', 'tipo', 'descrizione', 'bu', 'fonte', 'importo', 'stato', 'azioni'];
   readonly liquidandoId = signal<string | null>(null);

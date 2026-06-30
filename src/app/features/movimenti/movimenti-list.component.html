@@ -136,6 +136,90 @@
     } @else if (loading() && !result()) {
       <agos-skeleton-loader type="table" [rows]="8"></agos-skeleton-loader>
     } @else if (result()?.content?.length) {
+      <!-- Azioni di riga: condivise tra tabella (desktop) e card (mobile) -->
+      <ng-template #rowActions let-row>
+        <button mat-icon-button [routerLink]="['/movimenti', row.id]"
+                matTooltip="Dettaglio" (click)="$event.stopPropagation()">
+          <mat-icon>visibility</mat-icon>
+        </button>
+        <button mat-icon-button [routerLink]="['/movimenti', row.id, 'modifica']"
+                matTooltip="Modifica" (click)="$event.stopPropagation()">
+          <mat-icon>edit</mat-icon>
+        </button>
+        @if (row.stato === 'DA_LIQUIDARE') {
+          @if (liquidandoId() === row.id) {
+            <button mat-icon-button disabled class="mov-list__liquida-btn">
+              <mat-spinner diameter="18"></mat-spinner>
+            </button>
+          } @else {
+            <button mat-icon-button
+                    matTooltip="Liquida oggi"
+                    class="mov-list__liquida-btn"
+                    [disabled]="liquidandoId() !== null"
+                    [matMenuTriggerFor]="liquidaRowMenu"
+                    (click)="$event.stopPropagation()">
+              <mat-icon>payments</mat-icon>
+            </button>
+            <mat-menu #liquidaRowMenu="matMenu">
+              @for (c of conti(); track c.id) {
+                <button mat-menu-item
+                        (click)="liquidaMovimento(row, c.id)"
+                        [disabled]="c.saldoCalcolato < row.importo"
+                        [class.conto-saldo-ko]="c.saldoCalcolato < row.importo">
+                  <mat-icon [class.icon-danger]="c.saldoCalcolato < row.importo">
+                    {{ c.saldoCalcolato < row.importo ? 'money_off' : 'account_balance' }}
+                  </mat-icon>
+                  <span>{{ c.nome }}</span>
+                  @if (c.saldoCalcolato < row.importo) {
+                    <span class="saldo-ko-hint">saldo {{ c.saldoCalcolato | euro }}</span>
+                  }
+                </button>
+              }
+            </mat-menu>
+          }
+        }
+        @if (authService.isAdmin() && row.stato !== 'ANNULLATO') {
+          <button mat-icon-button color="warn"
+                  matTooltip="Elimina"
+                  (click)="deleteMovimento(row, $event)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </ng-template>
+
+      @if (isMobile()) {
+        <!-- Lista di card (mobile): la tabella a 8 colonne non sta in un telefono -->
+        <div class="mov-cards">
+          @for (row of result()!.content; track row.id) {
+            <div class="mov-card" (click)="onRowClick(row)">
+              <div class="mov-card__top">
+                <span class="mov-card__date">{{ formatDate(row.dataMovimento) }}</span>
+                <span class="euro mov-card__importo"
+                      [class.mov-card__importo--entrata]="row.tipo === 'ENTRATA'"
+                      [class.mov-card__importo--uscita]="row.tipo === 'USCITA'">
+                  {{ row.importo | euro }}
+                </span>
+              </div>
+              <div class="mov-card__desc">{{ row.descrizione }}</div>
+              <div class="mov-card__meta">
+                <agos-badge [text]="row.stato" [color]="statoColor(row.stato)"></agos-badge>
+                <agos-badge [text]="buNome(row.businessUnitId)" [color]="buColore(row.businessUnitId)"></agos-badge>
+                @if (row.fonte) {
+                  <agos-badge [text]="row.fonte" [color]="fonteColor(row.fonte)" size="sm"></agos-badge>
+                }
+                @if (row.stato === 'DA_LIQUIDARE' && row.giorniAllaScadenza != null) {
+                  <span class="mov-list__ritardo" [class.late]="row.giorniAllaScadenza < 0">
+                    {{ ritardoLabel(row.giorniAllaScadenza) }}
+                  </span>
+                }
+              </div>
+              <div class="mov-card__actions" (click)="$event.stopPropagation()">
+                <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ $implicit: row }" />
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
       <div class="mov-list__table-wrapper">
         <table mat-table [dataSource]="result()!.content" class="mov-list__table">
 
@@ -211,53 +295,7 @@
           <ng-container matColumnDef="azioni">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let row" class="mov-list__actions-cell">
-              <button mat-icon-button [routerLink]="['/movimenti', row.id]"
-                      matTooltip="Dettaglio" (click)="$event.stopPropagation()">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              <button mat-icon-button [routerLink]="['/movimenti', row.id, 'modifica']"
-                      matTooltip="Modifica" (click)="$event.stopPropagation()">
-                <mat-icon>edit</mat-icon>
-              </button>
-              @if (row.stato === 'DA_LIQUIDARE') {
-                @if (liquidandoId() === row.id) {
-                  <button mat-icon-button disabled class="mov-list__liquida-btn">
-                    <mat-spinner diameter="18"></mat-spinner>
-                  </button>
-                } @else {
-                  <button mat-icon-button
-                          matTooltip="Liquida oggi"
-                          class="mov-list__liquida-btn"
-                          [disabled]="liquidandoId() !== null"
-                          [matMenuTriggerFor]="liquidaRowMenu"
-                          (click)="$event.stopPropagation()">
-                    <mat-icon>payments</mat-icon>
-                  </button>
-                  <mat-menu #liquidaRowMenu="matMenu">
-                    @for (c of conti(); track c.id) {
-                      <button mat-menu-item
-                              (click)="liquidaMovimento(row, c.id)"
-                              [disabled]="c.saldoCalcolato < row.importo"
-                              [class.conto-saldo-ko]="c.saldoCalcolato < row.importo">
-                        <mat-icon [class.icon-danger]="c.saldoCalcolato < row.importo">
-                          {{ c.saldoCalcolato < row.importo ? 'money_off' : 'account_balance' }}
-                        </mat-icon>
-                        <span>{{ c.nome }}</span>
-                        @if (c.saldoCalcolato < row.importo) {
-                          <span class="saldo-ko-hint">saldo {{ c.saldoCalcolato | euro }}</span>
-                        }
-                      </button>
-                    }
-                  </mat-menu>
-                }
-              }
-              @if (authService.isAdmin() && row.stato !== 'ANNULLATO') {
-                <button mat-icon-button color="warn"
-                        matTooltip="Elimina"
-                        (click)="deleteMovimento(row, $event)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              }
+              <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ $implicit: row }" />
             </td>
           </ng-container>
 
@@ -268,6 +306,7 @@
           </tr>
         </table>
       </div>
+      }
 
       <mat-paginator
         [length]="result()!.totalElements"
