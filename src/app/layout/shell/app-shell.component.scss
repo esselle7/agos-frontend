@@ -350,74 +350,11 @@ $topbar-height:            64px;
 }
 .settings:hover .settings__gear { transform: rotate(90deg); color: var(--primary); }
 
-.settings__menu {
-  position: absolute;
-  bottom: 0;
-  left: calc(100% - 8px);      // sovrapposizione di 8px = nessun varco per il mouse
-  z-index: 60;
-  width: 210px;
-  padding: 6px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  opacity: 0;
-  transform: translateX(8px) scale(0.96);
-  filter: blur(6px);
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+// Voce "Esci" del mat-menu in colore d'allerta (il menu vive in un overlay → ::ng-deep).
+::ng-deep .settings__opt--danger {
+  color: var(--danger);
+  .mat-icon { color: var(--danger); }
 }
-.settings:hover .settings__menu {
-  opacity: 1;
-  transform: none;
-  filter: none;
-  pointer-events: auto;
-}
-
-.settings__opt {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 10px;
-  border: none;
-  background: transparent;
-  border-radius: 9px;
-  cursor: pointer;
-  color: var(--text-main);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-align: left;
-  transition: background 0.14s ease, color 0.14s ease;
-
-  mat-icon { font-size: 19px; width: 19px; height: 19px; color: var(--text-sub); }
-
-  // micro-stagger all'apertura
-  opacity: 0;
-  transform: translateX(6px);
-  transition: opacity 0.22s ease, transform 0.22s ease, background 0.14s ease;
-  &:nth-child(1) { transition-delay: 0.04s; }
-  &:nth-child(2) { transition-delay: 0.09s; }
-  &:nth-child(3) { transition-delay: 0.13s; }
-
-  &:hover {
-    background: color-mix(in srgb, var(--primary) 9%, transparent);
-    color: var(--primary-d);
-    mat-icon { color: var(--primary); }
-  }
-
-  &--danger:hover {
-    background: color-mix(in srgb, var(--danger) 10%, transparent);
-    color: var(--danger);
-    mat-icon { color: var(--danger); }
-  }
-}
-.settings:hover .settings__opt { opacity: 1; transform: none; }
 
 // Profilo Google (ultima voce)
 .profile {
@@ -513,7 +450,7 @@ $topbar-height:            64px;
   color: var(--primary);
   mat-icon { margin-right: 6px; }
 }
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .guide-btn .guide-btn__label { display: none; }
   .guide-btn mat-icon { margin-right: 0; }
 }
@@ -541,9 +478,7 @@ $topbar-height:            64px;
   .bu__panel,
   .nav-section__chev,
   .nav-section__panel,
-  .settings__menu,
   .settings__gear,
-  .settings__opt,
   .nav-link,
   .nav-link__icon { transition: none !important; }
 }

@@ -249,6 +249,58 @@
   }
 }
 
+// ── Mobile: tabella → lista di card (CSS-only, le celle usano data-label) ─────
+@media (max-width: 768px) {
+  .mov-list { padding: 16px; gap: 16px; }
+
+  .mov-list__actions a { width: 100%; }      // CTA "Nuovo Movimento" a tutta larghezza
+
+  .mov-list__table-wrapper { overflow-x: visible; }
+
+  .mov-list__table {
+    display: block;
+
+    .mat-mdc-header-row { display: none; }
+
+    .mat-mdc-row {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 10px);
+      margin-bottom: 10px;
+      padding: 4px 14px;
+    }
+
+    .mat-mdc-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      padding: 4px 0;
+      border: none;
+      text-align: right;
+
+      &::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-sub);
+        text-align: left;
+      }
+    }
+
+    // Riga azioni: niente label, bottoni allineati e sempre visibili (no hover su touch)
+    .mov-list__actions-cell {
+      opacity: 1;
+      justify-content: flex-end;
+      &::before { content: none; }
+    }
+  }
+}
+
 /* Indicatore di ritardo/scadenza accanto allo stato Da Liquidare (Feature 1) */
 .mov-list__ritardo {
   display: inline-block;

@@ -142,13 +142,13 @@
           <!-- Data -->
           <ng-container matColumnDef="dataMovimento">
             <th mat-header-cell *matHeaderCellDef>Data</th>
-            <td mat-cell *matCellDef="let row">{{ formatDate(row.dataMovimento) }}</td>
+            <td mat-cell *matCellDef="let row" data-label="Data">{{ formatDate(row.dataMovimento) }}</td>
           </ng-container>
 
           <!-- Tipo -->
           <ng-container matColumnDef="tipo">
             <th mat-header-cell *matHeaderCellDef>Tipo</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" data-label="Tipo">
               <agos-badge [text]="row.tipo" [color]="tipoColor(row.tipo)"></agos-badge>
             </td>
           </ng-container>
@@ -156,7 +156,7 @@
           <!-- Descrizione -->
           <ng-container matColumnDef="descrizione">
             <th mat-header-cell *matHeaderCellDef>Descrizione</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" data-label="Descrizione">
               <span [matTooltip]="row.descrizione.length > 40 ? row.descrizione : ''">
                 {{ truncate(row.descrizione) }}
               </span>
@@ -166,7 +166,7 @@
           <!-- BU -->
           <ng-container matColumnDef="bu">
             <th mat-header-cell *matHeaderCellDef>BU</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" data-label="BU">
               <agos-badge [text]="buNome(row.businessUnitId)" [color]="buColore(row.businessUnitId)"></agos-badge>
             </td>
           </ng-container>
@@ -174,7 +174,7 @@
           <!-- Fonte -->
           <ng-container matColumnDef="fonte">
             <th mat-header-cell *matHeaderCellDef>Fonte</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" data-label="Fonte">
               @if (row.fonte) {
                 <agos-badge [text]="row.fonte" [color]="fonteColor(row.fonte)" size="sm"></agos-badge>
               } @else {
@@ -186,7 +186,7 @@
           <!-- Importo -->
           <ng-container matColumnDef="importo">
             <th mat-header-cell *matHeaderCellDef class="text-right">Importo</th>
-            <td mat-cell *matCellDef="let row" class="text-right">
+            <td mat-cell *matCellDef="let row" class="text-right" data-label="Importo">
               <span class="euro mov-list__importo"
                     [class.mov-list__importo--entrata]="row.tipo === 'ENTRATA'"
                     [class.mov-list__importo--uscita]="row.tipo === 'USCITA'">
@@ -198,7 +198,7 @@
           <!-- Stato -->
           <ng-container matColumnDef="stato">
             <th mat-header-cell *matHeaderCellDef>Stato</th>
-            <td mat-cell *matCellDef="let row">
+            <td mat-cell *matCellDef="let row" data-label="Stato">
               <agos-badge [text]="row.stato" [color]="statoColor(row.stato)"></agos-badge>
               @if (row.stato === 'DA_LIQUIDARE' && row.giorniAllaScadenza != null) {
                 <span class="mov-list__ritardo" [class.late]="row.giorniAllaScadenza < 0"

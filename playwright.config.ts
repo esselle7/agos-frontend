@@ -14,4 +14,12 @@ export default defineConfig({
     headless: true,
     trace: 'retain-on-failure',
   },
+  projects: [
+    { name: 'desktop', testIgnore: '**/mobile.spec.ts' },
+    {
+      name: 'mobile',
+      testMatch: '**/mobile.spec.ts',
+      use: { viewport: { width: 393, height: 851 }, hasTouch: true }, // Pixel 5 portrait
+    },
+  ],
 });

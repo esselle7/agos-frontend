@@ -7,14 +7,16 @@ import {
   computed,
   effect,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, map } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpClient } from '@angular/common/http';
@@ -103,6 +105,7 @@ const NAV_SECTIONS: NavSection[] = [
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
+    MatMenuModule,
     MatBadgeModule,
     MatTooltipModule,
   ],
@@ -116,14 +119,27 @@ export class AppShellComponent implements OnInit {
   private readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly breakpoints = inject(BreakpointObserver);
 
   readonly user = this.authService.user;
   readonly isAdmin = this.authService.isAdmin;
   readonly isDarkTheme = this.themeService.theme;
 
+  /** Sotto 768px la sidenav diventa overlay (mode="over"): niente rail che mangia spazio. */
+  readonly isMobile = toSignal(
+    this.breakpoints.observe('(max-width: 768px)').pipe(map(r => r.matches)),
+    { initialValue: false },
+  );
+
+  /** Apertura dell'overlay su mobile (chiuso di default, nessuna persistenza). */
+  readonly mobileNavOpen = signal(false);
+
   readonly sidenavOpen = signal<boolean>(
     sessionStorage.getItem(SIDENAV_KEY) !== 'false'
   );
+
+  /** Barra "estesa" (label visibili): sempre su mobile, altrimenti segue sidenavOpen. */
+  readonly expanded = computed(() => this.sidenavOpen() || this.isMobile());
 
   /** "Dettaglio BU": chiuso di default per non occupare spazio verticale (stato ricordato). */
   readonly buExpanded = signal<boolean>(
@@ -172,6 +188,7 @@ export class AppShellComponent implements OnInit {
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
       .subscribe(e => {
+        if (this.isMobile()) this.mobileNavOpen.set(false);
         const label = this.sectionForUrl((e as NavigationEnd).urlAfterRedirects);
         if (label) this.openSections.update(s => new Set(s).add(label));
       });
@@ -230,7 +247,8 @@ export class AppShellComponent implements OnInit {
   }
 
   toggleSidenav(): void {
-    this.sidenavOpen.update(v => !v);
+    if (this.isMobile()) this.mobileNavOpen.update(v => !v);
+    else this.sidenavOpen.update(v => !v);
   }
 
   toggleBu(): void {

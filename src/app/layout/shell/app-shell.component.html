@@ -3,17 +3,18 @@
   <!-- ── Side rail ───────────────────────────────────────────────── -->
   <mat-sidenav
     #sidenav
-    mode="side"
-    [opened]="sidenavOpen()"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="isMobile() ? mobileNavOpen() : sidenavOpen()"
+    (closedStart)="mobileNavOpen.set(false)"
     class="sidenav"
-    [class.sidenav--collapsed]="!sidenavOpen()"
+    [class.sidenav--collapsed]="!expanded()"
   >
     <div class="rail">
 
       <!-- Brand -->
       <div class="rail-brand">
         <img src="assets/logo.png" alt="Agostinelli" class="brand-logo" />
-        @if (sidenavOpen()) { <span class="brand-text">Agostinelli</span> }
+        @if (expanded()) { <span class="brand-text">Agostinelli</span> }
       </div>
 
       <!-- Navigation (scrollable) -->
@@ -24,18 +25,18 @@
             <a
               [routerLink]="item.route"
               routerLinkActive="is-active"
-              [matTooltip]="!sidenavOpen() ? navTooltip(item) : ''"
+              [matTooltip]="!expanded() ? navTooltip(item) : ''"
               matTooltipPosition="right"
               class="nav-link"
               [class.nav-link--alert]="item.badge && item.badge() > 0"
             >
               <span class="nav-link__icon-wrap">
                 <mat-icon class="nav-link__icon">{{ item.icon }}</mat-icon>
-                @if (item.badge && item.badge() > 0 && !sidenavOpen()) {
+                @if (item.badge && item.badge() > 0 && !expanded()) {
                   <span class="nav-link__dot" aria-hidden="true"></span>
                 }
               </span>
-              @if (sidenavOpen()) {
+              @if (expanded()) {
                 <span class="nav-link__label">{{ item.label }}</span>
                 @if (item.badge && item.badge() > 0) {
                   <span class="nav-link__badge"
@@ -50,7 +51,7 @@
 
         @for (section of visibleSections(); track section.label) {
           <div class="nav-section">
-            @if (sidenavOpen()) {
+            @if (expanded()) {
               <button
                 type="button"
                 class="nav-section__toggle"
@@ -76,7 +77,7 @@
         }
 
         <!-- Dettaglio BU — sotto-livello richiudibile (solo admin, solo barra estesa) -->
-        @if (isAdmin() && businessUnits().length && sidenavOpen()) {
+        @if (isAdmin() && businessUnits().length && expanded()) {
           <div class="nav-section bu">
             <button
               type="button"
@@ -112,42 +113,46 @@
       <!-- Footer: impostazioni (hover) + profilo -->
       <div class="rail-foot">
 
-        <!-- Impostazioni: si apre al passaggio del mouse, si chiude quando lo allontani -->
+        <!-- Impostazioni: menu click-based (accessibile da touch) -->
         <div class="settings">
           <button
             type="button"
             class="settings__trigger"
-            [matTooltip]="!sidenavOpen() ? 'Impostazioni' : ''"
+            [matMenuTriggerFor]="settingsMenu"
+            [matTooltip]="!expanded() ? 'Impostazioni' : ''"
             matTooltipPosition="right"
           >
             <mat-icon class="settings__gear">settings</mat-icon>
-            @if (sidenavOpen()) { <span>Impostazioni</span> }
+            @if (expanded()) { <span>Impostazioni</span> }
           </button>
 
-          <div class="settings__menu" role="menu">
-            <button type="button" class="settings__opt" (click)="toggleSidenav()">
-              <mat-icon>{{ sidenavOpen() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
-              <span>{{ sidenavOpen() ? 'Comprimi barra' : 'Espandi barra' }}</span>
-            </button>
-            <button type="button" class="settings__opt" (click)="toggleTheme()">
+          <mat-menu #settingsMenu="matMenu">
+            <!-- Comprimi/espandi: solo da desktop (su mobile la barra è overlay) -->
+            @if (!isMobile()) {
+              <button mat-menu-item (click)="toggleSidenav()">
+                <mat-icon>{{ sidenavOpen() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+                <span>{{ sidenavOpen() ? 'Comprimi barra' : 'Espandi barra' }}</span>
+              </button>
+            }
+            <button mat-menu-item (click)="toggleTheme()">
               <mat-icon>{{ isDarkTheme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
               <span>{{ isDarkTheme() === 'dark' ? 'Tema chiaro' : 'Tema scuro' }}</span>
             </button>
-            <button type="button" class="settings__opt settings__opt--danger" (click)="logout()">
+            <button mat-menu-item class="settings__opt--danger" (click)="logout()">
               <mat-icon>logout</mat-icon>
               <span>Esci</span>
             </button>
-          </div>
+          </mat-menu>
         </div>
 
         <!-- Profilo Google (ultima voce in fondo) -->
         <div
           class="profile"
-          [matTooltip]="!sidenavOpen() ? (user()?.nome + ' · ' + user()?.email) : ''"
+          [matTooltip]="!expanded() ? (user()?.nome + ' · ' + user()?.email) : ''"
           matTooltipPosition="right"
         >
           <div class="profile__avatar">{{ userInitial() }}</div>
-          @if (sidenavOpen()) {
+          @if (expanded()) {
             <div class="profile__info">
               <span class="profile__name">{{ user()?.nome }}</span>
               <span class="profile__email">{{ user()?.email }}</span>

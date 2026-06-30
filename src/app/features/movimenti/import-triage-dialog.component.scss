@@ -141,7 +141,7 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .triage { min-width: 0; }
   .triage__form { grid-template-columns: 1fr; }
 }
